@@ -69,6 +69,11 @@ const config: LightNodeConfig = {
     authorization: process.env.AUTHORIZATION, // (Required)
   },
   // (Optional)
+  backup: {
+    redisUrl: process.env.REDIS_URL,
+    useBackup: true, 
+  },
+  // (Optional)
   logger: {
     datadog: {
       appName: process.env.DATADOG_APP_NAME as string,
