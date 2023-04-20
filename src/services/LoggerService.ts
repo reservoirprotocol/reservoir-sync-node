@@ -73,7 +73,7 @@ class _LoggerService {
    * @param message - The message to log.
    * @returns {void} - void
    */
-  public error(message: string): void {
+  public error(message: unknown ): void {
     this.logger.error(message + '\n');
   }
 

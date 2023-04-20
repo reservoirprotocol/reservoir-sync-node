@@ -10,13 +10,21 @@ import {
   URL_BASES,
   URL_PATHS,
 } from './services';
+import { BackupService } from './services/BackupService';
 import {
+  Backup,
   IndexSignatureType,
   LightNodeConfig,
   PrismaCreate,
   SyncerConfig,
 } from './types';
-import { isAddress, getMonth, getYear, createQuery } from './utils/utils';
+import {
+  createQuery,
+  getMonth,
+  getYear,
+  isAddress,
+  isSuccessResponse,
+} from './utils/utils';
 
 /**
  * LightNode class represents a lightweight node for syncing data.
@@ -46,11 +54,11 @@ class _LightNode {
    * @returns {void}
    * @access public
    */
-  public async launch(_config: LightNodeConfig) {
+  public async launch(_config: LightNodeConfig): Promise<void> {
     this._config = _config;
     this._validateConfig();
     this._setServices();
-    this._launchServices();
+    await this._launchServices();
     await this._createSyncers();
     this._launchSyncers();
     this._logSyncers();
@@ -60,8 +68,9 @@ class _LightNode {
    * @returns {void}
    * @access private
    */
-  private _launchServices(): void {
+  private async _launchServices(): Promise<void> {
     ServerManager.launch();
+    await BackupService.launch();
   }
 
   /**
@@ -82,22 +91,23 @@ class _LightNode {
           if (!manager) return;
           managers.push({
             Manager: id,
-            Year: getYear(manager?._config.date),
-            Month: getMonth(manager?._config.date),
+            Year: getYear(manager?.config.date),
+            Month: getMonth(manager?.config.date),
             Requests: manager?.requestCount,
             Insertions: manager?.insertCount,
             Status: manager?.status,
             Busy: manager?.isBusy,
-            Backfilled: manager?.backfilled,
+            Backfilled: manager?.isBackfilled,
           });
           manager.workers.forEach((worker, id) => {
             workers.push({
               Worker: id,
-              Date: worker?.config.date.substring(5),
+              Date: worker?.date.substring(5),
               Busy: worker?.isBusy,
               Status: worker?.status,
-              Backfilled: worker?.backfilled,
+              Backfilled: worker?.isBackfilled,
               Insertions: worker?.counts?._insertions,
+              Continuation: worker?.continuation,
               '2xx': worker?.counts._requests['2xx'],
               '4xx': worker?.counts._requests['4xx'],
               '5xx': worker?.counts?._requests['5xx'],
@@ -132,6 +142,12 @@ class _LightNode {
       query: createQuery('', this._config.syncer.contracts),
       apiKey: this._config.syncer.apiKey,
     });
+
+    if (!isSuccessResponse(res))
+      throw new Error(
+        `FAILED TO GET STARTED DATE: ${res.data.message}:${res.status}`
+      );
+
     const data = res.data as IndexSignatureType;
 
     const parsedData = PARSER_METHODS[syncer](
@@ -155,9 +171,8 @@ class _LightNode {
           return value.id;
         }),
     });
-
-    if (data[syncer].length > 0 && data[syncer][0].updatedAt) {
-      return data[syncer][0].updatedAt.substring(0, 10);
+    if (data[syncer].length > 0 && data[syncer][data[syncer].length - 1].updatedAt) {
+      return data[syncer][data[syncer].length - 1].updatedAt.substring(0, 10);
     }
     return new Date().toISOString().substring(0, 10);
   }
@@ -168,11 +183,15 @@ class _LightNode {
    * @returns {void}
    * @access private
    */
-  private async _createSyncers() {
-    const syncer = this._config.syncer;
+  private async _createSyncers(): Promise<void> {
+    const { syncer, backup } = this._config;
+
+    // Flush method yarn
+    if (!backup?.useBackup) {
+      await BackupService.flush();
+    }
 
     if (syncer.toSync.sales) {
-      const startDate = await this._getStartDate('sales');
       this._syncers.set(
         'sales-syncer',
         new SyncService({
@@ -182,11 +201,11 @@ class _LightNode {
           apiKey: syncer.apiKey,
           contracts: syncer.contracts,
           type: 'sales',
-          date: startDate,
+          date: await this._getStartDate('sales'),
+          backup: await this._loadBackup('sales'),
         })
       );
     }
-    return true;
   }
 
   /**
@@ -208,6 +227,7 @@ class _LightNode {
   private _setServices(): void {
     LoggerService.set(this._config.logger);
     ServerManager.set(this._config.server);
+    BackupService.set(this._config.backup);
   }
 
   /**
@@ -218,7 +238,12 @@ class _LightNode {
    * @throws {Error} - If any part of the configuration is invalid.
    */
   private _validateConfig(): void {
-    const { server, syncer, logger } = this._config;
+    const { server, syncer, logger, backup } = this._config;
+
+    // Validate backup configuration
+    if (backup && !backup.redisUrl) {
+      throw new Error(`INVALID REDIS URl; ${backup.redisUrl}`);
+    }
 
     // Validate server port
     if (String(server.port).length !== 4)
@@ -250,6 +275,16 @@ class _LightNode {
 
     // Validate chain
     if (!syncer.chain) throw new Error(`INVALID CHAIN: ${syncer.chain}`);
+  }
+  /**
+   * # _loadBackup
+   * Loads a backup of the most recent state of the LightNode
+   * @param {String} type - SyncerType
+   * @access private
+   * @returns {Backup} - LightNode Backup
+   */
+  private async _loadBackup(type: string): Promise<Backup | null> {
+    return BackupService.load(type);
   }
 }
 

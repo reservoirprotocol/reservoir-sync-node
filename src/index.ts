@@ -12,6 +12,12 @@ const config: LightNodeConfig = {
     port: process.env.PORT, // (Required)
     authorization: process.env.AUTHORIZATION, // (Required)
   },
+  // (Optional)
+  backup: {
+    redisUrl: process.env.REDIS_URL,
+    useBackup: true, 
+  },
+  // (Required)
   syncer: {
     chain: process.env.CHAIN as Chains, // (Required)
     contracts: process.env.CONTRACTS ? process.env.CONTRACTS.split(',') : [], // (Optional)

@@ -1,11 +1,11 @@
 import axios, { isAxiosError } from 'axios';
 import { uuid } from 'uuidv4';
-import { InsertionService, SyncManager } from '../services';
 import {
   ApiResponse,
   Bases,
   FormatMethods,
   IndexSignatureType,
+  Managers,
   ParserMethods,
   Paths,
   PrismaCreate,
@@ -14,17 +14,20 @@ import {
   RequestMethods,
   SalesSchema,
   Schemas,
-  SyncerConfig,
+  SyncerConfig
 } from '../types';
 import {
   addressToBuffer,
   createQuery,
   incrementDate,
   isValidDate,
-  toBuffer,
+  toBuffer
 } from '../utils';
+import { BackupService } from './BackupService';
+import { InsertionService } from './InsertionService';
+import { SyncManager } from './SyncManager';
 
-/**
+/*
  * The URL paths for the sync APIs
  */
 export const URL_PATHS: Paths = {
@@ -39,13 +42,13 @@ export const URL_BASES: Bases = {
   optimism: 'https://api-optimism.reservoir.tools',
   polygon: 'https://api-polygon.reservoir.tools',
 };
-
 /**
  * Formatting methods for the raw API responses
  */
 export const FORMAT_METHODS: FormatMethods = {
   sales: (sales: SalesSchema[]) => {
-    return sales.map((sale: SalesSchema) => {
+    if (!sales) return [];
+    return sales?.map((sale: SalesSchema) => {
       return {
         id: Buffer.from(`${sale.txHash}-${sale.logIndex}-${sale.batchIndex}`),
         sale_id: toBuffer(sale.saleId),
@@ -141,73 +144,57 @@ export const REQUEST_METHODS: RequestMethods = {
 export class SyncService {
   /**
    * # _apiKey
-   * Api key to use for API requests
+   * Reservoir API key to use for API request
    * @access private
    * @type {String}
    */
   private _apiKey: string;
+
   /**
-   * # _url
-   * Url to return data from
-   * @access private
-   * @type {String}
-   */
-  private _url: string;
-  /**
-   * # _backfilled
-   * Backfilled flag used to determine if a manager has reached the present
+   * # _isBackfilled
    * @access private
    * @type {Boolean}
    */
-  private _backfilled: boolean;
-  /**
-   * # _workerCount
-   * The amount of workers the SyncService can create
-   * @access private
-   * @type {Number}
-   */
-  private _workerCount: number;
-  /**
-   * # _managerCount
-   * The amount of managers the SyncService can create
-   * @access private
-   * @type {Number}
-   */
-  private _managerCount: number;
+  private _isBackfilled: boolean;
+
   /**
    * # _date
-   * The latest date to increment the managers with
+   * The date to increment by
    * @access private
    * @type {String}
    */
   private _date: string;
+
   /**
-   * # managers
-   * SyncService instance month managers
-   * @access public
-   * @type {Map<string, SyncManager | undefined>}
-   */
-  public readonly managers: Map<string, SyncManager | undefined> = new Map();
-  /**
+   * # config
    * SyncService instance config
    * @access public
    * @type {SyncerConfig}
    */
   public readonly config: SyncerConfig;
 
-  constructor(_config: SyncerConfig) {
-    this.config = _config;
-    this._date = _config.date;
-    this._apiKey = _config.apiKey;
+  /**
+   * # managers
+   * SyncManager map
+   * @access public
+   * @type {Map<string, SyncManager>}
+   */
+  public managers: Map<string, SyncManager>;
+  constructor(config: SyncerConfig) {
+    /**
+     * Set public variables
+     */
+    this.config = config;
+    this.managers = new Map();
 
-    this._backfilled = false;
-    this._url = `${URL_BASES[this.config.chain]}${
-      URL_PATHS[this.config.type as keyof Paths]
-    }`;
-
-    this._workerCount = Number(this.config.workerCount) || 1;
-    this._managerCount = Number(this.config.managerCount) || 1;
+    /**
+     * Set private variables
+     */
+    this._date = config.date;
+    this._apiKey = config.apiKey;
+    this._isBackfilled = false;
   }
+
   /**
    * # launch
    * Launches the SyncService
@@ -215,8 +202,9 @@ export class SyncService {
    * @returns {Promise<void>} Promise<void>
    */
   public launch(): void {
-    this._createManagers();
-    this._watchManagers();
+    this.config.backup?.data.managers
+      ? this._restoreManagers()
+      : this._createManagers();
     this._launchManagers();
   }
   /**
@@ -226,26 +214,147 @@ export class SyncService {
    * @returns {Promise<void>} Promise<void>
    */
   private _createManagers(): void {
-    for (let i = 0; i < this._managerCount; i++) {
+    for (let i = 0; i < Number(this.config.managerCount || 1); i++) {
       if (i !== 0) {
         const date = incrementDate(this._date, { months: 1 });
         if (!isValidDate(date)) return;
         this._date = date;
       }
-
+      const id = `${this.config.type}-manager-${uuid()}`;
       this.managers.set(
-        `${this.config.type}-manager-${uuid()}`,
+        id,
         new SyncManager({
+          id,
           date: this._date,
           insert: this._insert.bind(this),
           request: this._request.bind(this),
           parse: this._parse.bind(this),
           format: this._format.bind(this),
+          review: this._reviewManager.bind(this),
           count: this._count.bind(this),
-          workerCount: this._workerCount,
+          backup: this._backup.bind(this),
+          workerCount: Number(this.config.workerCount || 1),
         })
       );
     }
+  }
+  /**
+   * # _restoreManagers
+   * Restores month managers for the sync service from a backup
+   * @access private
+   * @returns {void} Promise<void>
+   */
+  private _restoreManagers(): void {
+    this.managers = this.config?.backup?.data.managers.reduce(
+      (managers, manager) => {
+        const id = `${this.config.type}-manager-${uuid()}`;
+        return managers.set(
+          id,
+          new SyncManager({
+            id,
+            date: manager.date,
+            insert: this._insert.bind(this),
+            request: this._request.bind(this),
+            parse: this._parse.bind(this),
+            format: this._format.bind(this),
+            count: this._count.bind(this),
+            review: this._reviewManager.bind(this),
+            backup: this._backup.bind(this),
+            workers: manager.workers,
+            workerCount: Number(this.config.workerCount || 1),
+          })
+        );
+      },
+      new Map<string, SyncManager>()
+    ) as Managers;
+  }
+  /**
+   * # _createBackup
+   * Backups the current state of the LightNode
+   * @access private
+   * @returns {void}
+   */
+  private async _backup(): Promise<void> {
+    await BackupService.backup({
+      type: this.config.type,
+      data: {
+        date: this._date,
+        managers: Array.from(this.managers.values()).map((manager) => {
+          return {
+            date: manager.date as string,
+            workers: Array.from(manager.workers.values()).map((worker) => {
+              return {
+                date: worker.date,
+                continuation: worker.continuation,
+              };
+            }),
+          };
+        }),
+      },
+    });
+  }
+  /**
+   * # _deleteManager
+   * Deletes an instance of a manager
+   * @param {String} id - Manager instance
+   * @returns {void} void
+   */
+  private _deleteManager(id: string): void {
+    // if (Array.from(manager.workers.values()).some((worker) => worker?.isBusy))
+    // return;
+
+    this.managers.delete(id);
+  }
+  private _reviewManager(manager: SyncManager): Boolean {
+    /**
+     * If the manager has a worker that hit's a cursor - it is reported as backfilled and becomes our primary manager
+     * This then means that all the other managers just need to finish what they are working on and will be queued for deletion once they are done
+     */
+    if (manager.isBackfilled) {
+      this._isBackfilled = true; // We set this backfill to true because we know a manager
+      /**
+       * We return becasue we dont ever want to kill this manager because it contains our worker that is upkeeping
+       * We don't need to assign it new work because it will continue forever due to their backfill flag being called
+       */
+      this._backup();
+      return true;
+    } else {
+      this._backup();
+      return this._continueWork(manager);
+    }
+  }
+  /**
+   * # _continueWork
+   * Determines if a manager should continue working or not based on the date
+   * @param {SyncManager} manager - Manager instance
+   * @returns void
+   */
+  private _continueWork(manager: SyncManager): boolean {
+    const _date = incrementDate(this._date, { months: 1 });
+
+    if (isValidDate(_date)) {
+      this._date = _date;
+      manager.config.date = _date;
+      return true;
+    } else {
+      return false;
+    }
+  }
+  /**
+   * # _launchMangers
+   * Initial launch method for the managers
+   * @access private
+   * @returns  void
+   */
+  private async _launchManagers(): Promise<void> {
+    const promises = await Promise.allSettled(
+      Array.from(this.managers.values()).map((manager) => {
+        return manager?.launch();
+      })
+    );
+    promises.forEach((promise: any) => {
+      this._deleteManager(promise.value);
+    });
   }
   /**
    * # _count
@@ -293,7 +402,7 @@ export class SyncService {
     date,
   }: Request): Promise<ApiResponse> {
     return await REQUEST_METHODS[this.config.type as keyof RequestMethods]({
-      url: this._url,
+      url: `${URL_BASES[this.config.chain]}${URL_PATHS[this.config.type]}`,
       query: createQuery(continuation, this.config.contracts, date),
       apiKey: this._apiKey,
     });
@@ -318,84 +427,5 @@ export class SyncService {
    */
   private _format(data: IndexSignatureType): Schemas {
     return data[this.config.type];
-  }
-  /**
-   * # _watchMangers
-   * Watches the SyncService managers for flag changes/updates
-   * @access private
-   * @returns {void} void
-   */
-  private _watchManagers(): void {
-    setInterval(() => {
-      this.managers.forEach((manager, id): void => {
-        // TypeSafety return!
-        if (!manager) return;
-
-        /**
-         * If the manager has a worker that hit's a cursor - it is reported as backfilled and becomes our primary manager
-         * This then means that all the other managers just need to finish what they are working on and will be queued for deletion once they are done
-         */
-        if (manager.backfilled) {
-          this._backfilled = true; // We set this backfill to true because we know a manager
-          /**
-           * We return becasue we dont ever want to kill this manager because it contains our worker that is upkeeping
-           * We don't need to assign it new work because it will continue forever due to their backfill flag being called
-           */
-          return;
-        }
-
-        /**
-         * If a mangager is no longer busy and we have recieved the backfill flag from another manager
-         * Then we can delete this instance becasue it's done and has no more use
-         * We only delete it IF its done AND if one of the managers has reported that the backfill has been reached
-         */
-        if (!manager?.isBusy && this._backfilled) {
-          this._deleteManager(manager, id);
-        } else if (!manager.isBusy) {
-          // Review logic?
-          this._assignManager(manager, id);
-        }
-      });
-    }, 1000);
-  }
-  /**
-   * # _deleteManager
-   * Deletes an instance of a manager
-   * @param {SyncManager} manager - Manager instance
-   * @returns {void} void
-   */
-  private _deleteManager(manager: SyncManager, id: string): void {
-    if (Array.from(manager.workers.values()).some((worker) => worker?.isBusy))
-      return;
-
-    if (manager.watcher) clearInterval(manager.watcher);
-    this.managers.set(id, undefined);
-    this.managers.delete(id);
-  }
-  /**
-   * # _assignManager
-   * Assigns an instance of a manager with new work
-   * @param {SyncManager} manager - Manager instance
-   * @returns {void} void
-   */
-  private _assignManager(manager: SyncManager, id: string): void {
-    const _date = incrementDate(this._date, { months: 1 });
-
-    if (!isValidDate(_date)) {
-      this._deleteManager(manager, id);
-    } else {
-      this._date = _date;
-      manager._config.date = _date;
-      manager.launch();
-    }
-  }
-  /**
-   * # _launchMangers
-   * Initial launch method for the managers
-   * @access private
-   * @returns {void} void
-   */
-  private _launchManagers(): void {
-    this.managers.forEach((manager) => manager?.launch());
   }
 }
