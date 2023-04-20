@@ -1,5 +1,5 @@
 import { uuid } from 'uuidv4';
-import { ManagerConfig, Status } from '../types';
+import { ManagerConfig, Status, Workers } from '../types';
 import {
   incrementDate,
   isSameMonth,
@@ -10,6 +10,13 @@ import { SyncerWorker } from './SyncWorker';
 
 export class SyncManager {
   /**
+   * Flag to determine whether or not to use the backup to create workers
+   * @type {Boolean}
+   * @access private
+   */
+  private _useBackup: boolean = false;
+
+  /**
    * Status of the SyncManager "Backifilling" | "Upkeeping"
    * @type {Status}
    * @access public
@@ -19,9 +26,9 @@ export class SyncManager {
   /**
    * Date of the manager
    * @type {String}
-   * @access private
+   * @access public
    */
-  private _date: string = '';
+  public _date: string = '';
   /**
    * Manager backfill flag to determine if a worker has reached a cursor
    * @type {Boolean}
@@ -70,8 +77,15 @@ export class SyncManager {
   public insertCount: number = 0;
 
   constructor(_config: ManagerConfig) {
+    const { date, workers } = _config;
     this._config = _config;
-    this._date = _config.date;
+    this._date = date;
+
+    if (workers?.length && workers.length > 0) {
+      this._useBackup = true;
+      console.log(`USING BACKUP`);
+      process.exit(1);
+    }
   }
   /**
    * # launch
@@ -91,7 +105,7 @@ export class SyncManager {
     });
 
     if (!isSuccessResponse(_res)) {
-      return this.launch();
+      return await this.launch();
     }
 
     const _records = this._config.format(_res.data);
@@ -105,6 +119,7 @@ export class SyncManager {
       this._date = _lastRecord.updatedAt.substring(0, 10);
       await this._handleSyncing();
     }
+    this._config.backup();
     this.isBusy = false;
   }
   /**
@@ -114,9 +129,29 @@ export class SyncManager {
    * @returns {Promise<void>} - Promise<void>
    */
   private async _handleSyncing(): Promise<void> {
-    this._createWorkers();
-    this.watchWorkers();
+    this._useBackup ? this._restoreWorkers() : this._createWorkers();
     await this._launchWorkers();
+  }
+  /**
+   * # _restoreWorkers
+   * Restores sync workers
+   * @returns {void}
+   * @access private
+   */
+  private _restoreWorkers(): void {
+    this.workers = this._config.workers?.reduce((workers, worker) => {
+      const id = `worker-${uuid()}`;
+      return workers.set(
+        id,
+        new SyncerWorker({
+          ...this._config,
+          id,
+          review: this._reviewWorker.bind(this),
+          date: worker.date,
+        })
+      );
+    }, new Map<string, SyncerWorker | undefined>()) as Workers;
+    this._useBackup = false;
   }
   /**
    * # _launchWorkers
@@ -125,52 +160,42 @@ export class SyncManager {
    * @returns {Promise<void>} - Promise<void>
    */
   private async _launchWorkers(): Promise<void> {
-    await Promise.all(
-      Array.from(this.workers.values()).map((worker) => worker?.launch())
+    const workers = await Promise.allSettled(
+      Array.from(this.workers.values()).map((worker) => {
+        return worker?.sync();
+      })
     );
+    workers.forEach((worker) => {
+      if (worker.status === 'fulfilled') {
+        this._deleteWorker(worker.value as string);
+      }
+    });
   }
 
-  /**
-   * # _watchWorkers
-   * Watches the day workers
-   * @access public
-   * @returns {void} - void
-   */
-  public watchWorkers(): void {
-    this.watcher = setInterval(this._reviewWorkers.bind(this), 1000);
-  }
   /**
    * # _reviewWorkers
    * Reviews the status of the workers
    * @access private
    * @returns {void} - void
    */
-  private _reviewWorkers(): void {
-    this.workers.forEach((worker, id): void => {
-      if (!worker) return;
+  private _reviewWorker(worker: SyncerWorker): Boolean {
+    const _reqs = worker.counts.requests;
 
-      const _reqs = worker.counts.requests;
+    this.requestCount += _reqs['2xx'] += _reqs['4xx'] += _reqs['5xx'];
+    this.insertCount += worker.counts.insertions;
 
-      this.requestCount += _reqs['2xx'] += _reqs['4xx'] += _reqs['5xx'];
-      this.insertCount += worker.counts.insertions;
+    worker.counts.insertions = 0;
+    _reqs['2xx'] = 0;
+    _reqs['4xx'] = 0;
+    _reqs['5xx'] = 0;
 
-      worker.counts.insertions = 0;
-      _reqs['2xx'] = 0;
-      _reqs['4xx'] = 0;
-      _reqs['5xx'] = 0;
-
-      if (worker.backfilled) {
-        this.backfilled = true;
-        this.status = 'upkeeping';
-        return;
-      }
-
-      if (!worker?.isBusy && this.backfilled) {
-        this._deleteWorker(id);
-      } else if (!worker?.isBusy) {
-        this._assignWorker(worker);
-      }
-    });
+    if (worker.backfilled) {
+      this.backfilled = true;
+      this.status = 'upkeeping';
+      return false;
+    }
+    this._config.backup();
+    return this._assignWorker(worker);
   }
   /**
    * # _createManagers
@@ -185,11 +210,13 @@ export class SyncManager {
         if (!isSameMonth(date, this._date) || !isValidDate(date)) return;
         this._date = date;
       }
-
+      const id = `worker-${uuid()}`;
       this.workers.set(
-        `worker-${uuid()}`,
+        id,
         new SyncerWorker({
           ...this._config,
+          id,
+          review: this._reviewWorker.bind(this),
           count: this._config.count,
           date: this._date,
         })
@@ -197,9 +224,6 @@ export class SyncManager {
     }
   }
   /**
-   *
-   * Mark for deletion?
-   *
    * # _deleteWorker
    * Deletes an instance of a worker
    * @param {String} id - Worker instance
@@ -215,12 +239,14 @@ export class SyncManager {
    * Assigns an instance of a worker with new work
    * @returns {void} - void
    */
-  private _assignWorker(worker: SyncerWorker): void {
+  private _assignWorker(worker: SyncerWorker): Boolean {
     const _date = incrementDate(this._date, { days: 1 });
     if (isSameMonth(_date, this._date) && isValidDate(_date)) {
       this._date = incrementDate(this._date, { days: 1 });
       worker.config.date = this._date;
-      worker.launch();
+      return false;
+    } else {
+      return true;
     }
   }
 }

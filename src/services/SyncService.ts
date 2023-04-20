@@ -6,6 +6,7 @@ import {
   Bases,
   FormatMethods,
   IndexSignatureType,
+  Managers,
   ParserMethods,
   Paths,
   PrismaCreate,
@@ -23,6 +24,7 @@ import {
   isValidDate,
   toBuffer,
 } from '../utils';
+import { BackupService } from './BackupService';
 
 /**
  * The URL paths for the sync APIs
@@ -45,7 +47,8 @@ export const URL_BASES: Bases = {
  */
 export const FORMAT_METHODS: FormatMethods = {
   sales: (sales: SalesSchema[]) => {
-    return sales.map((sale: SalesSchema) => {
+    if (!sales) return [];
+    return sales?.map((sale: SalesSchema) => {
       return {
         id: Buffer.from(`${sale.txHash}-${sale.logIndex}-${sale.batchIndex}`),
         sale_id: toBuffer(sale.saleId),
@@ -187,7 +190,7 @@ export class SyncService {
    * @access public
    * @type {Map<string, SyncManager | undefined>}
    */
-  public readonly managers: Map<string, SyncManager | undefined> = new Map();
+  public managers: Map<string, SyncManager | undefined> = new Map();
   /**
    * SyncService instance config
    * @access public
@@ -196,17 +199,18 @@ export class SyncService {
   public readonly config: SyncerConfig;
 
   constructor(_config: SyncerConfig) {
+    const { backup, date, apiKey, chain, type, workerCount, managerCount } =
+      _config;
+
     this.config = _config;
-    this._date = _config.date;
-    this._apiKey = _config.apiKey;
+    this._apiKey = apiKey;
 
     this._backfilled = false;
-    this._url = `${URL_BASES[this.config.chain]}${
-      URL_PATHS[this.config.type as keyof Paths]
-    }`;
+    this._date = backup?.date ? backup?.date : date;
+    this._url = `${URL_BASES[chain]}${URL_PATHS[type as keyof Paths]}`;
 
-    this._workerCount = Number(this.config.workerCount) || 1;
-    this._managerCount = Number(this.config.managerCount) || 1;
+    this._workerCount = Number(workerCount) || 1;
+    this._managerCount = Number(managerCount) || 1;
   }
   /**
    * # launch
@@ -215,9 +219,63 @@ export class SyncService {
    * @returns {Promise<void>} Promise<void>
    */
   public launch(): void {
-    this._createManagers();
+    this.config.backup?.managers
+      ? this._restoreManagers()
+      : this._createManagers();
     this._watchManagers();
     this._launchManagers();
+  }
+  /**
+   * # _restoreManagers
+   * Restores month managers for the sync service from a backup
+   * @access private
+   * @returns {void} Promise<void>
+   */
+  private _restoreManagers(): void {
+    this.managers = this.config?.backup?.managers.reduce(
+      (managers, manager) => {
+        return managers.set(
+          `${this.config.type}-manager-${uuid()}`,
+          new SyncManager({
+            date: manager.date,
+            insert: this._insert.bind(this),
+            request: this._request.bind(this),
+            parse: this._parse.bind(this),
+            format: this._format.bind(this),
+            count: this._count.bind(this),
+            backup: this._backup.bind(this),
+            workers: manager.workers,
+            workerCount: this._workerCount,
+          })
+        );
+      },
+      new Map<string, SyncManager | undefined>()
+    ) as Managers;
+  }
+  /**
+   * # _createBackup
+   * Backups the current state of the LightNode
+   * @access private
+   * @returns {void}
+   */
+  private async _backup(): Promise<void> {
+    BackupService.backup({
+      date: this._date,
+      type: this.config.type,
+      managers: Array.from(this.managers.values()).map((manager) => {
+        return {
+          date: manager?._date as string,
+          workers: manager?.workers
+            ? Array.from(manager?.workers.values()).map((worker) => {
+                return {
+                  date: worker?.config.date || '',
+                  continuation: worker?._continuation || '',
+                };
+              })
+            : [],
+        };
+      }),
+    });
   }
   /**
    * # _createManagers
@@ -232,7 +290,6 @@ export class SyncService {
         if (!isValidDate(date)) return;
         this._date = date;
       }
-
       this.managers.set(
         `${this.config.type}-manager-${uuid()}`,
         new SyncManager({
@@ -242,6 +299,7 @@ export class SyncService {
           parse: this._parse.bind(this),
           format: this._format.bind(this),
           count: this._count.bind(this),
+          backup: this._backup.bind(this),
           workerCount: this._workerCount,
         })
       );
@@ -382,7 +440,7 @@ export class SyncService {
     const _date = incrementDate(this._date, { months: 1 });
 
     if (!isValidDate(_date)) {
-      this._deleteManager(manager, id);
+    //  this._deleteManager(manager, id);
     } else {
       this._date = _date;
       manager._config.date = _date;

@@ -3,6 +3,7 @@ import { Counts, Status, WorkerConfig } from '../types';
 import { isSuccessResponse } from '../utils';
 
 export class SyncerWorker {
+  public id: string = '';
   /**
    * # status
    * A status string that indicates what the sync status of the worker
@@ -29,10 +30,10 @@ export class SyncerWorker {
   /**
    * # _continuation
    * The continuation token to use for pagination
-   * @access private
+   * @access public
    * @type {String}
    */
-  private _continuation: string = '';
+  public _continuation: string = '';
 
   /**
    * # _lastRecordId
@@ -72,18 +73,19 @@ export class SyncerWorker {
 
   constructor(_config: WorkerConfig) {
     this.config = _config;
+    this.id = _config.id;
     this.backfilled = false;
     this.isBusy = false;
   }
   /**
-   * # launch
+   * # sync
    * Launches a sync worker
    * @access public
    * @returns {Promise<void>} Promise void
    */
-  public async launch(): Promise<void> {
-    return new Promise<void>(async (resolve): Promise<void> => {
-      this.isBusy = true;
+  public sync(): Promise<string> {
+    this.isBusy = true;
+    return new Promise<string>(async (resolve): Promise<void> => {
       while (true) {
         const _res = await this.config.request({
           continuation: this._continuation,
@@ -121,12 +123,12 @@ export class SyncerWorker {
           }
 
           if (_records.length < 1000 && !_isToday) {
-            this.isBusy = false;
-            break;
+            const shouldBreak = this.config.review(this);
+            if (shouldBreak) break;
           }
         }
       }
-      resolve();
+      resolve(this.id);
     });
   }
 }

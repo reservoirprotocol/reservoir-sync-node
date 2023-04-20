@@ -1,7 +1,24 @@
+import { SyncWorker } from '@/services/SyncWorker copy';
 import { Prisma } from '@prisma/client';
 import { HttpStatusCode } from 'axios';
 import { Application } from 'express';
-import { SyncManager, SyncService } from '../services';
+import { SyncerWorker, SyncManager, SyncService } from '../services';
+
+export interface Worker {
+  date: string;
+  continuation: string;
+}
+
+export interface Manager {
+  date: string;
+  workers: Worker[];
+}
+
+export interface Backup {
+  type: string;
+  date: string;
+  managers: Manager[];
+}
 
 export interface Counts {
   insertions: number;
@@ -85,13 +102,18 @@ export type InsertType = SyncServiceInstance['_insert'];
 export type CountType = SyncServiceInstance['_count'];
 export type ParseType = SyncServiceInstance['_parse'];
 export type FormatType = SyncServiceInstance['_format'];
+export type BackupType = SyncServiceInstance['_backup'];
 
 export interface WorkerConfig {
   date: string;
+  id: string;
+  continuation: string;
   request: SyncServiceInstance['_request'];
   format: SyncServiceInstance['_format'];
   insert: SyncServiceInstance['_insert'];
   count: SyncServiceInstance['_count'];
+  review: SyncManagerInstance['_reviewWorker'];
+  backup: BackupType;
 }
 export type PrismaSalesCreate = Prisma.salesCreateInput;
 
@@ -192,6 +214,8 @@ export interface ManagerConfig {
   format: FormatType;
   parse: ParseType;
   request: RequestType;
+  backup: BackupType;
+  workers?: Worker[];
   workerCount: number;
 }
 export interface DatadogConfig {
@@ -214,6 +238,7 @@ export interface BaseSyncerConfig {
 export interface SyncerConfig extends BaseSyncerConfig {
   date: string;
   type: Tables;
+  backup: Backup | null;
 }
 export interface LightNodeSyncerConfig extends BaseSyncerConfig {
   apiKey: string;
@@ -224,9 +249,14 @@ export interface LightNodeSyncerConfig extends BaseSyncerConfig {
   toSync: ToSync;
 }
 
+export interface BackupConfig {
+  redisUrl?: string;
+  useBackup?: boolean;
+}
 export interface LightNodeConfig {
   server: ServerConfig;
   logger?: LoggerConfig;
+  backup?: BackupConfig;
   syncer: LightNodeSyncerConfig;
 }
 
@@ -234,3 +264,6 @@ export interface Path {
   handlers: Application;
   path: string;
 }
+
+export type Managers = Map<string, SyncManager | undefined>;
+export type Workers = Map<string, SyncWorker>;
