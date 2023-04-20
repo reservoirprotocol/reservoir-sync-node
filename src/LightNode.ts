@@ -91,23 +91,23 @@ class _LightNode {
           if (!manager) return;
           managers.push({
             Manager: id,
-            Year: getYear(manager?._config.date),
-            Month: getMonth(manager?._config.date),
+            Year: getYear(manager?.config.date),
+            Month: getMonth(manager?.config.date),
             Requests: manager?.requestCount,
             Insertions: manager?.insertCount,
             Status: manager?.status,
             Busy: manager?.isBusy,
-            Backfilled: manager?.backfilled,
+            Backfilled: manager?.isBackfilled,
           });
           manager.workers.forEach((worker, id) => {
             workers.push({
               Worker: id,
-              Date: worker?.config.date.substring(5),
+              Date: worker?.date.substring(5),
               Busy: worker?.isBusy,
               Status: worker?.status,
-              Backfilled: worker?.backfilled,
+              Backfilled: worker?.isBackfilled,
               Insertions: worker?.counts?._insertions,
-              Continuation: worker?._continuation,
+              Continuation: worker?.continuation,
               '2xx': worker?.counts._requests['2xx'],
               '4xx': worker?.counts._requests['4xx'],
               '5xx': worker?.counts?._requests['5xx'],
@@ -144,7 +144,9 @@ class _LightNode {
     });
 
     if (!isSuccessResponse(res))
-      throw new Error(`FAILED TO GET STARTED DATE: ${res.data.message}:${res.status}`);
+      throw new Error(
+        `FAILED TO GET STARTED DATE: ${res.data.message}:${res.status}`
+      );
 
     const data = res.data as IndexSignatureType;
 
@@ -169,7 +171,6 @@ class _LightNode {
           return value.id;
         }),
     });
-
     if (data[syncer].length > 0 && data[syncer][0].updatedAt) {
       return data[syncer][0].updatedAt.substring(0, 10);
     }

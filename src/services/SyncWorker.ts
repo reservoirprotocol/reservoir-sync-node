@@ -1,52 +1,44 @@
-import { isToday } from 'date-fns';
-import { Counts, Status, WorkerConfig } from '../types';
+import { isToday as _isToday } from 'date-fns';
+import { Counts, IndexSignatureType, Status, WorkerConfig } from '../types';
 import { isSuccessResponse } from '../utils';
 
-export class SyncerWorker {
-  public id: string = '';
+export class SyncWorker {
   /**
-   * # status
-   * A status string that indicates what the sync status of the worker
-   * @access private
-   * @type {Status}
+   * # id
+   * A unique identifier for the worker
+   * @access public
+   * @type {String}
    */
-  public status: Status = 'backfilling';
+  public id: string;
 
   /**
-   * # backfilled
-   * A backfill flag that indicates if the worker has reached the present
+   * # isBackfilled
+   * A flag that indicates the backfill staus of the worker
    * @access public
    * @type {Boolean}
    */
-  public backfilled: boolean;
+  public isBackfilled: boolean;
 
   /**
    * # isBusy
-   * A busy flag that indicates if the worker can recieve new work
-   * @access public
+   * A flag that indicates the busy status of the worker
+   * @acccess public
    * @type {Boolean}
    */
   public isBusy: boolean;
+
   /**
-   * # _continuation
-   * The continuation token to use for pagination
+   * # continuation
+   * The continuation token to use for data pagination
    * @access public
    * @type {String}
    */
-  public _continuation: string = '';
-
-  /**
-   * # _lastRecordId
-   * The last records identifier
-   * @access private
-   * @type {String}
-   */
-  private _lastRecordId: string = '';
+  public continuation: string;
 
   /**
    * # counts
-   * Request & Insertion counts that the worker has handled
-   * @access private
+   * Request & Insertion counts that the worker has processed
+   * @access public
    * @type {Counts}
    */
   public counts: Counts = {
@@ -63,72 +55,148 @@ export class SyncerWorker {
       '5xx': 0,
     },
   };
+
   /**
-   * # config
-   * Worker config
+   * # status
+   * A status string that indicates the sync status of the worker
+   * @access public
+   * @type {Status}
+   */
+  public status: Status;
+
+  /**
+   *  # config
+   * The configuration for fhe worker
    * @access public
    * @type {WorkerConfig}
    */
   public config: WorkerConfig;
 
-  constructor(_config: WorkerConfig) {
-    this.config = _config;
-    this.id = _config.id;
-    this.backfilled = false;
-    this.isBusy = false;
-  }
   /**
-   * # sync
-   * Launches a sync worker
+   * # date
+   * The date that the worker is on
    * @access public
-   * @returns {Promise<void>} Promise void
+   * @type {String}
    */
+  public date: string;
+
+  /**
+   * # _recentId
+   * The recent identifier of the last record in the previous results
+   * @access private
+   * @type {String}
+   */
+  private _recentId: string;
+
+  constructor(config: WorkerConfig) {
+    /**
+     * Set public variables
+     */
+    this.id = config.id;
+    this.isBusy = false;
+    this.config = config;
+    this.date = config.date;
+    this.isBackfilled = false;
+    this.status = 'backfilling';
+    this.continuation = config.continuation;
+
+    /**
+     * Set private variables
+     */
+    this._recentId = '';
+  }
   public sync(): Promise<string> {
     this.isBusy = true;
+
     return new Promise<string>(async (resolve): Promise<void> => {
       while (true) {
-        const _res = await this.config.request({
-          continuation: this._continuation,
-          date: this.config.date,
+        /**
+         * Fetch the data using the pagination token and the date
+         */
+        const res = await this.config.request({
+          continuation: this.continuation,
+          date: this.date,
         });
 
+        /**
+         * Increment the private request counts
+         */
         this.counts._requests[
-          `${_res.status.toString().split('')[0]}xx` as keyof Counts['requests']
+          `${res.status.toString().split('')[0]}xx` as keyof Counts['requests']
         ]++;
+
+        /**
+         * Increment the public request counts
+         */
         this.counts.requests[
-          `${_res.status.toString().split('')[0]}xx` as keyof Counts['requests']
+          `${res.status.toString().split('')[0]}xx` as keyof Counts['requests']
         ]++;
 
-        if (isSuccessResponse(_res)) {
-          const _records = this.config.format(_res.data);
-          const _lastRecord = _records[_records.length - 1];
-          const _isToday = isToday(new Date(_lastRecord?.updatedAt));
+        /**
+         * Use a typeguard to ensure that the resposne is 2xx
+         */
+        if (isSuccessResponse(res)) {
+          /**
+           * Format the data into an array
+           */
+          const data = this.config.format(res.data);
 
-          if (
-            _records &&
-            _records.length &&
-            this._lastRecordId !== _lastRecord?.id
-          ) {
-            this.counts._insertions += _records.length;
-            this.counts.insertions += _records.length;
-            this.config.insert(_res.data);
-            this._lastRecordId = _lastRecord.id;
-          }
+          /**
+           * Extract the last set from the data
+           */
+          const lastSet = data[data.length - 1];
 
-          this._continuation = _res.data.continuation;
+          /**
+           * Determine whether the last record matches todays date
+           */
+          const isToday = _isToday(new Date(lastSet?.updatedAt));
 
-          if (_records.length < 1000 && _isToday) {
-            this.backfilled = true;
+          /**
+           * Handle all the insertion related calls
+           */
+          this._handleInsertions(res.data);
+
+          /**
+           * Set the current pagination token to the one we just recieved
+           */
+          this.continuation = res.data.continuation;
+
+          /**
+           * If the dataset is less than 1000 and it is today then we have reached our backfilling point
+           */
+          if (data.length < 1000 && isToday) {
+            this.isBackfilled = true;
             this.status = 'upkeeping';
           }
 
-          if (_records.length < 1000 && !_isToday) {
-            const shouldBreak = this.config.review(this);
-            if (shouldBreak) break;
+          /**
+           * If the dataset is less than 1000 and it isn't today then we might still have more data
+           */
+          if (data.length < 1000 && !isToday) {
+            /**
+             * We callback to the review method to either break or recieve new work
+             */
+            if (!this.config.review(this)) break;
           }
         }
       }
+
       resolve(this.id);
     });
+  }
+  /**
+   * # _handleInsertions
+   * Handles insertion related calls
+   * @param {IndexSignatureType} data - Request resposne data
+   * @returns {void}
+   */
+  private _handleInsertions(data: IndexSignatureType): void {
+    const parsed = this.config.format(data);
+    if (parsed.length && this._recentId !== parsed[parsed.length - 1].id) {
+      this.counts._insertions += parsed.length;
+      this.counts.insertions += parsed.length;
+      this.config.insert(data);
+      this._recentId = parsed[parsed.length - 1].id;
+    }
   }
 }

@@ -6,127 +6,181 @@ import {
   isSuccessResponse,
   isValidDate,
 } from '../utils';
-import { SyncerWorker } from './SyncWorker';
+import { SyncWorker } from './SyncWorker';
 
 export class SyncManager {
   /**
-   * Flag to determine whether or not to use the backup to create workers
-   * @type {Boolean}
+   * # id
+   * SyncManager unique identifier
    * @access private
+   * @type {String}
    */
-  private _useBackup: boolean = false;
+  public id: string;
+  /**
+   * # _useBackup
+   * Flag to determine whether or not to use the backup to create workers
+   * @access private
+   * @type {Boolean}
+   */
+  private _useBackup: boolean;
 
   /**
-   * Status of the SyncManager "Backifilling" | "Upkeeping"
+   * # status
+   * A status string that indicates the sync status of the manager
    * @type {Status}
    * @access public
    */
-  public status: Status = 'backfilling';
+  public status: Status;
 
   /**
+   * # date
    * Date of the manager
+   * @access public
    * @type {String}
-   * @access public
    */
-  public _date: string = '';
+  public date: string;
+
   /**
-   * Manager backfill flag to determine if a worker has reached a cursor
-   * @type {Boolean}
+   * # isBackfilled
+   * A flag that indicates the backfill staus of the worker
    * @access public
+   * @type {Boolean}
    */
-  public backfilled: boolean = false;
+  public isBackfilled: boolean;
+
   /**
-   * Manager is busy flag
-   * @type {Boolean}
+   * # isBusy
+   * A flag that indicates the busy status of the worker
    * @access public
+   * @type {Boolean}
    */
   public isBusy: boolean = false;
-  /**
-   * Manager watcher interval reference
-   * @type {NodeJS.Timer}
-   * @access public
-   */
-  public watcher: NodeJS.Timer | null = null;
 
   /**
-   * Day workers
+   * # workers
+   * Sync Workers
+   * @access public
    * @type {Map<string, SyncerWorker | undefined>}
-   * @access private
    */
-  public workers: Map<string, SyncerWorker | undefined> = new Map();
+  public workers: Map<string, SyncWorker> = new Map();
 
   /**
-   * Manager config
+   * # config
+   * Manager configuration
+   * @access public
    * @type {ManagerConfig}
-   * @access public
    */
-  public _config: ManagerConfig;
+  public config: ManagerConfig;
 
   /**
-   * Total number of requests executed
+   * # requestCount
+   * Total number of requests executed by the manager
+   * @acccess public
    * @type {number}
-   * @access public
    */
-  public requestCount: number = 0;
+  public requestCount: number;
 
   /**
-   * Total number of insertions executed
-   * @type {number}
+   * # insertCount
+   * Total number of insertions executed by the manager
    * @access public
+   * @type {number}
    */
-  public insertCount: number = 0;
+  public insertCount: number;
 
-  constructor(_config: ManagerConfig) {
-    const { date, workers } = _config;
-    this._config = _config;
-    this._date = date;
+  constructor(config: ManagerConfig) {
+    /**
+     * Set public variables
+     */
+    this.id = config.id;
+    this.config = config;
+    this.insertCount = 0;
+    this.requestCount = 0;
+    this.date = config.date;
+    this.workers = new Map();
+    this.isBackfilled = false;
+    this.status = 'backfilling';
 
-    if (workers?.length && workers.length > 0) {
-      this._useBackup = true;
-      console.log(`USING BACKUP`);
-      process.exit(1);
-    }
+    /**
+     * Set private variables
+     */
+    this._useBackup = config.workers ? true : false;
   }
   /**
    * # launch
-   * Launches the SyncManager
+   * Launches the SyncManager instance
    * @access public
-   * @returns {void} - void
+   * @returns void
    */
-  public async launch(): Promise<void> {
-    this._date = this._config.date;
-    const yearMonth = this._config.date.substring(0, 7);
+  public async launch(): Promise<string> {
+    return new Promise(async (resolve) => {
+      while (true) {
+        /**
+         * Set the data parameters for the initial request
+         */
+        this.date = this.config.date;
+        const yearMonth = this.config.date.substring(0, 7);
 
-    this.isBusy = true;
+        /**
+         * Set the isBusy flag to true to indicate
+         * that this manager is working
+         */
+        this.isBusy = true;
 
-    const _res = await this._config.request({
-      date: yearMonth,
-      continuation: '',
+        /**
+         * Send the intial request to get the start day of the month
+         * If we are able to get all the data back in a single request
+         * then we can skip the month
+         */
+        const res = await this.config.request({
+          date: yearMonth,
+          continuation: '',
+        });
+
+        /**
+         * This intial request has to succeed or
+         * else we don't know where to start
+         */
+        if (!isSuccessResponse(res)) {
+          return await this.launch();
+        }
+
+        /**
+         * Format the data into a schema array
+         */
+        const data = this.config.format(res.data);
+
+        /**
+         * Increment the counts and insert the data
+         */
+        this.requestCount++;
+        this.config.insert(res.data);
+        this.insertCount += data.length;
+
+        /**
+         * If the data length is 1000 and we have a cursor then we
+         * know that there is more data to paginate through
+         */
+        if (data.length === 1000 && res.data.continuation) {
+          const lastSet = data[data.length - 1]; // Get the last set in the dataset
+          this.date = lastSet.updatedAt.substring(0, 10); // Parse the last date and set it to the working date
+          await this._handleSyncing(); // Handle the syncing
+        }
+
+        /**
+         * Update the backup
+         */
+        this.config.backup();
+        if (!this.config.review(this)) break;
+      }
+      resolve(this.id);
     });
-
-    if (!isSuccessResponse(_res)) {
-      return await this.launch();
-    }
-
-    const _records = this._config.format(_res.data);
-
-    this.requestCount += 1;
-    this._config.insert(_res.data);
-    this.insertCount += _records.length;
-
-    if (_records.length === 1000 && _res.data.continuation) {
-      const _lastRecord = _records[_records.length - 1];
-      this._date = _lastRecord.updatedAt.substring(0, 10);
-      await this._handleSyncing();
-    }
-    this._config.backup();
-    this.isBusy = false;
   }
   /**
    * # _launchSyncers
    * Launch the syncers
    * @access private
-   * @returns {Promise<void>} - Promise<void>
+   * @returns {void}
    */
   private async _handleSyncing(): Promise<void> {
     this._useBackup ? this._restoreWorkers() : this._createWorkers();
@@ -135,50 +189,59 @@ export class SyncManager {
   /**
    * # _restoreWorkers
    * Restores sync workers
-   * @returns {void}
    * @access private
+   * @returns void
    */
   private _restoreWorkers(): void {
-    this.workers = this._config.workers?.reduce((workers, worker) => {
+    this.workers = this.config.workers?.reduce((workers, worker) => {
       const id = `worker-${uuid()}`;
       return workers.set(
         id,
-        new SyncerWorker({
-          ...this._config,
+        new SyncWorker({
+          ...this.config,
           id,
-          review: this._reviewWorker.bind(this),
           date: worker.date,
+          review: this._reviewWorker.bind(this),
+          continuation: worker.continuation,
         })
       );
-    }, new Map<string, SyncerWorker | undefined>()) as Workers;
+    }, new Map<string, SyncWorker>()) as Workers;
     this._useBackup = false;
   }
   /**
-   * # _launchWorkers
-   * Initial launch method for the workers
+   * # _createManagers
+   * Creates day workers for the sync service
    * @access private
-   * @returns {Promise<void>} - Promise<void>
+   * @returns void
    */
-  private async _launchWorkers(): Promise<void> {
-    const workers = await Promise.allSettled(
-      Array.from(this.workers.values()).map((worker) => {
-        return worker?.sync();
-      })
-    );
-    workers.forEach((worker) => {
-      if (worker.status === 'fulfilled') {
-        this._deleteWorker(worker.value as string);
+  private _createWorkers(): void {
+    for (let i = 0; i < Number(this.config.workerCount || 1); i++) {
+      if (i !== 0) {
+        const date = incrementDate(this.date, { days: 1 });
+        if (!isSameMonth(date, this.date) || !isValidDate(date)) return;
+        this.date = date;
       }
-    });
+      const id = `worker-${uuid()}`;
+      this.workers.set(
+        id,
+        new SyncWorker({
+          ...this.config,
+          id,
+          date: this.date,
+          review: this._reviewWorker.bind(this),
+          continuation: '',
+        })
+      );
+    }
   }
-
   /**
    * # _reviewWorkers
    * Reviews the status of the workers
+   * @param {SyncWorker} worker - worker instance
    * @access private
    * @returns {void} - void
    */
-  private _reviewWorker(worker: SyncerWorker): Boolean {
+  private _reviewWorker(worker: SyncWorker): Boolean {
     const _reqs = worker.counts.requests;
 
     this.requestCount += _reqs['2xx'] += _reqs['4xx'] += _reqs['5xx'];
@@ -189,39 +252,46 @@ export class SyncManager {
     _reqs['4xx'] = 0;
     _reqs['5xx'] = 0;
 
-    if (worker.backfilled) {
-      this.backfilled = true;
+    if (worker.isBackfilled) {
+      this.isBackfilled = true;
       this.status = 'upkeeping';
-      return false;
+      return true;
     }
-    this._config.backup();
-    return this._assignWorker(worker);
+    this.config.backup();
+    return this._continueWork(worker);
   }
   /**
-   * # _createManagers
-   * Creates day workers for the sync service
+   * # _continueWork
+   * Determines if a worker should continue working or not based on the date
    * @access private
-   * @returns {void} - void
+   * @returns void
    */
-  private _createWorkers(): void {
-    for (let i = 0; i < this._config.workerCount; i++) {
-      if (i !== 0) {
-        const date = incrementDate(this._date, { days: 1 });
-        if (!isSameMonth(date, this._date) || !isValidDate(date)) return;
-        this._date = date;
-      }
-      const id = `worker-${uuid()}`;
-      this.workers.set(
-        id,
-        new SyncerWorker({
-          ...this._config,
-          id,
-          review: this._reviewWorker.bind(this),
-          count: this._config.count,
-          date: this._date,
-        })
-      );
+  private _continueWork(worker: SyncWorker): Boolean {
+    const _date = incrementDate(this.date, { days: 1 });
+    if (isSameMonth(_date, this.date) && isValidDate(_date)) {
+      this.date = incrementDate(this.date, { days: 1 });
+      worker.date = this.date; //  worker.config.date
+      return true;
+    } else {
+      this._deleteWorker(worker.id);
+      return false;
     }
+  }
+  /**
+   * # _launchWorkers
+   * Initial launch method for the workers
+   * @access private
+   * @returns {Promise<void>} - Promise<void>
+   */
+  private async _launchWorkers(): Promise<void> {
+    const promises = await Promise.allSettled(
+      Array.from(this.workers.values()).map((worker) => {
+        return worker?.sync();
+      })
+    );
+    promises.forEach((promise: any) => {
+      this._deleteWorker(promise.value);
+    });
   }
   /**
    * # _deleteWorker
@@ -230,23 +300,6 @@ export class SyncManager {
    * @returns {void} - void
    */
   private _deleteWorker(id: string): void {
-    this.workers.set(id, undefined);
     this.workers.delete(id);
-  }
-
-  /**
-   * # _assignWorker
-   * Assigns an instance of a worker with new work
-   * @returns {void} - void
-   */
-  private _assignWorker(worker: SyncerWorker): Boolean {
-    const _date = incrementDate(this._date, { days: 1 });
-    if (isSameMonth(_date, this._date) && isValidDate(_date)) {
-      this._date = incrementDate(this._date, { days: 1 });
-      worker.config.date = this._date;
-      return false;
-    } else {
-      return true;
-    }
   }
 }

@@ -1,8 +1,9 @@
-import { SyncWorker } from '@/services/SyncWorker copy';
+import { SyncService } from '@/services/SyncService';
+import { SyncWorker } from '@/services/SyncWorker';
 import { Prisma } from '@prisma/client';
 import { HttpStatusCode } from 'axios';
 import { Application } from 'express';
-import { SyncerWorker, SyncManager, SyncService } from '../services';
+import { SyncManager } from '../services';
 
 export interface Worker {
   date: string;
@@ -103,6 +104,7 @@ export type CountType = SyncServiceInstance['_count'];
 export type ParseType = SyncServiceInstance['_parse'];
 export type FormatType = SyncServiceInstance['_format'];
 export type BackupType = SyncServiceInstance['_backup'];
+export type ReviewType = SyncServiceInstance['_reviewManager']
 
 export interface WorkerConfig {
   date: string;
@@ -208,11 +210,13 @@ export interface ServerConfig {
   authorization?: string;
 }
 export interface ManagerConfig {
+  id: string;
   date: string;
   count: CountType;
   insert: InsertType;
   format: FormatType;
   parse: ParseType;
+  review: ReviewType;
   request: RequestType;
   backup: BackupType;
   workers?: Worker[];
@@ -265,5 +269,5 @@ export interface Path {
   path: string;
 }
 
-export type Managers = Map<string, SyncManager | undefined>;
+export type Managers = Map<string, SyncManager>;
 export type Workers = Map<string, SyncWorker>;
