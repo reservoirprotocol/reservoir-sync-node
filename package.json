@@ -1,7 +1,7 @@
 {
   "name": "reservoir-light-node",
   "scripts": {
-    "start": "node dist/index.js",
+    "start": "yarn build && yarn prepare && node dist/index.js",
     "prepare": "yarn database && yarn flush",
     "flush": "node redis-flush.js",
     "database": "yarn database:generate && yarn database:migrate && yarn database:deploy",
