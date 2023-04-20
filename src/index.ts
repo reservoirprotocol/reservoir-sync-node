@@ -3,23 +3,15 @@ import { LightNode } from './LightNode';
 import { Chains, LightNodeConfig } from './types';
 
 /**
- * Configuration object for the LightNode instance.
+ * (Required) Configuration object for the LightNode instance.
  * @type {LightNodeConfig}
  */
+
 const config: LightNodeConfig = {
-  // (Required)
   server: {
     port: process.env.PORT, // (Required)
     authorization: process.env.AUTHORIZATION, // (Required)
   },
-  // (Optional)
-  logger: {
-    datadog: {
-      appName: process.env.DATADOG_APP_NAME,
-      apiKey: process.env.DATADOG_API_KEY,
-    },
-  },
-  // (Required)
   syncer: {
     chain: process.env.CHAIN as Chains, // (Required)
     contracts: process.env.CONTRACTS ? process.env.CONTRACTS.split(',') : [], // (Optional)
@@ -31,6 +23,16 @@ const config: LightNodeConfig = {
     },
   },
 };
+
+// (Optional)
+if (process.env.DATADOG_APP_NAME && process.env.DATADOG_API_KEY) {
+  config.logger = {
+    datadog: {
+      appName: process.env.DATADOG_APP_NAME,
+      apiKey: process.env.DATADOG_API_KEY,
+    },
+  };
+}
 
 /**
  * Launches the LightNode instance with the given configuration.
