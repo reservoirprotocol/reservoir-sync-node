@@ -2,7 +2,9 @@
   "name": "reservoir-light-node",
   "scripts": {
     "start": "node dist/index.js",
-    "database:all": "yarn database:generate && yarn database:migrate && yarn database:deploy",
+    "prepare": "yarn database && yarn flush",
+    "flush": "node redis-flush.js",
+    "database": "yarn database:generate && yarn database:migrate && yarn database:deploy",
     "database:generate": "npx prisma generate",
     "database:deploy": "npx prisma migrate deploy",
     "database:migrate": "npx prisma migrate reset --force",

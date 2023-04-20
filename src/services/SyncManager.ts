@@ -170,7 +170,6 @@ export class SyncManager {
         /**
          * Update the backup
          */
-        this.config.backup();
         if (!this.config.review(this)) break;
       }
       resolve(this.id);
