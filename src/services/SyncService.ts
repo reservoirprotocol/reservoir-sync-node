@@ -14,14 +14,14 @@ import {
   RequestMethods,
   SalesSchema,
   Schemas,
-  SyncerConfig,
+  SyncerConfig
 } from '../types';
 import {
   addressToBuffer,
   createQuery,
   incrementDate,
   isValidDate,
-  toBuffer,
+  toBuffer
 } from '../utils';
 import { BackupService } from './BackupService';
 import { InsertionService } from './InsertionService';
@@ -283,10 +283,9 @@ export class SyncService {
           return {
             date: manager.date as string,
             workers: Array.from(manager.workers.values()).map((worker) => {
-              let x = worker.continuation;
               return {
                 date: worker.date,
-                continuation: x,
+                continuation: worker.continuation,
               };
             }),
           };
@@ -312,7 +311,7 @@ export class SyncService {
      * This then means that all the other managers just need to finish what they are working on and will be queued for deletion once they are done
      */
     if (manager.isBackfilled) {
-      //   this._backfilled = true; // We set this backfill to true because we know a manager
+      this._isBackfilled = true; // We set this backfill to true because we know a manager
       /**
        * We return becasue we dont ever want to kill this manager because it contains our worker that is upkeeping
        * We don't need to assign it new work because it will continue forever due to their backfill flag being called
