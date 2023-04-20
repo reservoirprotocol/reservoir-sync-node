@@ -171,8 +171,8 @@ class _LightNode {
           return value.id;
         }),
     });
-    if (data[syncer].length > 0 && data[syncer][0].updatedAt) {
-      return data[syncer][0].updatedAt.substring(0, 10);
+    if (data[syncer].length > 0 && data[syncer][data[syncer].length - 1].updatedAt) {
+      return data[syncer][data[syncer].length - 1].updatedAt.substring(0, 10);
     }
     return new Date().toISOString().substring(0, 10);
   }
@@ -186,6 +186,7 @@ class _LightNode {
   private async _createSyncers(): Promise<void> {
     const { syncer, backup } = this._config;
 
+    // Flush method yarn
     if (!backup?.useBackup) {
       await BackupService.flush();
     }

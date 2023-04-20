@@ -15,7 +15,7 @@ const config: LightNodeConfig = {
   // (Optional)
   backup: {
     redisUrl: process.env.REDIS_URL,
-    useBackup: true,
+    useBackup: true, // make it into a script yarn:redis:fluish
   },
   // (Required)
   syncer: {

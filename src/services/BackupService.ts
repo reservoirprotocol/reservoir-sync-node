@@ -100,7 +100,7 @@ class _BackupService {
   public async flush(): Promise<void> {
     if (!this._connected) return;
     try {
-      //  await this._client?.flushDb();
+      await this._client?.flushDb();
     } catch (err) {
       LoggerService.error(err);
     }

@@ -5,21 +5,22 @@ import { HttpStatusCode } from 'axios';
 import { Application } from 'express';
 import { SyncManager } from '../services';
 
-export interface Worker {
+
+export interface WorkerBackup {
   date: string;
   continuation: string;
 }
 
-export interface Manager {
+export interface ManagerBackup {
   date: string;
-  workers: Worker[];
+  workers: WorkerBackup[];
 }
 
 export interface Backup {
   type: string;
   data: {
     date: string;
-    managers: Manager[]
+    managers: ManagerBackup[]
   }
 }
 
@@ -221,7 +222,7 @@ export interface ManagerConfig {
   review: ReviewType;
   request: RequestType;
   backup: BackupType;
-  workers?: Worker[];
+  workers?: WorkerBackup[];
   workerCount: number;
 }
 export interface DatadogConfig {
