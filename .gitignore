@@ -1,0 +1,25 @@
+# Dependencies
+node_modules
+.yarn
+
+# Secrets
+.env
+docker/secrets/*
+
+# Build
+dist
+tsconfig.tsbuildinfo
+
+# Misc
+yarn-error.log
+postgres/
+scripts/
+
+# IDE
+*.iml
+.idea
+.yarnclean
+coverage/
+
+# Logs
+application.log

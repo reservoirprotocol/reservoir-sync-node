@@ -1,0 +1,41 @@
+{
+  "id": "980601838fd816046f948a503ad849a729718a5e6a9688fec4210e32b3f234ea",
+  "saleId": "cf3b2d14ec70a0786be49dfaef38fac79276a192f737a5584d2fe2d78eab7de1",
+  "token": {
+    "contract": "0xf766b3e7073f5a6483e27de20ea6f59b30b28f87",
+    "tokenId": "4",
+    "name": null,
+    "image": null,
+    "collection": { "id": null, "name": null }
+  },
+  "orderId": "0x11b1c478396a9fb74fd2ab6c7f5b9ecfce0f1fa7c28338abbbc42987eaac2495",
+  "orderSource": "opensea.io",
+  "orderSide": "ask",
+  "orderKind": "wyvern-v2",
+  "from": "0xfb642a49b6b3c4d7b822c5806a69c0e3c66079c5",
+  "to": "0xf395b970a04e710b0ffbe54a1cabb85ef84dbd58",
+  "amount": "1",
+  "fillSource": "opensea.io",
+  "block": 5992161,
+  "txHash": "0x240019b77c78bd60194a5047da0a15a21e66211d2f263bc22f3f1baa0b8b91fa",
+  "logIndex": 55,
+  "batchIndex": 1,
+  "timestamp": 1532003093,
+  "price": {
+    "currency": {
+      "contract": "0x0000000000000000000000000000000000000000",
+      "name": "Ether",
+      "symbol": "ETH",
+      "decimals": 18
+    },
+    "amount": {
+      "raw": "10000000000000000",
+      "decimal": 0.01,
+      "usd": 2.6747,
+      "native": 0.01
+    }
+  },
+  "washTradingScore": 0,
+  "createdAt": "2018-07-19T12:24:53.000Z",
+  "updatedAt": "2018-07-19T12:24:53.000Z"
+}

@@ -1,0 +1,45 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model sales {
+  id                 Bytes     @id @db.ByteA
+  sale_id            Bytes?    @db.ByteA
+  token_id           String?   @db.Text
+  contract_id        Bytes?    @db.ByteA
+  order_id           Bytes?    @db.ByteA
+  order_source       String?   @db.Text
+  order_side         String?   @db.Text
+  order_kind         String?   @db.Text
+  from               Bytes?    @db.ByteA
+  to                 Bytes?    @db.ByteA
+  amount             String?   @db.Text
+  fill_source        String?   @db.Text
+  block              Int?      @db.Integer
+  tx_hash            Bytes?    @db.ByteA
+  log_index          Int?      @db.Integer
+  batch_index        Int?      @db.Integer
+  timestamp          Int?      @db.Integer
+  wash_trading_score Float?
+  updated_at         DateTime? @default(now())
+  created_at         DateTime? 
+
+  price_currency_contract Bytes?  @db.ByteA
+  price_currency_name     String? @db.Text
+  price_currency_symbol   String? @db.Text
+  price_currency_decimals Int?    @db.Integer
+
+  price_amount_raw     String?  @db.Text
+  price_amount_decimal Decimal? @db.Decimal
+  price_amount_usd     Decimal? @db.Decimal
+  price_amount_native  Decimal? @db.Decimal
+}
+
+model orders {
+  id Bytes @id @db.ByteA
+}
