@@ -202,7 +202,7 @@ export class SyncService {
    * @returns {Promise<void>} Promise<void>
    */
   public launch(): void {
-    this.config.backup?.managers
+    this.config.backup?.data.managers
       ? this._restoreManagers()
       : this._createManagers();
     this._launchManagers();
@@ -245,7 +245,7 @@ export class SyncService {
    * @returns {void} Promise<void>
    */
   private _restoreManagers(): void {
-    this.managers = this.config?.backup?.managers.reduce(
+    this.managers = this.config?.backup?.data.managers.reduce(
       (managers, manager) => {
         const id = `${this.config.type}-manager-${uuid()}`;
         return managers.set(
@@ -275,22 +275,23 @@ export class SyncService {
    * @returns {void}
    */
   private async _backup(): Promise<void> {
-    BackupService.backup({
-      date: this._date,
+    await BackupService.backup({
       type: this.config.type,
-      managers: Array.from(this.managers.values()).map((manager) => {
-        return {
-          date: manager?.date as string,
-          workers: manager?.workers
-            ? Array.from(manager?.workers.values()).map((worker) => {
-                return {
-                  date: worker?.config.date || '',
-                  continuation: worker?.continuation || '',
-                };
-              })
-            : [],
-        };
-      }),
+      data: {
+        date: this._date,
+        managers: Array.from(this.managers.values()).map((manager) => {
+          return {
+            date: manager.date as string,
+            workers: Array.from(manager.workers.values()).map((worker) => {
+              let x = worker.continuation;
+              return {
+                date: worker.date,
+                continuation: x,
+              };
+            }),
+          };
+        }),
+      },
     });
   }
   /**
@@ -316,8 +317,10 @@ export class SyncService {
        * We return becasue we dont ever want to kill this manager because it contains our worker that is upkeeping
        * We don't need to assign it new work because it will continue forever due to their backfill flag being called
        */
+      this._backup();
       return true;
     } else {
+      this._backup();
       return this._continueWork(manager);
     }
   }

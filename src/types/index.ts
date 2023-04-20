@@ -17,8 +17,10 @@ export interface Manager {
 
 export interface Backup {
   type: string;
-  date: string;
-  managers: Manager[];
+  data: {
+    date: string;
+    managers: Manager[]
+  }
 }
 
 export interface Counts {

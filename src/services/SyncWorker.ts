@@ -178,6 +178,7 @@ export class SyncWorker {
              */
             if (!this.config.review(this)) break;
           }
+          this.config.backup();
         }
       }
 

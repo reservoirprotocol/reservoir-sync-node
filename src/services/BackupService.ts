@@ -60,7 +60,7 @@ class _BackupService {
     if (!this._connected) return;
     try {
       await this._client?.hSet(data.type, {
-        backup: JSON.stringify(data.managers),
+        backup: JSON.stringify(data.data),
       });
     } catch (err) {
       LoggerService.error(err);
@@ -76,9 +76,16 @@ class _BackupService {
   public async load(type: string): Promise<Backup | null> {
     if (!this._connected) return null;
     try {
-      const _data = await this._client?.hGet(type, 'backup');
-      if (!_data) return null;
-      return JSON.parse(_data) as Backup;
+      const data = await this._client?.hGet(type, 'backup');
+      if (!data) return null;
+      const backup = JSON.parse(data) as Backup['data'];
+      return {
+        type,
+        data: {
+          date: backup.date,
+          managers: backup.managers,
+        },
+      };
     } catch (err) {
       LoggerService.error(err);
       return null;
@@ -93,7 +100,7 @@ class _BackupService {
   public async flush(): Promise<void> {
     if (!this._connected) return;
     try {
-      await this._client?.flushDb();
+      //  await this._client?.flushDb();
     } catch (err) {
       LoggerService.error(err);
     }
