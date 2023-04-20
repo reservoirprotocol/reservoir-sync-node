@@ -36,6 +36,10 @@ AUTHORIZATION= # (Required) Server authorization string
 # Databse Configuration
 DATABASE_URL=your-postgres-database-url # (Required) Database to pipe data into
 
+# Backup configuration
+# (Optional) Sign up for a free redis cloud instance http://redis.com/try-free/
+# REDIS_URL= 
+
 # Syncer configuration
 
 CHAIN=mainnet # (Required) Chain to sync - Supports: 'rinkeby' 'goerli' 'polygon' 'mainnet'.
