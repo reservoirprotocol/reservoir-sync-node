@@ -1,5 +1,5 @@
 
-## Light-Node
+## Light-Node BETA
 
 Reservoir Light-Node is a customizable lightweight indexer based on the Reservoir indexer. It's easy to set up, customizable, and fast.
 
