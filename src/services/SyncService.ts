@@ -14,14 +14,14 @@ import {
   RequestMethods,
   SalesSchema,
   Schemas,
-  SyncerConfig
+  SyncerConfig,
 } from '../types';
 import {
   addressToBuffer,
   createQuery,
   incrementDate,
   isValidDate,
-  toBuffer
+  toBuffer,
 } from '../utils';
 import { BackupService } from './BackupService';
 import { InsertionService } from './InsertionService';
@@ -330,7 +330,9 @@ export class SyncService {
    * @returns void
    */
   private _continueWork(manager: SyncManager): boolean {
-    const _date = incrementDate(this._date, { months: 1 });
+    const _date = incrementDate(`${this._date.substring(0, 7)}-01`, {
+      months: 1,
+    });
 
     if (isValidDate(_date)) {
       this._date = _date;
