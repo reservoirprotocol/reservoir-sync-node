@@ -1,31 +1,21 @@
 require('dotenv/config');
 const { createClient } = require('redis');
+const CONNECTION_URL = process.env.REDIS_URL;
 
-/**
- * # flush
- * Flushes a redis database
- * @returns void
- */
-const flush = () => {
-  const client = createClient({
-    url: process.env.REDIS_URL,
-  });
-  client.on('error', (err) => {
-    console.error('ERROR CONNECTING TO REDIS: ', err);
-    process.exit(1);
-  });
-  client.on('connect', () => {
-    client.flushDb((err, res) => {
-      if (err) {
-        console.error('ERROR FLUSHING DATABASE: ', err);
-        process.exit(1);
-      } else {
-        console.log('FLUSHED REDIS DATABSE');
-        client.quit();
-        process.exit(0);
-      }
-    });
-  });
-};
+async function flushRedisStorage() {
+  try {
+    if (!CONNECTION_URL) {
+      throw new Error(`INVALID REDIS URL: ${CONNECTION_URL}`);
+    }
 
-flush();
+    const client = createClient({ url: CONNECTION_URL });
+    await client.connect();
+    await client.flushDb();
+    console.log(`FLUSHED REDIS STORAGE`);
+    await client.disconnect();
+  } catch (err) {
+    console.error(`ERROR FLUSHING REDIS STORAGE: ${err}`);
+  }
+}
+
+flushRedisStorage();
