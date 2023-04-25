@@ -110,6 +110,8 @@ To configure please setup the `.env` as shown below:
 ```env
 DATABASE_URL=your-postgres-database-url
 ```
+For assistance setting up Prisma please visit their [documentation](https://www.prisma.io/docs).
+
 ### Configuration - (Redis) Backups
 LightNode also uses the [Redis](https://www.redis.com) to store temporary backups of the current state of the LightNode in case it is to go down.
 This allows the LightNode to restart right where it left off.
@@ -119,8 +121,6 @@ To configure please setup the `.env` as shown below:
 ```env
 REDIS_URL=your-redis-url
 ```
-For assistance setting up Prisma please visit their [documentation](https://www.prisma.io/docs).
-
 
 ### Usage
 To launch the LightNode, run the command below: 
