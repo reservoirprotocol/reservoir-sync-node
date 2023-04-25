@@ -5,7 +5,6 @@ import { HttpStatusCode } from 'axios';
 import { Application } from 'express';
 import { SyncManager } from '../services';
 
-
 export interface WorkerBackup {
   date: string;
   continuation: string;
@@ -20,8 +19,8 @@ export interface Backup {
   type: string;
   data: {
     date: string;
-    managers: ManagerBackup[]
-  }
+    managers: ManagerBackup[];
+  };
 }
 
 export interface Counts {
@@ -92,10 +91,42 @@ export interface SalesSchema {
   isDeleted: boolean;
 }
 
-export type Schemas = SalesSchema[];
+export type Schemas = SalesSchema[] | AsksSchema[] | BidsSchema[];
 
+export type SchemasObject = {
+  sales: SalesSchema[];
+  asks: AsksSchema[];
+};
+
+export interface BidsSchema {
+  id: string;
+  kind: string;
+  side: string;
+  status: string;
+  tokenSetId: string;
+  tokenSetSchemaHash: string;
+  contract: string;
+  maker: string;
+  taker: string;
+  price: AsksPrice;
+  validFrom: number;
+  validUntil: number;
+  quantityFilled: number;
+  quantityRemaining: number;
+  dynamicPricing: any;
+  criteria: AsksCriteria;
+  source: AsksSource;
+  feeBps: number;
+  feeBreakdown: AsksFeeBreakdown[];
+  expiration: number;
+  isReservoir: any;
+  isDynamic: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
 export type IndexSignatureType = {
-  [key in Tables]: Schemas;
+  sales: SalesSchema[];
+  orders: AsksSchema[] | BidsSchema[];
 };
 
 export type SyncManagerInstance = InstanceType<typeof SyncManager>;
@@ -107,11 +138,12 @@ export type CountType = SyncServiceInstance['_count'];
 export type ParseType = SyncServiceInstance['_parse'];
 export type FormatType = SyncServiceInstance['_format'];
 export type BackupType = SyncServiceInstance['_backup'];
-export type ReviewType = SyncServiceInstance['_reviewManager']
+export type ReviewType = SyncServiceInstance['_reviewManager'];
 
 export interface WorkerConfig {
   date: string;
   id: string;
+  type: Tables;
   continuation: string;
   request: SyncServiceInstance['_request'];
   format: SyncServiceInstance['_format'];
@@ -121,12 +153,106 @@ export interface WorkerConfig {
   backup: BackupType;
 }
 export type PrismaSalesCreate = Prisma.salesCreateInput;
+export type PrismaAsksCreate = Prisma.asksCreateInput;
 
 export type PrismaCreate = PrismaSalesCreate & {
   isDeleted?: boolean;
 };
+export interface AsksSchema {
+  id: string;
+  kind: string;
+  side: string;
+  status: string;
+  tokenSetId: string;
+  tokenSetSchemaHash: string;
+  contract: string;
+  maker: string;
+  taker: string;
+  price: AsksPrice;
+  validFrom: number;
+  validUntil: number;
+  quantityFilled: number;
+  quantityRemaining: number;
+  dynamicPricing: any;
+  criteria: AsksCriteria;
+  source: AsksSource;
+  feeBps: number;
+  feeBreakdown: AsksFeeBreakdown[];
+  expiration: number;
+  isReservoir: any;
+  isDynamic: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
 
-export type Tables = 'sales';
+export interface AsksPrice {
+  currency: AsksCurrency;
+  amount: AsksAmount;
+  netAmount: AsksNetAmount;
+}
+
+export interface AsksCurrency {
+  contract: string;
+  name: string;
+  symbol: string;
+  decimals: number;
+}
+
+export interface AsksAmount {
+  raw: string;
+  decimal: number;
+  usd: number;
+  native: number;
+}
+
+export interface AsksNetAmount {
+  raw: string;
+  decimal: number;
+  usd: number;
+  native: number;
+}
+
+export interface AsksCriteria {
+  kind: string;
+  data: AsksData;
+}
+
+export interface AsksCollection {
+  id: string;
+  name: string;
+  image: string;
+}
+export interface AsksData {
+  token: AsksToken;
+  collection: AsksCollection;
+}
+
+export interface AsksToken {
+  tokenId: string;
+  name: string;
+  image: string;
+}
+
+export interface AsksSource {
+  id: string;
+  domain: string;
+  name: string;
+  icon: string;
+  url: string;
+}
+
+export interface AsksFeeBreakdown {
+  bps: number;
+  kind: string;
+  recipient: string;
+}
+
+export type Tables = 'sales' | 'asks';
+
+export type RecordRoots = {
+  sales: 'sales';
+  asks: 'orders';
+};
 
 export interface Delete {
   table: Tables;
@@ -146,6 +272,8 @@ export interface Bases {
 
 export interface Paths {
   sales: string;
+  asks: string;
+  bids: string;
 }
 export interface PrismaStatus {
   error?: unknown;
@@ -162,19 +290,55 @@ export interface RequestMethods {
     query: string;
     apiKey: string;
   }) => Promise<ApiResponse>;
+  asks: ({
+    url,
+    query,
+    apiKey,
+  }: {
+    url: string;
+    query: string;
+    apiKey: string;
+  }) => Promise<ApiResponse>;
 }
 
-export interface ParserMethods {
+export type ParserRaw<T> = {
+  sales: any;
+  asks: any;
+};
+export type ParserFormatted = {
+  sales: any;
+  asks: any;
+};
+
+export type ParserMethods = {
   sales: (sales: SalesSchema[], contracts?: string[]) => PrismaSalesCreate[];
+  asks: (asks: AsksSchema[], contracts?: string[]) => PrismaAsksCreate[];
+};
+
+export type DataType<T extends keyof ParserMethods> = ParserMethods[T] extends (
+  data: infer D,
+  contracts?: string[]
+) => any
+  ? D
+  : never;
+
+export interface ParserRawData<T> {
+  sales: SalesSchema;
+  asks: AsksSchema;
 }
+
 export interface FormatMethods {
   sales: (sales: SalesSchema[]) => PrismaSalesCreate[];
+  asks: (asks: AsksSchema[]) => PrismaAsksCreate[];
 }
-type KnownPropertiesType = {
+export type APIDatasets = 'sales' | 'orders';
+
+// continatuon
+// orders | sales
+export type KnownPropertiesType = {
   continuation: string;
-  cursor: string;
 } & {
-  [key in Tables]: Schemas;
+  [key in APIDatasets]: Schemas;
 };
 
 export interface Request {
@@ -224,6 +388,7 @@ export interface ManagerConfig {
   backup: BackupType;
   workers?: WorkerBackup[];
   workerCount: number;
+  type: Tables;
 }
 export interface DatadogConfig {
   appName?: string;
@@ -234,6 +399,7 @@ export interface LoggerConfig {
 }
 export interface ToSync {
   sales: boolean;
+  asks: boolean;
 }
 export interface BaseSyncerConfig {
   apiKey: string;

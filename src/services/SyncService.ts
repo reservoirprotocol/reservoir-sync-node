@@ -1,27 +1,33 @@
 import axios, { isAxiosError } from 'axios';
 import { uuid } from 'uuidv4';
 import {
+  APIDatasets,
   ApiResponse,
+  AsksSchema,
   Bases,
+  DataType,
   FormatMethods,
   IndexSignatureType,
+  KnownPropertiesType,
   Managers,
   ParserMethods,
   Paths,
+  PrismaAsksCreate,
   PrismaCreate,
   PrismaSalesCreate,
   Request,
   RequestMethods,
   SalesSchema,
   Schemas,
-  SyncerConfig
+  SyncerConfig,
+  Tables,
 } from '../types';
 import {
   addressToBuffer,
   createQuery,
   incrementDate,
   isValidDate,
-  toBuffer
+  toBuffer,
 } from '../utils';
 import { BackupService } from './BackupService';
 import { InsertionService } from './InsertionService';
@@ -32,7 +38,15 @@ import { SyncManager } from './SyncManager';
  */
 export const URL_PATHS: Paths = {
   sales: '/sales/v4',
+  asks: '/orders/asks/v4', // resolves to orders
+  bids: '', // resolves to orders
 };
+
+export const RECORD_ROOT: Record<Tables, APIDatasets> = {
+  sales: 'sales',
+  asks: 'orders',
+};
+
 /**
  * The URL bases for the sync APIs
  */
@@ -82,6 +96,64 @@ export const FORMAT_METHODS: FormatMethods = {
       };
     });
   },
+  asks: (asks: AsksSchema[]) => {
+    if (!asks) return [];
+    return asks?.map((ask: AsksSchema) => {
+      return {
+        id: Buffer.from(
+          `${ask.contract}-${ask.maker}-${ask.tokenSetId}-${ask.createdAt}`
+        ),
+        kind: ask?.kind,
+        side: ask?.side,
+        status: ask?.status,
+        token_set_Id: ask?.tokenSetId,
+        token_set_schema_hash: addressToBuffer(ask?.tokenSetSchemaHash),
+        contract: addressToBuffer(ask?.contract),
+        maker: addressToBuffer(ask?.maker),
+        taker: addressToBuffer(ask?.taker),
+        price_currency_contract: addressToBuffer(
+          ask?.price?.currency?.contract
+        ),
+        price_currency_name: ask?.price?.currency?.name,
+        price_currency_symbol: ask?.price?.currency?.symbol,
+        price_currency_decimals: ask?.price?.currency?.decimals,
+        price_amount_raw: ask?.price?.amount?.raw,
+        price_amount_decimal: ask?.price?.amount?.decimal,
+        price_amount_usd: ask?.price?.amount?.usd,
+        price_amount_native: ask?.price?.amount?.usd,
+        price_net_raw: ask?.price?.netAmount?.raw,
+        price_net_decimal: ask?.price?.netAmount?.decimal,
+        price_net_usd: ask?.price?.netAmount?.usd,
+        price_net_native: ask?.price?.netAmount?.native,
+        valid_from: ask?.validFrom,
+        valid_until: ask?.validUntil,
+        quantity_filled: ask?.quantityFilled,
+        quantity_remaining: ask?.quantityRemaining,
+        dynamic_pricing: 0,
+        criteria_kind: ask?.criteria?.kind,
+        criteria_data_token_tokenId: ask?.criteria?.data?.token?.tokenId,
+        criteria_data_token_name: ask?.criteria?.data?.token?.name,
+        criteria_data_token_image: ask?.criteria?.data?.token?.image,
+        criteria_data_collection_id: addressToBuffer(
+          ask?.criteria?.data?.collection?.id
+        ),
+        criteria_data_collection_name: ask?.criteria?.data?.collection?.name,
+        criteria_data_collection_image: ask?.criteria?.data?.collection?.image,
+        source_id: addressToBuffer(ask?.source?.id),
+        source_domain: ask?.source?.domain,
+        source_name: ask?.source?.name,
+        source_icon: ask?.source?.icon,
+        source_url: ask?.source?.url,
+        fee_bps: ask?.feeBps,
+        fee_breakdown: JSON.stringify(ask?.feeBreakdown),
+        expiration: ask?.expiration,
+        is_reservoir: ask?.isReservoir,
+        is_dynamic: ask?.isDynamic,
+        updated_at: ask?.updatedAt,
+        created_at: ask?.createdAt,
+      };
+    });
+  },
 };
 /**
  * Parser methods for the raw API responses
@@ -97,12 +169,51 @@ export const PARSER_METHODS: ParserMethods = {
     }
     return FORMAT_METHODS['sales'](sales) as PrismaSalesCreate[];
   },
+  asks: (asks, contracts) => {
+    if (contracts && contracts.length > 0) {
+      asks = asks.filter((ask) => {
+        contracts.includes(ask.contract.toLowerCase());
+      });
+    }
+    return FORMAT_METHODS['asks'](asks) as PrismaAsksCreate[];
+  },
 };
 /**
  * Request methods to return data from the API
  */
 export const REQUEST_METHODS: RequestMethods = {
   sales: async ({ url, query, apiKey }): Promise<ApiResponse> => {
+    try {
+      const _res = await axios.get(`${url}?${query}`, {
+        timeout: 100000,
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+        },
+      });
+      if (_res.status !== 200) throw _res;
+      return {
+        status: _res.status,
+        data: _res.data,
+      };
+    } catch (err: any) {
+      if (isAxiosError(err)) {
+        return {
+          status: err.response?.status || 500,
+          data: err.response?.data,
+        };
+      }
+      return {
+        status: 500,
+        data: {
+          status: 500,
+          message: 'Unknown error.',
+          error: err,
+        },
+      };
+    }
+  },
+  asks: async ({ url, query, apiKey }): Promise<ApiResponse> => {
     try {
       const _res = await axios.get(`${url}?${query}`, {
         timeout: 100000,
@@ -226,6 +337,7 @@ export class SyncService {
         new SyncManager({
           id,
           date: this._date,
+          type: this.config.type,
           insert: this._insert.bind(this),
           request: this._request.bind(this),
           parse: this._parse.bind(this),
@@ -253,6 +365,7 @@ export class SyncService {
           new SyncManager({
             id,
             date: manager.date,
+            type: this.config.type,
             insert: this._insert.bind(this),
             request: this._request.bind(this),
             parse: this._parse.bind(this),
@@ -362,8 +475,9 @@ export class SyncService {
    * @param {Schemas[]} data - array of object data
    * @returns {Promise<void>} Promise<void>
    */
-  private _count(data: IndexSignatureType): number {
-    return data[this.config.type].length;
+  private _count(data: KnownPropertiesType): number {
+    const type = RECORD_ROOT[this.config.type];
+    return data[type].length;
   }
   /**
    * # _insert
@@ -372,9 +486,9 @@ export class SyncService {
    * @param {Prisma.ordersCreateInput | Prisma.salesCreateInput} data - An array of objects
    * @returns {Promise<void>} Promise<void>
    */
-  private _insert(data: IndexSignatureType): void {
+  private _insert(data: KnownPropertiesType): void {
     InsertionService.upsert({
-      data: this._parse(data[this.config.type]).map((value) => {
+      data: this._parse(data[RECORD_ROOT[this.config.type]]).map((value) => {
         delete value.isDeleted;
         return value;
       }),
@@ -382,7 +496,7 @@ export class SyncService {
     });
     InsertionService.delete({
       table: this.config.type,
-      ids: this._parse(data[this.config.type])
+      ids: this._parse(data[RECORD_ROOT[this.config.type]])
         .filter((data) => data.isDeleted)
         .map((value) => {
           delete value.isDeleted;
@@ -415,7 +529,7 @@ export class SyncService {
    */
   private _parse(data: Schemas): PrismaCreate[] {
     return PARSER_METHODS[this.config.type as keyof ParserMethods](
-      data,
+      data as DataType<typeof this.config.type>,
       this.config.contracts
     );
   }
@@ -425,7 +539,7 @@ export class SyncService {
    * @param {IndexSignatureType} data API response data
    * @returns {Schemas} formatted data
    */
-  private _format(data: IndexSignatureType): Schemas {
-    return data[this.config.type];
+  private _format(data: KnownPropertiesType): Schemas {
+    return data[RECORD_ROOT[this.config.type]];
   }
 }

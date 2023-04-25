@@ -2,9 +2,8 @@
 import { formatDistance } from 'date-fns';
 import { ServerManager } from './server/Server';
 import {
-  InsertionService,
   LoggerService,
-  PARSER_METHODS,
+  RECORD_ROOT,
   REQUEST_METHODS,
   SyncService,
   URL_BASES,
@@ -15,7 +14,6 @@ import {
   Backup,
   IndexSignatureType,
   LightNodeConfig,
-  PrismaCreate,
   SyncerConfig,
 } from './types';
 import {
@@ -90,6 +88,7 @@ class _LightNode {
         syncer.managers.forEach((manager, id) => {
           if (!manager) return;
           managers.push({
+            type: syncer.config.type,
             Manager: id,
             Year: getYear(manager?.config.date),
             Month: getMonth(manager?.config.date),
@@ -142,7 +141,6 @@ class _LightNode {
       query: createQuery('', this._config.syncer.contracts),
       apiKey: this._config.syncer.apiKey,
     });
-
     if (!isSuccessResponse(res))
       throw new Error(
         `FAILED TO GET STARTED DATE: ${res.data.message}:${res.status}`
@@ -150,29 +148,10 @@ class _LightNode {
 
     const data = res.data as IndexSignatureType;
 
-    const parsedData = PARSER_METHODS[syncer](
-      data[syncer],
-      this._config.syncer.contracts
-    ) as PrismaCreate[];
+    const type = RECORD_ROOT[syncer];
 
-    InsertionService.upsert({
-      data: parsedData.map((value) => {
-        delete value.isDeleted;
-        return value;
-      }),
-      table: syncer,
-    });
-    InsertionService.delete({
-      table: syncer,
-      ids: parsedData
-        .filter((data) => data.isDeleted)
-        .map((value) => {
-          delete value.isDeleted;
-          return value.id;
-        }),
-    });
-    if (data[syncer].length > 0 && data[syncer][data[syncer].length - 1].updatedAt) {
-      return data[syncer][data[syncer].length - 1].updatedAt.substring(0, 10);
+    if (data[type]?.length > 0 && data[type]?.[data[type]?.length - 1]) {
+      return data[type][data[type].length - 1].updatedAt.substring(0, 10);
     }
     return new Date().toISOString().substring(0, 10);
   }
@@ -186,7 +165,6 @@ class _LightNode {
   private async _createSyncers(): Promise<void> {
     const { syncer, backup } = this._config;
 
-    // Flush method yarn
     if (!backup?.useBackup) {
       await BackupService.flush();
     }
@@ -203,6 +181,21 @@ class _LightNode {
           type: 'sales',
           date: await this._getStartDate('sales'),
           backup: await this._loadBackup('sales'),
+        })
+      );
+    }
+    if (syncer.toSync.asks) {
+      this._syncers.set(
+        'asks-syncer',
+        new SyncService({
+          chain: syncer.chain,
+          workerCount: syncer.workerCount,
+          managerCount: syncer.managerCount,
+          apiKey: syncer.apiKey,
+          contracts: syncer.contracts,
+          type: 'asks',
+          date: await this._getStartDate('asks'),
+          backup: await this._loadBackup('asks'),
         })
       );
     }

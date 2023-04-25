@@ -46,6 +46,7 @@ export const createQuery = (
     'sortDirection=asc',
     'includeDeleted=true',
     'limit=1000',
+    'includeCriteriaMetadata=true',
   ];
 
   if (date) {
