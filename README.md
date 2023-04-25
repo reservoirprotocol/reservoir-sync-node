@@ -106,7 +106,10 @@ LightNode.launch(config);
 ```
 ### Configuration - (Prisma) Database
 LightNode also uses the [Prisma ORM](https://www.prisma.io) to interact with a PostgresSQL datbase.
-
+To configure please setup the `.env` as shown below: 
+```env
+DATABASE_URL=your-postgres-database-url
+```
 ### Configuration - (Redis) Backups
 LightNode also uses the [Redis](https://www.redis.com) to store temporary backups of the current state of the LightNode in case it is to go down.
 This allows the LightNode to restart right where it left off.
@@ -114,7 +117,7 @@ For easy an easy no hassle setup use: https://redis.com/try-free.
 
 To configure please setup the `.env` as shown below: 
 ```env
-REDIS_URL=your-postgres-database-url
+REDIS_URL=your-redis-url
 ```
 For assistance setting up Prisma please visit their [documentation](https://www.prisma.io/docs).
 
