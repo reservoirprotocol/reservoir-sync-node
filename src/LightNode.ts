@@ -90,6 +90,7 @@ class _LightNode {
         syncer.managers.forEach((manager, id) => {
           if (!manager) return;
           managers.push({
+            "Syncer Contract": syncer.config.contracts,
             Manager: id,
             Year: getYear(manager?.config.date),
             Month: getMonth(manager?.config.date),
@@ -171,7 +172,10 @@ class _LightNode {
           return value.id;
         }),
     });
-    if (data[syncer].length > 0 && data[syncer][data[syncer].length - 1].updatedAt) {
+    if (
+      data[syncer].length > 0 &&
+      data[syncer][data[syncer].length - 1].updatedAt
+    ) {
       return data[syncer][data[syncer].length - 1].updatedAt.substring(0, 10);
     }
     return new Date().toISOString().substring(0, 10);
@@ -189,6 +193,28 @@ class _LightNode {
     // Flush method yarn
     if (!backup?.useBackup) {
       await BackupService.flush();
+    }
+
+    if (syncer.contracts && syncer.contracts.length > 0) {
+      for await (const contract of syncer.contracts) {
+        if (syncer.toSync.sales) {
+          this._syncers.set(
+            `sales-syncer-${contract}`,
+            new SyncService({
+              chain: syncer.chain,
+              workerCount: syncer.workerCount,
+              managerCount: syncer.managerCount,
+              apiKey: syncer.apiKey,
+              contracts: [contract],
+              type: 'sales',
+              date: await this._getStartDate('sales'),
+              backup: await this._loadBackup('sales'),
+            })
+          );
+        }
+      }
+
+      return;
     }
 
     if (syncer.toSync.sales) {
