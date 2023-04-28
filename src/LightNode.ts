@@ -2,6 +2,7 @@
 import { formatDistance } from 'date-fns';
 import { ServerManager } from './server/Server';
 import {
+  BackupService,
   InsertionService,
   LoggerService,
   PARSER_METHODS,
@@ -9,8 +10,7 @@ import {
   SyncService,
   URL_BASES,
   URL_PATHS,
-} from './services';
-import { BackupService } from './services/BackupService';
+} from './services/';
 import {
   Backup,
   IndexSignatureType,
@@ -171,7 +171,10 @@ class _LightNode {
           return value.id;
         }),
     });
-    if (data[syncer].length > 0 && data[syncer][data[syncer].length - 1].updatedAt) {
+    if (
+      data[syncer].length > 0 &&
+      data[syncer][data[syncer].length - 1].updatedAt
+    ) {
       return data[syncer][data[syncer].length - 1].updatedAt.substring(0, 10);
     }
     return new Date().toISOString().substring(0, 10);
