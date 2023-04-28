@@ -5,6 +5,9 @@ import { HttpStatusCode } from 'axios';
 import { Application } from 'express';
 import { SyncManager } from '../services';
 
+export interface ContractInfo {
+  name: string;
+}
 
 export interface WorkerBackup {
   date: string;
@@ -20,8 +23,8 @@ export interface Backup {
   type: string;
   data: {
     date: string;
-    managers: ManagerBackup[]
-  }
+    managers: ManagerBackup[];
+  };
 }
 
 export interface Counts {
@@ -107,7 +110,7 @@ export type CountType = SyncServiceInstance['_count'];
 export type ParseType = SyncServiceInstance['_parse'];
 export type FormatType = SyncServiceInstance['_format'];
 export type BackupType = SyncServiceInstance['_backup'];
-export type ReviewType = SyncServiceInstance['_reviewManager']
+export type ReviewType = SyncServiceInstance['_reviewManager'];
 
 export interface WorkerConfig {
   date: string;
