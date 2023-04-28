@@ -1,3 +1,4 @@
+import axios from 'axios';
 import {
   add,
   addDays,
@@ -14,7 +15,7 @@ import {
 } from 'date-fns';
 import { validate } from 'node-cron';
 import web3 from 'web3';
-import { ApiResponse, SuccessResponse } from '../types';
+import { ApiResponse, ContractInfo, SuccessResponse } from '../types';
 
 export const isCron = validate;
 export const isAddress = web3.utils.isAddress;
@@ -192,4 +193,28 @@ export const toBuffer = (hexValue: string) => {
  */
 export const addressToBuffer = (hexValue: string = '') => {
   return Buffer.from((hexValue || '').slice(2), 'hex');
+};
+
+/**
+ * # getContractInfo
+ * @param contract - Contract address
+ * @returns {ContractInfo} - contract info
+ */
+export const getContractInfo = async (
+  contract: string
+): Promise<ContractInfo> => {
+  try {
+    const res = await axios.get(
+      `https://api.reservoir.tools/search/collections/v2?collectionsSetId=${contract}&limit=1`
+    );
+    if (res.status !== 200)
+      throw new Error(`Error getting contract info: ${res.status}`);
+    return {
+      name: res.data.collections[0].slug,
+    };
+  } catch (err) {
+    return {
+      name: contract,
+    };
+  }
 };

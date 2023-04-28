@@ -21,6 +21,7 @@ import {
 } from './types';
 import {
   createQuery,
+  getContractInfo,
   getMonth,
   getYear,
   isAddress,
@@ -72,7 +73,8 @@ class _LightNode {
    * @returns {string | null} string or null
    */
   public async createSyncer(type: Tables, contract: string): Promise<void> {
-    const id = `${type}-syncer-${contract}`;
+    const { name } = await getContractInfo(contract);
+    const id = `${type}-syncer-${name}`;
     const syncService = new SyncService({
       chain: this._config.syncer.chain,
       workerCount: this._config.syncer.workerCount,
@@ -111,10 +113,11 @@ class _LightNode {
       let workers: any[] = [];
       let managers: any[] = [];
 
-      this._syncers.forEach((syncer) => {
+      this._syncers.forEach((syncer, syncerId) => {
         syncer.managers.forEach((manager, id) => {
           if (!manager) return;
           managers.push({
+            Syncer: syncerId,
             Manager: id,
             Year: getYear(manager?.config.date),
             Month: getMonth(manager?.config.date),
