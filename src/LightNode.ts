@@ -17,6 +17,7 @@ import {
   LightNodeConfig,
   PrismaCreate,
   SyncerConfig,
+  Tables,
 } from './types';
 import {
   createQuery,
@@ -62,6 +63,30 @@ class _LightNode {
     await this._createSyncers();
     this._launchSyncers();
     this._logSyncers();
+  }
+  /**
+   *  # createSyncer
+   * Creates a a new syncer
+   * @param type - Type of syncer
+   * @param contracts - Contracts to filter
+   * @returns {string | null} string or null
+   */
+  public async createSyncer(type: Tables, contract: string): Promise<void> {
+    const id = `${type}-syncer-${contract}`;
+    const syncService = new SyncService({
+      chain: this._config.syncer.chain,
+      workerCount: this._config.syncer.workerCount,
+      managerCount: this._config.syncer.managerCount,
+      apiKey: this._config.syncer.apiKey,
+      contracts: [contract],
+      type: type,
+      date: await this._getStartDate(type),
+      backup: await this._loadBackup(type),
+    });
+
+    this._syncers.set(id, syncService);
+
+    this._syncers.get(id)?.launch();
   }
   /**
    * # _launchServices
@@ -171,7 +196,10 @@ class _LightNode {
           return value.id;
         }),
     });
-    if (data[syncer].length > 0 && data[syncer][data[syncer].length - 1].updatedAt) {
+    if (
+      data[syncer].length > 0 &&
+      data[syncer][data[syncer].length - 1].updatedAt
+    ) {
       return data[syncer][data[syncer].length - 1].updatedAt.substring(0, 10);
     }
     return new Date().toISOString().substring(0, 10);
