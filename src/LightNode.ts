@@ -222,6 +222,28 @@ class _LightNode {
       await BackupService.flush();
     }
 
+    if (syncer.contracts && syncer.contracts.length > 0) {
+      for await (const contract of syncer.contracts) {
+        if (syncer.toSync.sales) {
+          this._syncers.set(
+            `sales-syncer-${contract}`,
+            new SyncService({
+              chain: syncer.chain,
+              workerCount: syncer.workerCount,
+              managerCount: syncer.managerCount,
+              apiKey: syncer.apiKey,
+              contracts: [contract],
+              type: 'sales',
+              date: await this._getStartDate('sales'),
+              backup: await this._loadBackup('sales'),
+            })
+          );
+        }
+      }
+
+      return;
+    }
+
     if (syncer.toSync.sales) {
       this._syncers.set(
         'sales-syncer',
