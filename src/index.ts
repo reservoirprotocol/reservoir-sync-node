@@ -12,11 +12,6 @@ const config: LightNodeConfig = {
     port: process.env.PORT, // (Required)
     authorization: process.env.AUTHORIZATION, // (Required)
   },
-  // (Optional)
-  backup: {
-    redisUrl: process.env.REDIS_URL,
-    useBackup: true, 
-  },
   // (Required)
   syncer: {
     chain: process.env.CHAIN as Chains, // (Required)
@@ -25,6 +20,7 @@ const config: LightNodeConfig = {
     workerCount: process.env.WORKER_COUNT, // (Optional)
     managerCount: process.env.MANAGER_COUNT, // (Optional)
     toSync: {
+      asks: process.env.SYNC_ASKS === '1',
       sales: process.env.SYNC_SALES === '1', // (Optional)
     },
   },
@@ -37,6 +33,14 @@ if (process.env.DATADOG_APP_NAME && process.env.DATADOG_API_KEY) {
       appName: process.env.DATADOG_APP_NAME,
       apiKey: process.env.DATADOG_API_KEY,
     },
+  };
+}
+// (Optional)
+if (process.env.REDIS_URL) {
+  config.backup = {
+    // (Optional)
+    redisUrl: process.env.REDIS_URL,
+    useBackup: true,
   };
 }
 

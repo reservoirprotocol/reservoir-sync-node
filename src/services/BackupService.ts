@@ -44,8 +44,12 @@ class _BackupService {
    */
   public async launch(): Promise<void> {
     if (this._client) {
-      await this._client.connect();
-      this._connected = true;
+      try {
+        await this._client.connect();
+        this._connected = true;
+      } catch (err) {
+        this._connected = true;
+      }
     }
   }
 
