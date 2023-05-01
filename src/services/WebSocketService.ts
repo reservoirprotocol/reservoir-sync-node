@@ -84,6 +84,7 @@ class _WebSocketService {
    * Connects to the websocket
    */
   private _connect(): void {
+    if (this._isConnected) return;
     this._ws = new WebSocket(`${this._url}?api_key=${this._apiKey}`);
 
     this._ws.on('open', this._onOpen.bind(this));
@@ -142,7 +143,16 @@ class _WebSocketService {
     }
   }
   private _onClose(code: number, reason: Buffer): void {
-    // Socket closed entirely meaning we need to restart it
+    this._isConnected = false;
+    try {
+      this._ws?.close();
+      const reconnect = setInterval(() => {
+        this._connect();
+        if (this._isConnected) clearInterval(reconnect);
+      }, 5000);
+    } catch (err) {
+      LoggerService.error(err);
+    }
   }
   private _onError(err: SocketError): void {
     LoggerService.error(err);
