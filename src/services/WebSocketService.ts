@@ -11,7 +11,7 @@ export interface ToConnect {
 }
 
 export interface WebSocketConfig {
-  contracts: string[];
+  contracts?: string[];
   apiKey: string;
   toConnect: ToConnect;
 }
@@ -77,6 +77,14 @@ class _WebSocketService {
    */
   public set(config: WebSocketConfig): void {
     this._config = config;
+  }
+  /**
+   * # launch
+   * @access public
+   * @returns voi
+   */
+  public launch(): void {
+    this._connect();
   }
 
   /**

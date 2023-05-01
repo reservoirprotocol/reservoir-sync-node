@@ -3,13 +3,13 @@ import { formatDistance } from 'date-fns';
 import { ServerManager } from './server/Server';
 import {
   BackupService,
-  InsertionService,
   LoggerService,
   RECORD_ROOT,
   REQUEST_METHODS,
   SyncService,
   URL_BASES,
   URL_PATHS,
+  WebSocketService,
 } from './services/';
 import {
   Backup,
@@ -96,6 +96,7 @@ class _LightNode {
    */
   private async _launchServices(): Promise<void> {
     ServerManager.launch();
+    WebSocketService.launch();
     await BackupService.launch();
   }
 
@@ -180,7 +181,7 @@ class _LightNode {
     const type = RECORD_ROOT[syncer];
     if (data[type]?.length > 0 && data[type]?.[data[type]?.length - 1]) {
       return data[type][data[type].length - 1].updatedAt.substring(0, 10);
-      }
+    }
     return new Date().toISOString().substring(0, 10);
   }
 
@@ -271,6 +272,13 @@ class _LightNode {
     LoggerService.set(this._config.logger);
     ServerManager.set(this._config.server);
     BackupService.set(this._config.backup);
+    WebSocketService.set({
+      apiKey: this._config.syncer.apiKey,
+      contracts: this._config.syncer.contracts,
+      toConnect: {
+        asks: this._config.syncer.toSync.asks,
+      },
+    });
   }
 
   /**
