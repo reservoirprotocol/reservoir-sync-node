@@ -2,22 +2,25 @@
 import { formatDistance } from 'date-fns';
 import { ServerManager } from './server/Server';
 import {
+  BackupService,
+  InsertionService,
   LoggerService,
   RECORD_ROOT,
   REQUEST_METHODS,
   SyncService,
   URL_BASES,
   URL_PATHS,
-} from './services';
-import { BackupService } from './services/BackupService';
+} from './services/';
 import {
   Backup,
   IndexSignatureType,
   LightNodeConfig,
   SyncerConfig,
+  Tables,
 } from './types';
 import {
   createQuery,
+  getContractInfo,
   getMonth,
   getYear,
   isAddress,
@@ -62,6 +65,31 @@ class _LightNode {
     this._logSyncers();
   }
   /**
+   *  # createSyncer
+   * Creates a a new syncer
+   * @param type - Type of syncer
+   * @param contracts - Contracts to filter
+   * @returns {string | null} string or null
+   */
+  public async createSyncer(type: Tables, contract: string): Promise<void> {
+    const { name } = await getContractInfo(contract);
+    const id = `${type}-syncer-${name}`;
+    const syncService = new SyncService({
+      chain: this._config.syncer.chain,
+      workerCount: this._config.syncer.workerCount,
+      managerCount: this._config.syncer.managerCount,
+      apiKey: this._config.syncer.apiKey,
+      contracts: [contract],
+      type: type,
+      date: await this._getStartDate(type),
+      backup: await this._loadBackup(type),
+    });
+
+    this._syncers.set(id, syncService);
+
+    this._syncers.get(id)?.launch();
+  }
+  /**
    * # _launchServices
    * @returns {void}
    * @access private
@@ -84,11 +112,12 @@ class _LightNode {
       let workers: any[] = [];
       let managers: any[] = [];
 
-      this._syncers.forEach((syncer) => {
+      this._syncers.forEach((syncer, syncerId) => {
         syncer.managers.forEach((manager, id) => {
           if (!manager) return;
           managers.push({
             type: syncer.config.type,
+            Syncer: syncerId,
             Manager: id,
             Year: getYear(manager?.config.date),
             Month: getMonth(manager?.config.date),
@@ -149,10 +178,9 @@ class _LightNode {
     const data = res.data as IndexSignatureType;
 
     const type = RECORD_ROOT[syncer];
-
     if (data[type]?.length > 0 && data[type]?.[data[type]?.length - 1]) {
       return data[type][data[type].length - 1].updatedAt.substring(0, 10);
-    }
+      }
     return new Date().toISOString().substring(0, 10);
   }
 
@@ -167,6 +195,28 @@ class _LightNode {
 
     if (!backup?.useBackup) {
       await BackupService.flush();
+    }
+
+    if (syncer.contracts && syncer.contracts.length > 0) {
+      for await (const contract of syncer.contracts) {
+        if (syncer.toSync.sales) {
+          this._syncers.set(
+            `sales-syncer-${contract}`,
+            new SyncService({
+              chain: syncer.chain,
+              workerCount: syncer.workerCount,
+              managerCount: syncer.managerCount,
+              apiKey: syncer.apiKey,
+              contracts: [contract],
+              type: 'sales',
+              date: await this._getStartDate('sales'),
+              backup: await this._loadBackup('sales'),
+            })
+          );
+        }
+      }
+
+      return;
     }
 
     if (syncer.toSync.sales) {

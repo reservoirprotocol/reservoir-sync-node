@@ -5,6 +5,9 @@ import { HttpStatusCode } from 'axios';
 import { Application } from 'express';
 import { SyncManager } from '../services';
 
+export interface ContractInfo {
+  name: string;
+}
 export interface WorkerBackup {
   date: string;
   continuation: string;

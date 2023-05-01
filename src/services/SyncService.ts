@@ -327,7 +327,7 @@ export class SyncService {
   private _createManagers(): void {
     for (let i = 0; i < Number(this.config.managerCount || 1); i++) {
       if (i !== 0) {
-        const date = incrementDate(this._date, { months: 1 });
+        const date = incrementDate(`${this._date.substring(0, 7)}-01`, { months: 1 });
         if (!isValidDate(date)) return;
         this._date = date;
       }
@@ -443,7 +443,9 @@ export class SyncService {
    * @returns void
    */
   private _continueWork(manager: SyncManager): boolean {
-    const _date = incrementDate(this._date, { months: 1 });
+    const _date = incrementDate(`${this._date.substring(0, 7)}-01`, {
+      months: 1,
+    });
 
     if (isValidDate(_date)) {
       this._date = _date;
