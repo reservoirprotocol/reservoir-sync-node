@@ -193,7 +193,7 @@ export class SyncManager {
    */
   private _restoreWorkers(): void {
     this.workers = this.config.workers?.reduce((workers, worker) => {
-      const id = `worker-${uuid()}`;
+      const id = `${this.config.type}-worker-${uuid()}`;
       return workers.set(
         id,
         new SyncWorker({
@@ -220,7 +220,7 @@ export class SyncManager {
         if (!isSameMonth(date, this.date) || !isValidDate(date)) return;
         this.date = date;
       }
-      const id = `worker-${uuid()}`;
+      const id = `${this.config.type}-worker-${uuid()}`;
       this.workers.set(
         id,
         new SyncWorker({

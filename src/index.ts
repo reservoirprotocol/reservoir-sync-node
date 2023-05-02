@@ -40,7 +40,7 @@ if (process.env.REDIS_URL) {
   config.backup = {
     // (Optional)
     redisUrl: process.env.REDIS_URL,
-    useBackup: true,
+    useBackup: false,
   };
 }
 

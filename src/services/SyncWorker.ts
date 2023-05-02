@@ -1,13 +1,22 @@
-import { isToday as _isToday } from 'date-fns';
+import { format, getDate, getMonth, getYear, isToday as _isToday, parseISO } from 'date-fns';
+import { utcToZonedTime } from 'date-fns-tz';
 import {
   Counts,
   IndexSignatureType,
   KnownPropertiesType,
-  SalesSchema,
   Status,
-  WorkerConfig,
+  WorkerConfig
 } from '../types';
 import { isSuccessResponse } from '../utils';
+
+function isTodayUTC(dateString: string | number | Date) {
+  const date = new Date(dateString);
+  const dateInUTC = utcToZonedTime(date, 'Etc/UTC');
+  const todayInUTC = utcToZonedTime(new Date(), 'Etc/UTC');
+  
+  return format(dateInUTC, 'yyyy-MM-dd') === format(todayInUTC, 'yyyy-MM-dd');
+}
+
 
 export class SyncWorker {
   /**
@@ -143,10 +152,10 @@ export class SyncWorker {
          * Use a typeguard to ensure that the resposne is 2xx
          */
         if (isSuccessResponse(res)) {
-          res.data.sales
+          res.data.sales;
           /**
            * Format the data into an array
-           */           // this.type
+           */ // this.type
           const data = this.config.format(res.data); // this.data.sales; this.date.orders
 
           /**
@@ -154,10 +163,13 @@ export class SyncWorker {
            */
           const lastSet = data[data.length - 1];
 
+          const rawDate = lastSet?.updatedAt;
+
+          const date = new Date(lastSet?.updatedAt);
           /**
            * Determine whether the last record matches todays date
            */
-          const isToday = _isToday(new Date(lastSet?.updatedAt));
+          const isToday = isTodayUTC(lastSet?.updatedAt);
 
           /**
            * Handle all the insertion related calls

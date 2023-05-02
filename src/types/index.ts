@@ -318,13 +318,11 @@ export type ParserFormatted = {
 //   asks: (asks: AsksSchema[], contracts?: string[]) => PrismaAsksCreate[];
 // };
 
-
 export type ParserMethods = {
-  [K in 'sales' | 'asks']: K extends 'sales' 
-    ? (sales: SalesSchema[], contracts?: string[]) => PrismaSalesCreate[] 
-    : (asks: AsksSchema[], contracts?: string[]) => PrismaAsksCreate[]
+  [K in 'sales' | 'asks']: K extends 'sales'
+    ? (sales: SalesSchema[], contracts?: string[]) => PrismaSalesCreate[]
+    : (asks: AsksSchema[], contracts?: string[]) => PrismaAsksCreate[];
 };
-
 
 export type DataType<T extends keyof ParserMethods> = ParserMethods[T] extends (
   data: infer D,
@@ -390,6 +388,7 @@ export interface ServerConfig {
 export interface ManagerConfig {
   id: string;
   date: string;
+  delay: number;
   count: CountType;
   insert: InsertType;
   format: FormatType;
@@ -421,6 +420,7 @@ export interface BaseSyncerConfig {
 }
 export interface SyncerConfig extends BaseSyncerConfig {
   date: string;
+  delay: number;
   type: Tables;
   backup: Backup | null;
 }

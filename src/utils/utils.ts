@@ -5,6 +5,7 @@ import {
   endOfMonth,
   format,
   isEqual,
+  isToday as isTodayFn,
   isPast,
   isSameDay as _isSameDay,
   isSameMonth as _isSameMonth,
@@ -12,6 +13,8 @@ import {
   parse,
   parseISO,
   startOfDay,
+  startOfMonth,
+  startOfToday,
 } from 'date-fns';
 import { validate } from 'node-cron';
 import web3 from 'web3';
@@ -43,6 +46,7 @@ export const createQuery = (
   date?: string
 ) => {
   const queries: string[] = [
+    'sortBy=updatedAt',
     'orderBy=updated_at',
     'sortDirection=asc',
     'includeDeleted=true',
@@ -218,4 +222,13 @@ export const getContractInfo = async (
       name: contract,
     };
   }
+};
+
+/**
+ * # getToday
+ * Gets the current date
+ * @returns {String} - todays date
+ */
+export const getToday = (): string => {
+  return format(startOfMonth(new Date()), 'yyyy-MM-dd');
 };

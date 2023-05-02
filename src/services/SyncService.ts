@@ -25,7 +25,9 @@ import {
 import {
   addressToBuffer,
   createQuery,
+  getToday,
   incrementDate,
+  isSameMonth,
   isValidDate,
   toBuffer,
 } from '../utils';
@@ -327,7 +329,9 @@ export class SyncService {
   private _createManagers(): void {
     for (let i = 0; i < Number(this.config.managerCount || 1); i++) {
       if (i !== 0) {
-        const date = incrementDate(`${this._date.substring(0, 7)}-01`, { months: 1 });
+        const date = incrementDate(`${this._date.substring(0, 7)}-01`, {
+          months: 1,
+        });
         if (!isValidDate(date)) return;
         this._date = date;
       }
@@ -338,6 +342,28 @@ export class SyncService {
           id,
           date: this._date,
           type: this.config.type,
+          delay: this.config.delay,
+          insert: this._insert.bind(this),
+          request: this._request.bind(this),
+          parse: this._parse.bind(this),
+          format: this._format.bind(this),
+          review: this._reviewManager.bind(this),
+          count: this._count.bind(this),
+          backup: this._backup.bind(this),
+          workerCount: Number(this.config.workerCount || 1),
+        })
+      );
+    }
+    if (this.config.type === 'asks') {
+      if (isSameMonth(this._date, getToday())) return;
+      const id = `${this.config.type}-manager-${uuid()}`;
+      this.managers.set(
+        id,
+        new SyncManager({
+          id,
+          date: getToday(),
+          type: this.config.type,
+          delay: this.config.delay,
           insert: this._insert.bind(this),
           request: this._request.bind(this),
           parse: this._parse.bind(this),
@@ -366,6 +392,7 @@ export class SyncService {
             id,
             date: manager.date,
             type: this.config.type,
+            delay: this.config.delay,
             insert: this._insert.bind(this),
             request: this._request.bind(this),
             parse: this._parse.bind(this),
@@ -413,9 +440,6 @@ export class SyncService {
    * @returns {void} void
    */
   private _deleteManager(id: string): void {
-    // if (Array.from(manager.workers.values()).some((worker) => worker?.isBusy))
-    // return;
-
     this.managers.delete(id);
   }
   private _reviewManager(manager: SyncManager): Boolean {

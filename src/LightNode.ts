@@ -61,8 +61,8 @@ class _LightNode {
     this._setServices();
     await this._launchServices();
     await this._createSyncers();
-    // this._launchSyncers();
-    // this._logSyncers();
+    this._launchSyncers();
+    this._logSyncers();
   }
   /**
    *  # createSyncer
@@ -80,6 +80,7 @@ class _LightNode {
       managerCount: this._config.syncer.managerCount,
       apiKey: this._config.syncer.apiKey,
       contracts: [contract],
+      delay: 0,
       type: type,
       date: await this._getStartDate(type),
       backup: await this._loadBackup(type),
@@ -155,7 +156,11 @@ class _LightNode {
         `Memory usage: ${Math.round((used.rss / 1024 / 1024) * 100) / 100} MB`
       );
       console.table(managers);
-      console.table(workers);
+      console.table(
+        workers.sort(
+          (a, b) => new Date(a.date).getDate() - new Date(b.date).getDate()
+        )
+      );
     }, 100);
   }
 
@@ -193,8 +198,9 @@ class _LightNode {
    */
   private async _createSyncers(): Promise<void> {
     const { syncer, backup } = this._config;
-
+    console.log(backup);
     if (!backup?.useBackup) {
+      console.log(`FLUSHING`);
       await BackupService.flush();
     }
 
@@ -209,9 +215,26 @@ class _LightNode {
               managerCount: syncer.managerCount,
               apiKey: syncer.apiKey,
               contracts: [contract],
+              delay: 0,
               type: 'sales',
               date: await this._getStartDate('sales'),
               backup: await this._loadBackup('sales'),
+            })
+          );
+        }
+        if (syncer.toSync.asks) {
+          this._syncers.set(
+            'asks-syncer',
+            new SyncService({
+              chain: syncer.chain,
+              workerCount: syncer.workerCount,
+              managerCount: syncer.managerCount,
+              apiKey: syncer.apiKey,
+              delay: 60,
+              contracts: syncer.contracts,
+              type: 'asks',
+              date: await this._getStartDate('asks'),
+              backup: await this._loadBackup('asks'),
             })
           );
         }
@@ -229,6 +252,7 @@ class _LightNode {
           managerCount: syncer.managerCount,
           apiKey: syncer.apiKey,
           contracts: syncer.contracts,
+          delay: 0,
           type: 'sales',
           date: await this._getStartDate('sales'),
           backup: await this._loadBackup('sales'),
@@ -243,6 +267,7 @@ class _LightNode {
           workerCount: syncer.workerCount,
           managerCount: syncer.managerCount,
           apiKey: syncer.apiKey,
+          delay: 60,
           contracts: syncer.contracts,
           type: 'asks',
           date: await this._getStartDate('asks'),
