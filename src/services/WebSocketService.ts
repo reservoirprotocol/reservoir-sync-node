@@ -1,5 +1,5 @@
 import WebSocket from 'ws';
-import { Chains, DataType, Query, Schemas, Tables } from '../types';
+import { AsksSchema, Chains, DataType } from '../types';
 import { InsertionService } from './InsertionService';
 import { LoggerService } from './LoggerService';
 import { PARSER_METHODS } from './SyncService';
@@ -22,7 +22,7 @@ export interface SocketMessage {
   type: MessageType;
   event: MessageEvent;
   status: string;
-  data: Schemas;
+  data: AsksSchema;
 }
 export interface SocketError {
   name: string;
@@ -121,27 +121,24 @@ class _WebSocketService {
         message.toString('utf-8')
       );
 
+      if (!event || event === 'subscribe') return;
       if (type === 'connection' && status === 'ready') {
         this._isConnected = true;
         this._onConnected();
         return;
       }
 
-      if (event === 'subscribe') return;
-
-      if (event.includes('asks')) {
-        const query: Query = {
-          table: `${type.split('.')[0]}s` as Tables,
-          data: PARSER_METHODS.asks(
-            data as DataType<'asks'>,
+      if (event.includes('ask')) {
+        InsertionService.upsert({
+          table: 'asks',
+          data: PARSER_METHODS['asks'](
+            [data] as DataType<'asks'>,
             this._config?.contracts
           ),
-        };
-        InsertionService.upsert(query);
+        });
       }
-    } catch (err: any) {
+    } catch (err) {
       LoggerService.error(err);
-      return;
     }
   }
   private _onClose(code: number, reason: Buffer): void {
@@ -166,11 +163,13 @@ class _WebSocketService {
   private _subscribe(event: MessageEvent, contract?: string): void {
     console.log(`CALLED`);
     console.log(
-      `Sending message: ${{
-        type: 'subscribe',
-        event,
-        ...(contract && { contract }),
-      }}`
+      JSON.stringify(
+        `Sending message: ${{
+          type: 'subscribe',
+          event,
+          ...(contract && { contract }),
+        }}`
+      )
     );
     this._ws?.send(
       JSON.stringify({
