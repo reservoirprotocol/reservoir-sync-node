@@ -471,7 +471,7 @@ export class SyncService {
       months: 1,
     });
 
-    if (isValidDate(_date)) {
+    if (isValidDate(_date) && !Array.from(this.managers.values()).some(manager => isSameMonth(_date, manager.date))) {
       this._date = _date;
       manager.config.date = _date;
       return true;

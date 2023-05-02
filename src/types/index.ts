@@ -148,6 +148,7 @@ export interface WorkerConfig {
   id: string;
   type: Tables;
   continuation: string;
+  delay: number;
   request: SyncServiceInstance['_request'];
   format: SyncServiceInstance['_format'];
   insert: SyncServiceInstance['_insert'];

@@ -1,22 +1,22 @@
-import { format, getDate, getMonth, getYear, isToday as _isToday, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 import { utcToZonedTime } from 'date-fns-tz';
 import {
   Counts,
   IndexSignatureType,
   KnownPropertiesType,
   Status,
-  WorkerConfig
+  WorkerConfig,
 } from '../types';
-import { isSuccessResponse } from '../utils';
+import { delay, isSuccessResponse } from '../utils';
 
 function isTodayUTC(dateString: string | number | Date) {
+  if (!dateString) return false;
   const date = new Date(dateString);
   const dateInUTC = utcToZonedTime(date, 'Etc/UTC');
   const todayInUTC = utcToZonedTime(new Date(), 'Etc/UTC');
-  
+
   return format(dateInUTC, 'yyyy-MM-dd') === format(todayInUTC, 'yyyy-MM-dd');
 }
-
 
 export class SyncWorker {
   /**
@@ -163,9 +163,6 @@ export class SyncWorker {
            */
           const lastSet = data[data.length - 1];
 
-          const rawDate = lastSet?.updatedAt;
-
-          const date = new Date(lastSet?.updatedAt);
           /**
            * Determine whether the last record matches todays date
            */
@@ -200,6 +197,9 @@ export class SyncWorker {
           }
           this.config.backup();
         }
+        //if (this.isBackfilled) {
+        //  await delay(this.config.delay);
+        //}
       }
 
       resolve(this.id);
