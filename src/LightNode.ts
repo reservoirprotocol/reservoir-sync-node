@@ -61,8 +61,8 @@ class _LightNode {
     this._setServices();
     await this._launchServices();
     await this._createSyncers();
-    this._launchSyncers();
-    this._logSyncers();
+    // this._launchSyncers();
+    // this._logSyncers();
   }
   /**
    *  # createSyncer
@@ -275,6 +275,7 @@ class _LightNode {
     WebSocketService.set({
       apiKey: this._config.syncer.apiKey,
       contracts: this._config.syncer.contracts,
+      chain: this._config.syncer.chain,
       toConnect: {
         asks: this._config.syncer.toSync.asks,
       },

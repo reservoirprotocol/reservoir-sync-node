@@ -313,10 +313,18 @@ export type ParserFormatted = {
   asks: any;
 };
 
+// export type ParserMethods = {
+//   sales: (sales: SalesSchema[], contracts?: string[]) => PrismaSalesCreate[];
+//   asks: (asks: AsksSchema[], contracts?: string[]) => PrismaAsksCreate[];
+// };
+
+
 export type ParserMethods = {
-  sales: (sales: SalesSchema[], contracts?: string[]) => PrismaSalesCreate[];
-  asks: (asks: AsksSchema[], contracts?: string[]) => PrismaAsksCreate[];
+  [K in 'sales' | 'asks']: K extends 'sales' 
+    ? (sales: SalesSchema[], contracts?: string[]) => PrismaSalesCreate[] 
+    : (asks: AsksSchema[], contracts?: string[]) => PrismaAsksCreate[]
 };
+
 
 export type DataType<T extends keyof ParserMethods> = ParserMethods[T] extends (
   data: infer D,
@@ -373,7 +381,7 @@ export type ApiResponse<T = SuccessType> = SuccessResponse<T> | ErrorResponse;
 
 export type Chain = keyof Chains;
 
-export type Chains = 'mainnet' | 'goerli' | 'optimism' | 'polygon';
+export type Chains = 'mainnet' | 'goerli';
 
 export interface ServerConfig {
   port?: number | string;

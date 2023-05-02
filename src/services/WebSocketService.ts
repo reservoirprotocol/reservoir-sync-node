@@ -1,5 +1,5 @@
 import WebSocket from 'ws';
-import { Query, Tables } from '../types';
+import { Chains, DataType, Query, Schemas, Tables } from '../types';
 import { InsertionService } from './InsertionService';
 import { LoggerService } from './LoggerService';
 import { PARSER_METHODS } from './SyncService';
@@ -13,22 +13,22 @@ export interface ToConnect {
 export interface WebSocketConfig {
   contracts?: string[];
   apiKey: string;
+  chain: Chains;
   toConnect: ToConnect;
 }
-
+export type MessageType = 'connection';
+export type MessageEvent = 'subscribe' | 'ask.created' | 'ask.updated';
 export interface SocketMessage {
-  type: Event;
+  type: MessageType;
+  event: MessageEvent;
   status: string;
-  data: Record<string | number, unknown>;
+  data: Schemas;
 }
 export interface SocketError {
   name: string;
   message: string;
   stack?: string;
 }
-export type Event = 'connection' | 'ask.created' | 'ask.updated';
-
-export type DataType = 'ask';
 
 enum URLS {
   'goerli' = 'wss://ws.dev.reservoir.tools?',
@@ -48,15 +48,6 @@ class _WebSocketService {
   private _config: WebSocketConfig | null;
 
   /**
-   * # _apiKey
-   * Reservoir api key
-   * @access private
-   */
-  private _apiKey: string | null;
-
-  private _contracts: string[] | null;
-
-  /**
    * # _isConnected
    */
   private _isConnected: boolean | null;
@@ -64,9 +55,7 @@ class _WebSocketService {
   constructor() {
     this._ws = null;
     this._url = null;
-    this._apiKey = null;
     this._config = null;
-    this._contracts = null;
     this._isConnected = null;
   }
 
@@ -77,11 +66,12 @@ class _WebSocketService {
    */
   public set(config: WebSocketConfig): void {
     this._config = config;
+    this._url = URLS[this._config.chain];
   }
   /**
    * # launch
    * @access public
-   * @returns voi
+   * @returns void
    */
   public launch(): void {
     this._connect();
@@ -93,21 +83,18 @@ class _WebSocketService {
    */
   private _connect(): void {
     if (this._isConnected) return;
-    this._ws = new WebSocket(`${this._url}?api_key=${this._apiKey}`);
+    this._ws = new WebSocket(`${this._url}?api_key=${this._config?.apiKey}`);
 
-    this._ws.on('open', this._onOpen.bind(this));
     this._ws.on('close', this._onClose.bind(this));
     this._ws.on('error', this._onError.bind(this));
     this._ws.on('message', this._onMessage.bind(this));
   }
   /**
    * # _onOpen
-   * Callback binded to the WebSocket open event
+   * Connection
    * @returns void
    */
-  private _onOpen(): void {
-    if (!this._isConnected) return;
-
+  private _onConnected(): void {
     if (this._config?.contracts && this._config.contracts.length > 0) {
       this._config.contracts.forEach((contract) => {
         if (this._config?.toConnect.asks) {
@@ -130,21 +117,28 @@ class _WebSocketService {
    */
   private _onMessage(message: Buffer): void {
     try {
-      const { type, status, data }: SocketMessage = JSON.parse(
+      const { type, status, data, event }: SocketMessage = JSON.parse(
         message.toString('utf-8')
       );
 
       if (type === 'connection' && status === 'ready') {
         this._isConnected = true;
+        this._onConnected();
         return;
       }
 
-      const query: Query = {
-        table: `${type.split('.')[0]}s` as Tables,
-        data: PARSER_METHODS[`${type.split('.')[0]}s` as Tables]([], []),
-      };
+      if (event === 'subscribe') return;
 
-      InsertionService.upsert(query);
+      if (event.includes('asks')) {
+        const query: Query = {
+          table: `${type.split('.')[0]}s` as Tables,
+          data: PARSER_METHODS.asks(
+            data as DataType<'asks'>,
+            this._config?.contracts
+          ),
+        };
+        InsertionService.upsert(query);
+      }
     } catch (err: any) {
       LoggerService.error(err);
       return;
@@ -169,7 +163,15 @@ class _WebSocketService {
    * # _subscribe
    * Subcribe to WebSocket events
    */
-  private _subscribe(event: Event, contract?: string): void {
+  private _subscribe(event: MessageEvent, contract?: string): void {
+    console.log(`CALLED`);
+    console.log(
+      `Sending message: ${{
+        type: 'subscribe',
+        event,
+        ...(contract && { contract }),
+      }}`
+    );
     this._ws?.send(
       JSON.stringify({
         type: 'subscribe',
