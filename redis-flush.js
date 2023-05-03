@@ -11,7 +11,7 @@ async function flushRedisStorage() {
     const client = createClient({ url: CONNECTION_URL });
     await client.connect();
     await client.flushDb();
-    console.infos(`FLUSHED REDIS STORAGE`);
+    console.info(`FLUSHED REDIS STORAGE`);
     await client.disconnect();
   } catch (err) {
     console.error(`ERROR FLUSHING REDIS STORAGE: ${err}`);
