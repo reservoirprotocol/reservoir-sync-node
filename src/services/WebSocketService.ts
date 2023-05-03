@@ -19,12 +19,23 @@ class _WebSocketService {
    */
   private _ws: WebSocket | null;
 
+  /**
+   * # _url
+   * WebSocket url
+   * @access private
+   */
   private _url: URLS | null;
 
+  /**
+   * # _config
+   * WebSocket service config
+   * @access private
+   */
   private _config: WebSocketConfig | null;
 
   /**
    * # _isConnected
+   * @access private
    */
   private _isConnected: boolean | null;
 
