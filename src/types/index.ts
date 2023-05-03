@@ -343,11 +343,6 @@ export type ParserFormatted = {
   asks: any;
 };
 
-// export type ParserMethods = {
-//   sales: (sales: SalesSchema[], contracts?: string[]) => PrismaSalesCreate[];
-//   asks: (asks: AsksSchema[], contracts?: string[]) => PrismaAsksCreate[];
-// };
-
 export type ParserMethods = {
   [K in 'sales' | 'asks']: K extends 'sales'
     ? (sales: SalesSchema[], contracts?: string[]) => PrismaSalesCreate[]
@@ -372,8 +367,6 @@ export interface FormatMethods {
 }
 export type APIDatasets = 'sales' | 'orders';
 
-// continatuon
-// orders | sales
 export type KnownPropertiesType = {
   continuation: string;
 } & {
