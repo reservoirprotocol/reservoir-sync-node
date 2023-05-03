@@ -24,25 +24,23 @@ const config: LightNodeConfig = {
       sales: process.env.SYNC_SALES === '1', // (Optional)
     },
   },
+  // (Optional)
+  ...(process.env.DATADOG_APP_NAME &&
+    process.env.DATADOG_API_KEY && {
+      datadog: {
+        appName: process.env.DATADOG_APP_NAME,
+        apiKey: process.env.DATADOG_API_KEY,
+      },
+    }),
+  // (Optional)
+  ...(process.env.REDIS_URL &&
+    process.env.DATADOG_API_KEY && {
+      backup: {
+        redisUrl: process.env.REDIS_URL,
+        useBackup: process.env.USE_BACKUP === '1',
+      },
+    }),
 };
-
-// (Optional)
-if (process.env.DATADOG_APP_NAME && process.env.DATADOG_API_KEY) {
-  config.logger = {
-    datadog: {
-      appName: process.env.DATADOG_APP_NAME,
-      apiKey: process.env.DATADOG_API_KEY,
-    },
-  };
-}
-// (Optional)
-if (process.env.REDIS_URL) {
-  config.backup = {
-    // (Optional)
-    redisUrl: process.env.REDIS_URL,
-    useBackup: false,
-  };
-}
 
 /**
  * Launches the LightNode instance with the given configuration.
