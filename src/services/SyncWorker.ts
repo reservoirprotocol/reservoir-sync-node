@@ -146,10 +146,7 @@ export class SyncWorker {
            * Extract the last set from the data
            */
           const lastSet = data[data.length - 1];
-
-          if (this.date.includes('05-09')) {
-            console.log(res.data);
-          }
+          
           /**
            * Determine whether the last record matches todays date
            */
