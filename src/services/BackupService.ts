@@ -43,12 +43,14 @@ class _BackupService {
    * @returns {void} void
    */
   public async launch(): Promise<void> {
+    console.log(`THIS IS BACKUP SERVICE`);
     if (this._client) {
       try {
         await this._client.connect();
         this._connected = true;
       } catch (err) {
-        this._connected = true;
+        LoggerService.error(err);
+        this._connected = false;
       }
     }
   }
