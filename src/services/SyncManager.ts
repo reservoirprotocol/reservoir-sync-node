@@ -135,6 +135,7 @@ export class SyncManager {
         const res = await this.config.request({
           date: yearMonth,
           continuation: '',
+          isBackfilled: this.isBackfilled,
         });
 
         /**

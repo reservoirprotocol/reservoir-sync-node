@@ -103,58 +103,64 @@ export const FORMAT_METHODS: FormatMethods = {
     return asks?.map((ask: AsksSchema) => {
       return {
         id: Buffer.from(
-          `${ask.id}-${ask.contract}-${ask.maker}-${ask.tokenSetId}-${ask.createdAt}`
+          `${ask?.id}-${ask?.contract}-${ask?.maker}-${ask?.tokenSetId}-${ask?.createdAt}`
         ),
-        ask_id: toBuffer(ask?.id),
-        kind: ask?.kind,
-        side: ask?.side,
-        status: ask?.status,
-        token_set_Id: ask?.tokenSetId,
-        token_set_schema_hash: addressToBuffer(ask?.tokenSetSchemaHash),
-        contract: addressToBuffer(ask?.contract),
-        maker: addressToBuffer(ask?.maker),
-        taker: addressToBuffer(ask?.taker),
-        price_currency_contract: addressToBuffer(
-          ask?.price?.currency?.contract
-        ),
-        price_currency_name: ask?.price?.currency?.name,
-        price_currency_symbol: ask?.price?.currency?.symbol,
-        price_currency_decimals: ask?.price?.currency?.decimals,
-        price_amount_raw: ask?.price?.amount?.raw,
-        price_amount_decimal: ask?.price?.amount?.decimal,
-        price_amount_native: ask?.price?.amount?.usd,
-        price_net_raw: ask?.price?.netAmount?.raw,
-        price_net_decimal: ask?.price?.netAmount?.decimal,
-        price_amount_usd: 0.00,
-        price_net_native: ask?.price?.netAmount?.native,
-        quantity_filled: ask?.quantityFilled,
-        quantity_remaining: ask?.quantityRemaining,
-        dynamic_pricing: 0,
-        criteria_kind: ask?.criteria?.kind,
-        criteria_data_token_tokenId: ask?.criteria?.data?.token?.tokenId,
-        criteria_data_token_name: ask?.criteria?.data?.token?.name,
-        criteria_data_token_image: ask?.criteria?.data?.token?.image,
-        criteria_data_collection_id: addressToBuffer(
-          ask?.criteria?.data?.collection?.id
-        ),
-        criteria_data_collection_name: ask?.criteria?.data?.collection?.name,
-        criteria_data_collection_image: ask?.criteria?.data?.collection?.image,
-        source_id: addressToBuffer(ask?.source?.id),
-        source_domain: ask?.source?.domain,
-        source_name: ask?.source?.name,
-        source_icon: ask?.source?.icon,
-        source_url: ask?.source?.url,
-        fee_bps: ask?.feeBps,
-        fee_breakdown: JSON.stringify(ask?.feeBreakdown),
-        expiration: ask?.expiration.toString(),
-        is_reservoir: ask?.isReservoir,
-        is_dynamic: ask?.isDynamic,
-        updated_at: ask?.updatedAt,
-        created_at: ask?.createdAt,
+        ask_id: ask?.id ? toBuffer(ask.id) : null,
+        kind: ask?.kind || null,
+        side: ask?.side || null,
+        status: ask?.status || null,
+        token_set_id: ask?.tokenSetId || null,
+        token_set_schema_hash: ask?.tokenSetSchemaHash
+          ? addressToBuffer(ask.tokenSetSchemaHash)
+          : null,
+        contract: ask?.contract ? addressToBuffer(ask.contract) : null,
+        maker: ask?.maker ? addressToBuffer(ask.maker) : null,
+        taker: ask?.taker ? addressToBuffer(ask.taker) : null,
+        price_currency_contract: ask?.price?.currency?.contract
+          ? addressToBuffer(ask.price.currency.contract)
+          : null,
+        price_currency_name: ask?.price?.currency?.name || null,
+        price_currency_symbol: ask?.price?.currency?.symbol || null,
+        price_currency_decimals: ask?.price?.currency?.decimals || null,
+        price_amount_raw: ask?.price?.amount?.raw || null,
+        price_amount_decimal: ask?.price?.amount?.decimal || null,
+        price_amount_native: ask?.price?.amount?.native || null,
+        price_amount_usd: ask?.price?.amount?.usd || null,
+        price_net_amount_decimal: ask?.price?.netAmount?.decimal || null,
+        price_net_amount_native: ask?.price?.netAmount?.native || null,
+        price_net_amount_raw: ask?.price?.netAmount?.raw || null,
+        price_net_amount_usd: ask?.price?.netAmount?.usd || null,
+        valid_from: ask?.validFrom || null,
+        valid_until: ask?.validUntil || null,
+        quantity_filled: ask?.quantityFilled || null,
+        quantity_remaining: ask?.quantityRemaining || null,
+        criteria_kind: ask?.criteria?.kind || null,
+        criteria_data_token_image: ask?.criteria?.data?.token?.image || null,
+        criteria_data_token_name: ask?.criteria?.data?.token?.name || null,
+        criteria_data_token_token_id:
+          ask?.criteria?.data?.token?.tokenId || null,
+        criteria_data_collection_id:
+          ask?.criteria?.data?.collection?.id || null,
+        criteria_data_collection_image:
+          ask?.criteria?.data?.collection?.image || null,
+        criteria_data_collection_name:
+          ask?.criteria?.data?.collection?.name || null,
+        source_domain: ask?.source?.domain || null,
+        source_icon: ask?.source?.icon || null,
+        source_url: ask?.source?.url || null,
+        source_id: ask?.source?.id || null,
+        fee_bps: ask?.feeBps || null,
+        fee_breakdown: JSON.stringify(ask.feeBreakdown),
+        expiration: ask?.expiration || null,
+        is_reservoir: ask?.isReservoir || null,
+        is_dynamic: ask?.isDynamic || null,
+        updated_at: ask?.updatedAt || null,
+        created_at: ask?.createdAt || null,
       };
     });
   },
 };
+
 /**
  * Parser methods for the raw API responses
  */
@@ -542,10 +548,17 @@ export class SyncService {
   private async _request({
     continuation,
     date,
+    isBackfilled,
   }: Request): Promise<ApiResponse> {
     return await REQUEST_METHODS[this.config.type as keyof RequestMethods]({
       url: `${URL_BASES[this.config.chain]}${URL_PATHS[this.config.type]}`,
-      query: createQuery(continuation, this.config.contracts, date),
+      query: createQuery(
+        continuation,
+        this.config.contracts,
+        this.config.type,
+        isBackfilled,
+        date
+      ),
       apiKey: this._apiKey,
     });
   }

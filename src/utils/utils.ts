@@ -12,12 +12,12 @@ import {
   parse,
   parseISO,
   startOfDay,
-  startOfMonth,
+  startOfMonth
 } from 'date-fns';
 import { utcToZonedTime } from 'date-fns-tz';
 import { validate } from 'node-cron';
 import web3 from 'web3';
-import { ApiResponse, ContractInfo, SuccessResponse } from '../types';
+import { ApiResponse, ContractInfo, SuccessResponse, Tables } from '../types';
 
 export const isCron = validate;
 export const isAddress = web3.utils.isAddress;
@@ -31,6 +31,10 @@ export const isAddress = web3.utils.isAddress;
 export const delay = (seconds: number): Promise<void> =>
   new Promise<void>((r) => setTimeout(r, seconds * 1000));
 
+export const DEFAULT_QUERIES = {
+  sales: ['sortBy=updatedAt'],
+  asks: ['sortBy=updatedAt'],
+};
 /**
  * # createQuery
  * Creates a query string based on the provided parameters.
@@ -42,16 +46,21 @@ export const delay = (seconds: number): Promise<void> =>
 export const createQuery = (
   continuation: string = '',
   contracts: string[] = [],
+  type: Tables,
+  isBackfilled: boolean,
   date?: string
 ) => {
   const queries: string[] = [
-    'sortBy=updatedAt',
-    'orderBy=updated_at',
     'sortDirection=asc',
-    'status=active',
     'limit=1000',
     'includeCriteriaMetadata=true',
+    'sortBy=updatedAt'
   ];
+
+
+  if (!isBackfilled && type === 'asks') {
+    queries.push('status=active');
+  };
 
   if (date) {
     let startTimestamp = 0;

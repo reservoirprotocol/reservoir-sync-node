@@ -354,6 +354,7 @@ export type KnownPropertiesType = {
 export interface Request {
   continuation: string;
   date: string;
+  isBackfilled: boolean;
 }
 
 export type GenericResponse = KnownPropertiesType;

@@ -115,6 +115,7 @@ export class SyncWorker {
         const res = await this.config.request({
           continuation: this.continuation,
           date: this.date,
+          isBackfilled: this.isBackfilled,
         });
 
         /**
@@ -146,6 +147,9 @@ export class SyncWorker {
            */
           const lastSet = data[data.length - 1];
 
+          if (this.date.includes('05-09')) {
+            console.log(res.data);
+          }
           /**
            * Determine whether the last record matches todays date
            */

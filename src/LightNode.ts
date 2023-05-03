@@ -173,7 +173,7 @@ class _LightNode {
   private async _getStartDate(syncer: SyncerConfig['type']): Promise<string> {
     const res = await REQUEST_METHODS.sales({
       url: `${URL_BASES[this._config.syncer.chain]}${URL_PATHS[syncer]}`,
-      query: createQuery('', this._config.syncer.contracts),
+      query: createQuery('', this._config.syncer.contracts, syncer, false),
       apiKey: this._config.syncer.apiKey,
     });
     if (!isSuccessResponse(res))
@@ -198,7 +198,6 @@ class _LightNode {
    */
   private async _createSyncers(): Promise<void> {
     const { syncer, backup } = this._config;
-    console.log(backup);
     if (!backup?.useBackup) {
       await BackupService.flush();
     }

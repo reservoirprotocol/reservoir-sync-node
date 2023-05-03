@@ -41,17 +41,16 @@ model sales {
 }
 
 model asks {
-  id                    Bytes   @id @db.ByteA
-  ask_id                Bytes?  @db.ByteA
-  kind                  String? @db.Text
-  side                  String? @db.Text
-  status                String? @db.Text
-  token_set_Id          String? @db.Text
-  token_set_schema_hash Bytes?  @db.ByteA
-  contract              Bytes?  @db.ByteA
-  maker                 Bytes?  @db.ByteA
-  taker                 Bytes?  @db.ByteA
-
+  id                      Bytes   @id @db.ByteA
+  ask_id                  Bytes?  @db.ByteA
+  kind                    String? @db.Text
+  side                    String? @db.Text
+  status                  String? @db.Text
+  token_set_id            String? @db.Text
+  token_set_schema_hash   Bytes?  @db.ByteA
+  contract                Bytes?  @db.ByteA
+  maker                   Bytes?  @db.ByteA
+  taker                   Bytes?  @db.ByteA
   price_currency_contract Bytes?  @db.ByteA
   price_currency_name     String? @db.Text
   price_currency_symbol   String? @db.Text
@@ -62,92 +61,35 @@ model asks {
   price_amount_usd     Decimal? @db.Decimal
   price_amount_native  Decimal? @db.Decimal
 
-  price_net_raw     String?  @db.Text
-  price_net_decimal Decimal? @db.Decimal
-  price_net_usd     Decimal? @db.Decimal
-  price_net_native  Decimal? @db.Decimal
+  price_net_amount_raw     String?  @db.Text
+  price_net_amount_decimal Decimal? @db.Decimal
+  price_net_amount_usd     Decimal? @db.Decimal
+  price_net_amount_native  Decimal? @db.Decimal
 
-  quantity_filled    Int? @db.Integer
-  quantity_remaining Int? @db.Integer
-  dynamic_pricing    Int? @db.Integer
+  valid_from         BigInt?   @db.BigInt
+  valid_until        BigInt?   @db.BigInt
+  quantity_filled    BigInt?   @db.BigInt
+  quantity_remaining BigInt?   @db.BigInt
 
-  criteria_kind                  String? @db.Text
-  criteria_data_token_tokenId    String? @db.Text
-  criteria_data_token_name       String? @db.Text
-  criteria_data_token_image      String? @db.Text
-  criteria_data_collection_id    Bytes?  @db.ByteA
+  criteria_kind                String? @db.Text
+  criteria_data_token_token_id String? @db.Text
+  criteria_data_token_name     String? @db.Text
+  criteria_data_token_image    String? @db.Text
+
+  criteria_data_collection_id    String? @db.Text
   criteria_data_collection_name  String? @db.Text
   criteria_data_collection_image String? @db.Text
 
-  source_id     Bytes?  @db.ByteA
+  source_id     String? @db.Text
   source_domain String? @db.Text
   source_name   String? @db.Text
   source_icon   String? @db.Text
   source_url    String? @db.Text
-
-  fee_bps       Int?  @db.Integer
-  fee_breakdown Json? @db.Json
-
-  expiration   String? @db.Text
-  is_reservoir Boolean?  @db.Boolean
-  is_dynamic   Boolean?  @db.Boolean
-  updated_at   DateTime? @default(now())
-  created_at   DateTime?
-}
-
-model bids {
-  id                    Bytes   @id @db.ByteA
-  kind                  String? @db.Text
-  side                  String? @db.Text
-  status                String? @db.Text
-  token_set_Id          String? @db.Text
-  token_set_schema_hash Bytes?  @db.ByteA
-  contract              Bytes?  @db.ByteA
-  maker                 Bytes?  @db.ByteA
-  taker                 Bytes?  @db.ByteA
-
-  price_currency_contract Bytes?  @db.ByteA
-  price_currency_name     String? @db.Text
-  price_currency_symbol   String? @db.Text
-  price_currency_decimals Int?    @db.Integer
-
-  price_amount_raw     String?  @db.Text
-  price_amount_decimal Decimal? @db.Decimal
-  price_amount_usd     Decimal? @db.Decimal
-  price_amount_native  Decimal? @db.Decimal
-
-  price_net_raw     String?  @db.Text
-  price_net_decimal Decimal? @db.Decimal
-  price_net_usd     Decimal? @db.Decimal
-  price_net_native  Decimal? @db.Decimal
-
-  valid_from  Int? @db.Integer
-  valid_until Int? @db.Integer
-
-  quantity_filled    Int? @db.Integer
-  quantity_remaining Int? @db.Integer
-  dynamic_pricing    Int? @db.Integer
-
-  criteria_kind                  String? @db.Text
-  criteria_data_token_tokenId    String? @db.Text
-  criteria_data_token_name       String? @db.Text
-  criteria_data_token_image      String? @db.Text
-  criteria_data_collection_id    Bytes?  @db.ByteA
-  criteria_data_collection_name  String? @db.Text
-  criteria_data_collection_image String? @db.Text
-
-  source_id     Bytes?  @db.ByteA
-  source_domain String? @db.Text
-  source_name   String? @db.Text
-  source_icon   String? @db.Text
-  source_url    String? @db.Text
-
-  fee_bps       Int?  @db.Integer
-  fee_breakdown Json? @db.Json
-
-  expiration   Int?      @db.Integer
-  is_reservoir Boolean?  @db.Boolean
-  is_dynamic   Boolean?  @db.Boolean
-  updated_at   DateTime? @default(now())
-  created_at   DateTime?
+  fee_bps       BigInt?   @db.BigInt
+  fee_breakdown Json?     @db.JsonB
+  expiration    BigInt?   @db.BigInt
+  is_reservoir  Boolean?  @db.Boolean
+  is_dynamic    Boolean?  @db.Boolean
+  created_at    DateTime? @db.Timestamp
+  updated_at    DateTime? @db.Timestamp
 }
