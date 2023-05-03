@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { formatDistance } from 'date-fns';
 import { ServerManager } from './server/Server';
 import {
@@ -315,31 +314,25 @@ class _LightNode {
   private _validateConfig(): void {
     const { server, syncer, logger, backup } = this._config;
 
-    // Validate backup configuration
     if (backup && !backup.redisUrl) {
       throw new Error(`INVALID REDIS URl; ${backup.redisUrl}`);
     }
 
-    // Validate server port
     if (String(server.port).length !== 4)
       throw new Error(`INVALID SERVER PORT: ${server.port}`);
 
-    // Validate server authorization
     if (!server.authorization)
       throw new Error(`INVALID SERVER AUTHORIZATION: ${server.authorization}`);
 
-    // Validate datadog configuration (if present)
     if (logger?.datadog) {
       const { appName, apiKey } = logger.datadog;
       if (!appName || !apiKey)
         throw new Error(`INVALID DATADOG CONFIG: ${appName}-${apiKey}`);
     }
 
-    // Validate api keys
     if (!syncer.apiKey)
       throw new Error(`AN API KEY IS REQUIRED: ${syncer.apiKey}`);
 
-    // Validate the contracts to filter by
     if (syncer?.contracts) {
       syncer.contracts.forEach((contract) => {
         if (!isAddress(contract)) {
@@ -348,7 +341,6 @@ class _LightNode {
       });
     }
 
-    // Validate chain
     if (!syncer.chain) throw new Error(`INVALID CHAIN: ${syncer.chain}`);
   }
   /**
