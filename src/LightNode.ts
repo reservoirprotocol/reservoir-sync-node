@@ -200,7 +200,6 @@ class _LightNode {
     const { syncer, backup } = this._config;
     console.log(backup);
     if (!backup?.useBackup) {
-      console.log(`FLUSHING`);
       await BackupService.flush();
     }
 
