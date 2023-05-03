@@ -5,6 +5,35 @@ import { HttpStatusCode } from 'axios';
 import { Application } from 'express';
 import { SyncManager } from '../services';
 
+export interface ToConnect {
+  asks: boolean;
+}
+
+export interface WebSocketConfig {
+  contracts?: string[];
+  apiKey: string;
+  chain: Chains;
+  toConnect: ToConnect;
+}
+export type MessageType = 'connection';
+export type MessageEvent = 'subscribe' | 'ask.created' | 'ask.updated';
+export interface SocketMessage {
+  type: MessageType;
+  event: MessageEvent;
+  status: string;
+  data: AsksSchema;
+}
+export interface SocketError {
+  name: string;
+  message: string;
+  stack?: string;
+}
+
+export enum URLS {
+  'goerli' = 'wss://ws.dev.reservoir.tools?',
+  'mainnet' = 'wss://ws.reservoir.tools?',
+}
+
 export interface ContractInfo {
   name: string;
 }

@@ -1,39 +1,15 @@
 import WebSocket from 'ws';
-import { AsksSchema, Chains, DataType } from '../types';
+import {
+  DataType,
+  MessageEvent,
+  SocketError,
+  SocketMessage,
+  URLS,
+  WebSocketConfig,
+} from '../types';
 import { InsertionService } from './InsertionService';
 import { LoggerService } from './LoggerService';
 import { PARSER_METHODS } from './SyncService';
-
-// should it emit or insert on its own?
-
-export interface ToConnect {
-  asks: boolean;
-}
-
-export interface WebSocketConfig {
-  contracts?: string[];
-  apiKey: string;
-  chain: Chains;
-  toConnect: ToConnect;
-}
-export type MessageType = 'connection';
-export type MessageEvent = 'subscribe' | 'ask.created' | 'ask.updated';
-export interface SocketMessage {
-  type: MessageType;
-  event: MessageEvent;
-  status: string;
-  data: AsksSchema;
-}
-export interface SocketError {
-  name: string;
-  message: string;
-  stack?: string;
-}
-
-enum URLS {
-  'goerli' = 'wss://ws.dev.reservoir.tools?',
-  'mainnet' = 'wss://ws.reservoir.tools?',
-}
 
 class _WebSocketService {
   /**
