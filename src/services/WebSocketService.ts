@@ -161,16 +161,6 @@ class _WebSocketService {
    * Subcribe to WebSocket events
    */
   private _subscribe(event: MessageEvent, contract?: string): void {
-    console.log(`CALLED`);
-    console.log(
-      JSON.stringify(
-        `Sending message: ${{
-          type: 'subscribe',
-          event,
-          ...(contract && { contract }),
-        }}`
-      )
-    );
     this._ws?.send(
       JSON.stringify({
         type: 'subscribe',
