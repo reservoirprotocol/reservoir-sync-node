@@ -67,9 +67,6 @@ model asks {
   price_net_usd     Decimal? @db.Decimal
   price_net_native  Decimal? @db.Decimal
 
-  valid_from  String? @db.Text
-  valid_until  String? @db.Text
-
   quantity_filled    Int? @db.Integer
   quantity_remaining Int? @db.Integer
   dynamic_pricing    Int? @db.Integer
