@@ -247,7 +247,6 @@ export const REQUEST_METHODS: RequestMethods = {
     }
   },
 };
-
 /**
  * The SyncService class handles assigning managers
  * to months so that the manager can process the data for that month and once
@@ -471,7 +470,12 @@ export class SyncService {
       months: 1,
     });
 
-    if (isValidDate(_date) && !Array.from(this.managers.values()).some(manager => isSameMonth(_date, manager.date))) {
+    if (
+      isValidDate(_date) &&
+      !Array.from(this.managers.values()).some((manager) =>
+        isSameMonth(_date, manager.date)
+      )
+    ) {
       this._date = _date;
       manager.config.date = _date;
       return true;

@@ -1,22 +1,5 @@
-import { format } from 'date-fns';
-import { utcToZonedTime } from 'date-fns-tz';
-import {
-  Counts,
-  IndexSignatureType,
-  KnownPropertiesType,
-  Status,
-  WorkerConfig,
-} from '../types';
-import { delay, isSuccessResponse } from '../utils';
-
-function isTodayUTC(dateString: string | number | Date) {
-  if (!dateString) return false;
-  const date = new Date(dateString);
-  const dateInUTC = utcToZonedTime(date, 'Etc/UTC');
-  const todayInUTC = utcToZonedTime(new Date(), 'Etc/UTC');
-
-  return format(dateInUTC, 'yyyy-MM-dd') === format(todayInUTC, 'yyyy-MM-dd');
-}
+import { Counts, KnownPropertiesType, Status, WorkerConfig } from '../types';
+import { isSuccessResponse, isTodayUTC } from '../utils';
 
 export class SyncWorker {
   /**

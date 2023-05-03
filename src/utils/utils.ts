@@ -5,7 +5,6 @@ import {
   endOfMonth,
   format,
   isEqual,
-  isToday as isTodayFn,
   isPast,
   isSameDay as _isSameDay,
   isSameMonth as _isSameMonth,
@@ -14,8 +13,8 @@ import {
   parseISO,
   startOfDay,
   startOfMonth,
-  startOfToday,
 } from 'date-fns';
+import { utcToZonedTime } from 'date-fns-tz';
 import { validate } from 'node-cron';
 import web3 from 'web3';
 import { ApiResponse, ContractInfo, SuccessResponse } from '../types';
@@ -46,6 +45,7 @@ export const createQuery = (
   date?: string
 ) => {
   const queries: string[] = [
+    'includePrivate=true',
     'sortBy=updatedAt',
     'orderBy=updated_at',
     'sortDirection=asc',
@@ -231,4 +231,17 @@ export const getContractInfo = async (
  */
 export const getToday = (): string => {
   return format(startOfMonth(new Date()), 'yyyy-MM-dd');
+};
+
+/**
+ * # isTodayUTC
+ * @param dateString - Date string
+ * @returns Boolean
+ */
+export const isTodayUTC = (dateString: string) => {
+  if (!dateString) return;
+  return (
+    format(utcToZonedTime(new Date(dateString), 'Etc/UTC'), 'yyyy-MM-dd') ===
+    format(utcToZonedTime(new Date(), 'Etc/UTC'), 'yyyy-MM-dd')
+  );
 };
