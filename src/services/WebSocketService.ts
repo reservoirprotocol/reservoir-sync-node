@@ -70,7 +70,8 @@ class _WebSocketService {
    */
   private _connect(): void {
     if (this._isConnected) return;
-    this._ws = new WebSocket(`${this._url}?api_key=${this._config?.apiKey}`);
+
+    this._ws = new WebSocket(`${this._url}api_key=${this._config?.apiKey}`);
 
     this._ws.on('close', this._onClose.bind(this));
     this._ws.on('error', this._onError.bind(this));
