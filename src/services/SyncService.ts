@@ -105,6 +105,7 @@ export const FORMAT_METHODS: FormatMethods = {
         id: Buffer.from(
           `${ask.contract}-${ask.maker}-${ask.tokenSetId}-${ask.createdAt}`
         ),
+        ask_id: addressToBuffer(ask?.id),
         kind: ask?.kind,
         side: ask?.side,
         status: ask?.status,

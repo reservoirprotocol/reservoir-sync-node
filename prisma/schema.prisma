@@ -42,6 +42,7 @@ model sales {
 
 model asks {
   id                    Bytes   @id @db.ByteA
+  ask_id                Bytes?  @db.ByteA
   kind                  String? @db.Text
   side                  String? @db.Text
   status                String? @db.Text
@@ -95,7 +96,6 @@ model asks {
   is_dynamic   Boolean?  @db.Boolean
   updated_at   DateTime? @default(now())
   created_at   DateTime?
-
 }
 
 model bids {
@@ -153,5 +153,4 @@ model bids {
   is_dynamic   Boolean?  @db.Boolean
   updated_at   DateTime? @default(now())
   created_at   DateTime?
-
 }
