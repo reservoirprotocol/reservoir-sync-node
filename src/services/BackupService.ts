@@ -43,7 +43,6 @@ class _BackupService {
    * @returns {void} void
    */
   public async launch(): Promise<void> {
-    console.log(`THIS IS BACKUP SERVICE`);
     if (this._client) {
       try {
         await this._client.connect();

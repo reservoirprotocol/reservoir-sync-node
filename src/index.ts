@@ -36,7 +36,7 @@ const config: LightNodeConfig = {
   ...(process.env.REDIS_URL && {
       backup: {
         redisUrl: process.env.REDIS_URL,
-        useBackup: process.env.USE_BACKUP === '1',
+        useBackup: process.env.USE_BACKUP == '1',
       },
     }),
 };
