@@ -1,5 +1,5 @@
 import { Counts, KnownPropertiesType, Status, WorkerConfig } from '../types';
-import { isSuccessResponse, isTodayUTC } from '../utils';
+import { delay, isSuccessResponse, isTodayUTC } from '../utils';
 
 export class SyncWorker {
   /**
@@ -146,7 +146,7 @@ export class SyncWorker {
            * Extract the last set from the data
            */
           const lastSet = data[data.length - 1];
-          
+
           /**
            * Determine whether the last record matches todays date
            */
@@ -181,9 +181,9 @@ export class SyncWorker {
           }
           this.config.backup();
         }
-        //if (this.isBackfilled) {
-        //  await delay(this.config.delay);
-        //}
+        if (this.isBackfilled) {
+          await delay(this.config.delay);
+        }
       }
 
       resolve(this.id);
