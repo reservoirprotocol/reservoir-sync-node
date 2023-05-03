@@ -67,8 +67,8 @@ model asks {
   price_net_usd     Decimal? @db.Decimal
   price_net_native  Decimal? @db.Decimal
 
-  valid_from  Int? @db.Integer
-  valid_until Int? @db.Integer
+  valid_from  String? @db.Text
+  valid_until  String? @db.Text
 
   quantity_filled    Int? @db.Integer
   quantity_remaining Int? @db.Integer
@@ -91,7 +91,7 @@ model asks {
   fee_bps       Int?  @db.Integer
   fee_breakdown Json? @db.Json
 
-  expiration   Int?      @db.Integer
+  expiration   String? @db.Text
   is_reservoir Boolean?  @db.Boolean
   is_dynamic   Boolean?  @db.Boolean
   updated_at   DateTime? @default(now())

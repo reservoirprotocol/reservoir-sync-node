@@ -45,11 +45,10 @@ export const createQuery = (
   date?: string
 ) => {
   const queries: string[] = [
-    'includePrivate=true',
     'sortBy=updatedAt',
     'orderBy=updated_at',
     'sortDirection=asc',
-    'includeDeleted=true',
+    'status=active',
     'limit=1000',
     'includeCriteriaMetadata=true',
   ];
