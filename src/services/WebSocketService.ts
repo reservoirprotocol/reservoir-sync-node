@@ -136,7 +136,7 @@ class _WebSocketService {
       const reconnect = setInterval(() => {
         this._connect();
         if (this._isConnected) clearInterval(reconnect);
-      }, 5000);
+      }, 60000);
     } catch (err) {
       LoggerService.error(err);
     }

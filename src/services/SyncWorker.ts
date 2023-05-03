@@ -181,7 +181,7 @@ export class SyncWorker {
           }
           this.config.backup();
         }
-        if (this.isBackfilled) {
+        if (this.isBackfilled && !this.continuation) {
           await delay(this.config.delay);
         }
       }
