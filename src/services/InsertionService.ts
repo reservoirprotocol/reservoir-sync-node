@@ -98,7 +98,6 @@ class _InsertionService {
     }
   }
   private async _count(table: Tables): Promise<{ _count: number }> {
-    let a: Tables = 'sales';
     try {
       switch (table) {
         case 'sales':
