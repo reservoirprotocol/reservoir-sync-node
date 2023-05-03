@@ -33,8 +33,7 @@ const config: LightNodeConfig = {
       },
     }),
   // (Optional)
-  ...(process.env.REDIS_URL &&
-    process.env.DATADOG_API_KEY && {
+  ...(process.env.REDIS_URL && {
       backup: {
         redisUrl: process.env.REDIS_URL,
         useBackup: process.env.USE_BACKUP === '1',
