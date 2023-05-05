@@ -187,6 +187,7 @@ export interface WorkerConfig {
 }
 export type PrismaSalesCreate = Prisma.salesCreateInput;
 export type PrismaAsksCreate = Prisma.asksCreateInput;
+export type PrismaBidsCreate = Prisma.bidsCreateInput;
 
 export type PrismaCreate = PrismaSalesCreate & {
   isDeleted?: boolean;
@@ -280,7 +281,7 @@ export interface AsksFeeBreakdown {
   recipient: string;
 }
 
-export type Tables = 'sales' | 'asks';
+export type Tables = 'sales' | 'asks' | 'bids';
 
 export type RecordRoots = {
   sales: 'sales';
@@ -332,20 +333,22 @@ export interface RequestMethods {
     query: string;
     apiKey: string;
   }) => Promise<ApiResponse>;
+  bids: ({
+    url,
+    query,
+    apiKey,
+  }: {
+    url: string;
+    query: string;
+    apiKey: string;
+  }) => Promise<ApiResponse>;
 }
 
-export type ParserRaw<T> = {
-  sales: any;
-  asks: any;
-};
-export type ParserFormatted = {
-  sales: any;
-  asks: any;
-};
-
 export type ParserMethods = {
-  [K in 'sales' | 'asks']: K extends 'sales'
+  [K in Tables]: K extends 'sales'
     ? (sales: SalesSchema[], contracts?: string[]) => PrismaSalesCreate[]
+    : K extends 'bids'
+    ? (bids: BidsSchema[], contracts?: string[]) => PrismaBidsCreate[]
     : (asks: AsksSchema[], contracts?: string[]) => PrismaAsksCreate[];
 };
 
@@ -364,6 +367,7 @@ export interface ParserRawData<T> {
 export interface FormatMethods {
   sales: (sales: SalesSchema[]) => PrismaSalesCreate[];
   asks: (asks: AsksSchema[]) => PrismaAsksCreate[];
+  bids: (bids: BidsSchema[]) => PrismaBidsCreate[];
 }
 export type APIDatasets = 'sales' | 'orders';
 
