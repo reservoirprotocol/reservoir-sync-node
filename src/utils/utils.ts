@@ -31,10 +31,6 @@ export const isAddress = web3.utils.isAddress;
 export const delay = (seconds: number): Promise<void> =>
   new Promise<void>((r) => setTimeout(r, seconds * 1000));
 
-export const DEFAULT_QUERIES = {
-  sales: ['sortBy=updatedAt'],
-  asks: ['sortBy=updatedAt'],
-};
 /**
  * # createQuery
  * Creates a query string based on the provided parameters.
