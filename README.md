@@ -67,38 +67,42 @@ import { LightNode } from './LightNode';
 import { Chains, LightNodeConfig } from './types';
 
 /**
- * Configuration object for the LightNode instance.
+ * (Required) Configuration object for the LightNode instance.
  * @type {LightNodeConfig}
  */
+
 const config: LightNodeConfig = {
-  // (Required)
   server: {
-    port: Number(process.env.PORT), // (Required)
+    port: process.env.PORT, // (Required)
     authorization: process.env.AUTHORIZATION, // (Required)
-  },
-  // (Optional)
-  backup: {
-    redisUrl: process.env.REDIS_URL,
-    useBackup: true, 
-  },
-  // (Optional)
-  logger: {
-    datadog: {
-      appName: process.env.DATADOG_APP_NAME as string,
-      apiKey: process.env.DATADOG_API_KEY as string,
-    },
   },
   // (Required)
   syncer: {
     chain: process.env.CHAIN as Chains, // (Required)
-    contracts: process.env.CONTRACTS ? process.env.CONTRACTS.split(',') : [], // (Optional) 
+    contracts: process.env.CONTRACTS ? process.env.CONTRACTS.split(',') : [], // (Optional)
     apiKey: process.env.API_KEY as string, // (Required)
-    workerCount: Number(process.env.WORKER_COUNT), // (Optional)
-    managerCount: Number(process.env.MANAGER_COUNT), // (Optional)
+    workerCount: process.env.WORKER_COUNT, // (Optional)
+    managerCount: process.env.MANAGER_COUNT, // (Optional)
     toSync: {
-      sales: true, // (Optional)
+      asks: process.env.SYNC_ASKS === '1',
+      sales: process.env.SYNC_SALES === '1', // (Optional)
     },
   },
+  // (Optional)
+  ...(process.env.DATADOG_APP_NAME &&
+    process.env.DATADOG_API_KEY && {
+      datadog: {
+        appName: process.env.DATADOG_APP_NAME,
+        apiKey: process.env.DATADOG_API_KEY,
+      },
+    }),
+  // (Optional)
+  ...(process.env.REDIS_URL && {
+      backup: {
+        redisUrl: process.env.REDIS_URL,
+        useBackup: process.env.USE_BACKUP == '1',
+      },
+    }),
 };
 
 /**
