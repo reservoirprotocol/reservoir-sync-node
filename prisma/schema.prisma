@@ -73,12 +73,6 @@ model asks {
 
   criteria_kind                String? @db.Text
   criteria_data_token_token_id String? @db.Text
-  criteria_data_token_name     String? @db.Text
-  criteria_data_token_image    String? @db.Text
-
-  criteria_data_collection_id    String? @db.Text
-  criteria_data_collection_name  String? @db.Text
-  criteria_data_collection_image String? @db.Text
 
   source_id     String? @db.Text
   source_domain String? @db.Text

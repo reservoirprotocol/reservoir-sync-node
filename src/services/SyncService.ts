@@ -135,16 +135,7 @@ export const FORMAT_METHODS: FormatMethods = {
         quantity_filled: ask?.quantityFilled || null,
         quantity_remaining: ask?.quantityRemaining || null,
         criteria_kind: ask?.criteria?.kind || null,
-        criteria_data_token_image: ask?.criteria?.data?.token?.image || null,
-        criteria_data_token_name: ask?.criteria?.data?.token?.name || null,
-        criteria_data_token_token_id:
-          ask?.criteria?.data?.token?.tokenId || null,
-        criteria_data_collection_id:
-          ask?.criteria?.data?.collection?.id || null,
-        criteria_data_collection_image:
-          ask?.criteria?.data?.collection?.image || null,
-        criteria_data_collection_name:
-          ask?.criteria?.data?.collection?.name || null,
+        criteria_data_token_token_id: ask?.criteria?.data?.token?.tokenId || null,
         source_domain: ask?.source?.domain || null,
         source_icon: ask?.source?.icon || null,
         source_url: ask?.source?.url || null,
