@@ -189,14 +189,6 @@ const AskType = new GraphQLObjectType({
       type: GraphQLString,
       resolve: (parents): string | null => parents.criteria_data_token_token_id,
     },
-    criteria_data_token_name: {
-      type: GraphQLString,
-      resolve: (parents): string | null => parents.criteria_data_token_name,
-    },
-    criteria_data_token_image: {
-      type: GraphQLString,
-      resolve: (parents): string | null => parents.criteria_data_token_image,
-    },
     source_id: {
       type: GraphQLString,
       resolve: (parents): string | null => parents.source_id,
