@@ -135,3 +135,17 @@ To launch the LightNode, run the command below:
 ```
 yarn start
 ```
+
+### Advanced Usage
+On the express server created by the LightNode there is a path `/sync/create`.
+
+This path can be used to add new contracts to be backfilled and upkept by the LightNode by sending the following query parameters in a post request:
+"type=TABLE_NAME" | "sales" OR "asks"
+
+"contract=CONTRACT_ID" | Valid contract for the chain you initially started the Node on.
+
+The full request might look similiar to this: 
+
+```
+curl --location --request POST 'http://your-server.com/sync/create?type=ask&contract=0xed5af388653567af2f388e6224dc7c4b3241c544'
+```
