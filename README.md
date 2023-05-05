@@ -41,11 +41,15 @@ DATABASE_URL=your-postgres-database-url # (Required) Database to pipe data into
 # REDIS_URL= 
 
 # Syncer configuration
+# (Required) Enable or disable the syncing of sales (1 = true | 0 = false)
+SYNC_SALES=0 
+# (Required) Enable or disable the syncing of asks (1 = true | 0 = false)
+SYNC_ASKS=0
 
-CHAIN=mainnet # (Required) Chain to sync - Supports: 'rinkeby' 'goerli' 'polygon' 'mainnet'.
+CHAIN=mainnet # (Required) Chain to sync - Supports: 'rinkeby' 'goerli'
 API_KEY=your_reservoir_api_key # (Required) Reservoir API key - Sign up for free https://reservoir.tools/
 
-# (Optional) Contracts to filter by - i.e., Only these contracts will be indexed.
+# (Optional) Contracts to filter by - i.e., Only these contracts will be indexed. 
 # CONTRACTS=contract1,contract2,contract3
 
 # (Optional) (Default: 1) Number of workers to be used by the syncers
@@ -127,4 +131,3 @@ To launch the LightNode, run the command below:
 ```
 yarn start
 ```
-Per our testing, below are some statistics on the avg hours required to backfill data since 2018:
