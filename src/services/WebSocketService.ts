@@ -1,4 +1,4 @@
-import WebSocket from 'ws';
+import WebSocket, { OPEN } from 'ws';
 import {
   DataType,
   MessageEvent,
@@ -90,6 +90,7 @@ class _WebSocketService {
           this._subscribe('ask.updated', contract);
         }
       });
+      return;
     }
 
     if (this._config?.toConnect.asks) {
