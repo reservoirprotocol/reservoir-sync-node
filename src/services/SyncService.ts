@@ -1,13 +1,18 @@
 import axios, { isAxiosError } from 'axios';
 import { uuid } from 'uuidv4';
 import {
+  APIDatasets,
   ApiResponse,
+  AsksSchema,
   Bases,
+  DataType,
   FormatMethods,
   IndexSignatureType,
+  KnownPropertiesType,
   Managers,
   ParserMethods,
   Paths,
+  PrismaAsksCreate,
   PrismaCreate,
   PrismaSalesCreate,
   Request,
@@ -15,11 +20,14 @@ import {
   SalesSchema,
   Schemas,
   SyncerConfig,
+  Tables,
 } from '../types';
 import {
   addressToBuffer,
   createQuery,
+  getToday,
   incrementDate,
+  isSameMonth,
   isValidDate,
   toBuffer,
 } from '../utils';
@@ -32,7 +40,15 @@ import { SyncManager } from './SyncManager';
  */
 export const URL_PATHS: Paths = {
   sales: '/sales/v4',
+  asks: '/orders/asks/v4', // resolves to orders
+  bids: '', // resolves to orders
 };
+
+export const RECORD_ROOT: Record<Tables, APIDatasets> = {
+  sales: 'sales',
+  asks: 'orders',
+};
+
 /**
  * The URL bases for the sync APIs
  */
@@ -82,7 +98,60 @@ export const FORMAT_METHODS: FormatMethods = {
       };
     });
   },
+  asks: (asks: AsksSchema[]) => {
+    if (!asks) return [];
+    return asks?.map((ask: AsksSchema) => {
+      return {
+        id: Buffer.from(
+          `${ask?.id}-${ask?.contract}-${ask?.maker}-${ask?.tokenSetId}-${ask?.createdAt}`
+        ),
+        ask_id: ask?.id ? addressToBuffer(ask.id) : null,
+        kind: ask?.kind || null,
+        side: ask?.side || null,
+        status: ask?.status || null,
+        token_set_id: ask?.tokenSetId || null,
+        token_set_schema_hash: ask?.tokenSetSchemaHash
+          ? addressToBuffer(ask.tokenSetSchemaHash)
+          : null,
+        contract: ask?.contract ? addressToBuffer(ask.contract) : null,
+        maker: ask?.maker ? addressToBuffer(ask.maker) : null,
+        taker: ask?.taker ? addressToBuffer(ask.taker) : null,
+        price_currency_contract: ask?.price?.currency?.contract
+          ? addressToBuffer(ask.price.currency.contract)
+          : null,
+        price_currency_name: ask?.price?.currency?.name || null,
+        price_currency_symbol: ask?.price?.currency?.symbol || null,
+        price_currency_decimals: ask?.price?.currency?.decimals || null,
+        price_amount_raw: ask?.price?.amount?.raw || null,
+        price_amount_decimal: ask?.price?.amount?.decimal || null,
+        price_amount_native: ask?.price?.amount?.native || null,
+        price_amount_usd: ask?.price?.amount?.usd || null,
+        price_net_amount_decimal: ask?.price?.netAmount?.decimal || null,
+        price_net_amount_native: ask?.price?.netAmount?.native || null,
+        price_net_amount_raw: ask?.price?.netAmount?.raw || null,
+        price_net_amount_usd: ask?.price?.netAmount?.usd || null,
+        valid_from: ask?.validFrom || null,
+        valid_until: ask?.validUntil || null,
+        quantity_filled: ask?.quantityFilled || null,
+        quantity_remaining: ask?.quantityRemaining || null,
+        criteria_kind: ask?.criteria?.kind || null,
+        criteria_data_token_token_id: ask?.criteria?.data?.token?.tokenId || null,
+        source_domain: ask?.source?.domain || null,
+        source_icon: ask?.source?.icon || null,
+        source_url: ask?.source?.url || null,
+        source_id: ask?.source?.id || null,
+        fee_bps: ask?.feeBps || null,
+        fee_breakdown: JSON.stringify(ask.feeBreakdown),
+        expiration: ask?.expiration || null,
+        is_reservoir: ask?.isReservoir || null,
+        is_dynamic: ask?.isDynamic || null,
+        updated_at: ask?.updatedAt || null,
+        created_at: ask?.createdAt || null,
+      };
+    });
+  },
 };
+
 /**
  * Parser methods for the raw API responses
  */
@@ -96,6 +165,14 @@ export const PARSER_METHODS: ParserMethods = {
       );
     }
     return FORMAT_METHODS['sales'](sales) as PrismaSalesCreate[];
+  },
+  asks: (asks, contracts) => {
+    if (contracts && contracts.length > 0) {
+      asks = asks.filter((ask) => {
+        contracts.includes(ask.contract.toLowerCase());
+      });
+    }
+    return FORMAT_METHODS['asks'](asks) as PrismaAsksCreate[];
   },
 };
 /**
@@ -133,8 +210,38 @@ export const REQUEST_METHODS: RequestMethods = {
       };
     }
   },
+  asks: async ({ url, query, apiKey }): Promise<ApiResponse> => {
+    try {
+      const _res = await axios.get(`${url}?${query}`, {
+        timeout: 100000,
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+        },
+      });
+      if (_res.status !== 200) throw _res;
+      return {
+        status: _res.status,
+        data: _res.data,
+      };
+    } catch (err: any) {
+      if (isAxiosError(err)) {
+        return {
+          status: err.response?.status || 500,
+          data: err.response?.data,
+        };
+      }
+      return {
+        status: 500,
+        data: {
+          status: 500,
+          message: 'Unknown error.',
+          error: err,
+        },
+      };
+    }
+  },
 };
-
 /**
  * The SyncService class handles assigning managers
  * to months so that the manager can process the data for that month and once
@@ -228,6 +335,29 @@ export class SyncService {
         new SyncManager({
           id,
           date: this._date,
+          type: this.config.type,
+          upkeepDelay: this.config.upkeepDelay,
+          insert: this._insert.bind(this),
+          request: this._request.bind(this),
+          parse: this._parse.bind(this),
+          format: this._format.bind(this),
+          review: this._reviewManager.bind(this),
+          count: this._count.bind(this),
+          backup: this._backup.bind(this),
+          workerCount: Number(this.config.workerCount || 1),
+        })
+      );
+    }
+    if (this.config.type === 'asks') {
+      if (isSameMonth(this._date, getToday())) return;
+      const id = `${this.config.type}-manager-${uuid()}`;
+      this.managers.set(
+        id,
+        new SyncManager({
+          id,
+          date: getToday(),
+          type: this.config.type,
+          upkeepDelay: this.config.upkeepDelay,
           insert: this._insert.bind(this),
           request: this._request.bind(this),
           parse: this._parse.bind(this),
@@ -255,6 +385,8 @@ export class SyncService {
           new SyncManager({
             id,
             date: manager.date,
+            type: this.config.type,
+            upkeepDelay: this.config.upkeepDelay,
             insert: this._insert.bind(this),
             request: this._request.bind(this),
             parse: this._parse.bind(this),
@@ -302,9 +434,6 @@ export class SyncService {
    * @returns {void} void
    */
   private _deleteManager(id: string): void {
-    // if (Array.from(manager.workers.values()).some((worker) => worker?.isBusy))
-    // return;
-
     this.managers.delete(id);
   }
   private _reviewManager(manager: SyncManager): Boolean {
@@ -336,7 +465,12 @@ export class SyncService {
       months: 1,
     });
 
-    if (isValidDate(_date)) {
+    if (
+      isValidDate(_date) &&
+      !Array.from(this.managers.values()).some((manager) =>
+        isSameMonth(_date, manager.date)
+      )
+    ) {
       this._date = _date;
       manager.config.date = _date;
       return true;
@@ -367,8 +501,9 @@ export class SyncService {
    * @param {Schemas[]} data - array of object data
    * @returns {Promise<void>} Promise<void>
    */
-  private _count(data: IndexSignatureType): number {
-    return data[this.config.type].length;
+  private _count(data: KnownPropertiesType): number {
+    const type = RECORD_ROOT[this.config.type];
+    return data[type].length;
   }
   /**
    * # _insert
@@ -377,9 +512,9 @@ export class SyncService {
    * @param {Prisma.ordersCreateInput | Prisma.salesCreateInput} data - An array of objects
    * @returns {Promise<void>} Promise<void>
    */
-  private _insert(data: IndexSignatureType): void {
+  private _insert(data: KnownPropertiesType): void {
     InsertionService.upsert({
-      data: this._parse(data[this.config.type]).map((value) => {
+      data: this._parse(data[RECORD_ROOT[this.config.type]]).map((value) => {
         delete value.isDeleted;
         return value;
       }),
@@ -387,7 +522,7 @@ export class SyncService {
     });
     InsertionService.delete({
       table: this.config.type,
-      ids: this._parse(data[this.config.type])
+      ids: this._parse(data[RECORD_ROOT[this.config.type]])
         .filter((data) => data.isDeleted)
         .map((value) => {
           delete value.isDeleted;
@@ -405,10 +540,17 @@ export class SyncService {
   private async _request({
     continuation,
     date,
+    isBackfilled,
   }: Request): Promise<ApiResponse> {
     return await REQUEST_METHODS[this.config.type as keyof RequestMethods]({
       url: `${URL_BASES[this.config.chain]}${URL_PATHS[this.config.type]}`,
-      query: createQuery(continuation, this.config.contracts, date),
+      query: createQuery(
+        continuation,
+        this.config.contracts,
+        this.config.type,
+        isBackfilled,
+        date
+      ),
       apiKey: this._apiKey,
     });
   }
@@ -420,7 +562,7 @@ export class SyncService {
    */
   private _parse(data: Schemas): PrismaCreate[] {
     return PARSER_METHODS[this.config.type as keyof ParserMethods](
-      data,
+      data as DataType<typeof this.config.type>,
       this.config.contracts
     );
   }
@@ -430,7 +572,7 @@ export class SyncService {
    * @param {IndexSignatureType} data API response data
    * @returns {Schemas} formatted data
    */
-  private _format(data: IndexSignatureType): Schemas {
-    return data[this.config.type];
+  private _format(data: KnownPropertiesType): Schemas {
+    return data[RECORD_ROOT[this.config.type]];
   }
 }

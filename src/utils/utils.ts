@@ -12,10 +12,12 @@ import {
   parse,
   parseISO,
   startOfDay,
+  startOfMonth
 } from 'date-fns';
+import { utcToZonedTime } from 'date-fns-tz';
 import { validate } from 'node-cron';
 import web3 from 'web3';
-import { ApiResponse, ContractInfo, SuccessResponse } from '../types';
+import { ApiResponse, ContractInfo, SuccessResponse, Tables } from '../types';
 
 export const isCron = validate;
 export const isAddress = web3.utils.isAddress;
@@ -40,14 +42,21 @@ export const delay = (seconds: number): Promise<void> =>
 export const createQuery = (
   continuation: string = '',
   contracts: string[] = [],
+  type: Tables,
+  isBackfilled: boolean,
   date?: string
 ) => {
   const queries: string[] = [
-    'orderBy=updated_at',
     'sortDirection=asc',
-    'includeDeleted=true',
     'limit=1000',
+    'includeCriteriaMetadata=true',
+    'sortBy=updatedAt'
   ];
+
+
+  if (!isBackfilled && type === 'asks') {
+    queries.push('status=active');
+  };
 
   if (date) {
     let startTimestamp = 0;
@@ -217,4 +226,26 @@ export const getContractInfo = async (
       name: contract,
     };
   }
+};
+
+/**
+ * # getToday
+ * Gets the current date
+ * @returns {String} - todays date
+ */
+export const getToday = (): string => {
+  return format(startOfMonth(new Date()), 'yyyy-MM-dd');
+};
+
+/**
+ * # isTodayUTC
+ * @param dateString - Date string
+ * @returns Boolean
+ */
+export const isTodayUTC = (dateString: string) => {
+  if (!dateString) return;
+  return (
+    format(utcToZonedTime(new Date(dateString), 'Etc/UTC'), 'yyyy-MM-dd') ===
+    format(utcToZonedTime(new Date(), 'Etc/UTC'), 'yyyy-MM-dd')
+  );
 };

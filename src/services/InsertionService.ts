@@ -38,6 +38,14 @@ class _InsertionService {
             },
           },
         });
+      case 'asks':
+        return await this.prisma.asks.deleteMany({
+          where: {
+            id: {
+              in: ids,
+            },
+          },
+        });
       default:
         throw new Error(`Unsupported Table: ${table}`);
     }
@@ -57,6 +65,16 @@ class _InsertionService {
             });
           })
         );
+      case 'asks':
+        return await Promise.allSettled(
+          (data as Prisma.salesCreateInput[]).map((ask) => {
+            return this.prisma.asks.upsert({
+              where: { id: ask.id },
+              update: ask,
+              create: ask,
+            });
+          })
+        );
       default:
         throw new Error(`Unsupported Table: ${table}`);
     }
@@ -66,6 +84,10 @@ class _InsertionService {
       switch (table) {
         case 'sales':
           return await this.prisma.sales.aggregate({
+            _count: true,
+          });
+        case 'asks':
+          return await this.prisma.asks.aggregate({
             _count: true,
           });
         default:
@@ -106,12 +128,6 @@ class _InsertionService {
       },
       [[], []] as [Buffer[], Buffer[]]
     );
-
-    rejected.forEach((reject) => {});
-    await this.upsert({
-      data: data.filter((set) => rejected.includes(set.id)),
-      table,
-    });
   }
 }
 

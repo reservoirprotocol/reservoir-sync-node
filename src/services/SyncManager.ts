@@ -4,6 +4,7 @@ import {
   incrementDate,
   isSameMonth,
   isSuccessResponse,
+  isTodayUTC,
   isValidDate,
 } from '../utils';
 import { SyncWorker } from './SyncWorker';
@@ -135,6 +136,7 @@ export class SyncManager {
         const res = await this.config.request({
           date: yearMonth,
           continuation: '',
+          isBackfilled: this.isBackfilled,
         });
 
         /**
@@ -157,20 +159,19 @@ export class SyncManager {
         this.config.insert(res.data);
         this.insertCount += data.length;
 
+        const lastSet = data[data.length - 1];
         /**
          * If the data length is 1000 and we have a cursor then we
          * know that there is more data to paginate through
          */
         if (data.length === 1000 && res.data.continuation) {
-          const lastSet = data[data.length - 1]; // Get the last set in the dataset
-          this.date = lastSet.updatedAt.substring(0, 10); // Parse the last date and set it to the working date
+          this.date = lastSet?.updatedAt.substring(0, 10); // Parse the last date and set it to the working date
           await this._handleSyncing(); // Handle the syncing
         }
 
-        /**
-         * Update the backup
-         */
-        if (!this.config.review(this)) break;
+        if (!isTodayUTC(lastSet?.updatedAt)) {
+          if (!this.config.review(this)) break;
+        }
       }
       resolve(this.id);
     });
@@ -193,7 +194,7 @@ export class SyncManager {
    */
   private _restoreWorkers(): void {
     this.workers = this.config.workers?.reduce((workers, worker) => {
-      const id = `worker-${uuid()}`;
+      const id = `${this.config.type}-worker-${uuid()}`;
       return workers.set(
         id,
         new SyncWorker({
@@ -220,7 +221,7 @@ export class SyncManager {
         if (!isSameMonth(date, this.date) || !isValidDate(date)) return;
         this.date = date;
       }
-      const id = `worker-${uuid()}`;
+      const id = `${this.config.type}-worker-${uuid()}`;
       this.workers.set(
         id,
         new SyncWorker({

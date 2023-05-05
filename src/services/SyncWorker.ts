@@ -1,6 +1,5 @@
-import { isToday as _isToday } from 'date-fns';
-import { Counts, IndexSignatureType, Status, WorkerConfig } from '../types';
-import { isSuccessResponse } from '../utils';
+import { Counts, KnownPropertiesType, Status, WorkerConfig } from '../types';
+import { delay, isSuccessResponse, isTodayUTC } from '../utils';
 
 export class SyncWorker {
   /**
@@ -116,6 +115,7 @@ export class SyncWorker {
         const res = await this.config.request({
           continuation: this.continuation,
           date: this.date,
+          isBackfilled: this.isBackfilled,
         });
 
         /**
@@ -136,10 +136,11 @@ export class SyncWorker {
          * Use a typeguard to ensure that the resposne is 2xx
          */
         if (isSuccessResponse(res)) {
+          res.data.sales;
           /**
            * Format the data into an array
-           */
-          const data = this.config.format(res.data);
+           */ // this.type
+          const data = this.config.format(res.data); // this.data.sales; this.date.orders
 
           /**
            * Extract the last set from the data
@@ -149,7 +150,7 @@ export class SyncWorker {
           /**
            * Determine whether the last record matches todays date
            */
-          const isToday = _isToday(new Date(lastSet?.updatedAt));
+          const isToday = isTodayUTC(lastSet?.updatedAt);
 
           /**
            * Handle all the insertion related calls
@@ -180,6 +181,9 @@ export class SyncWorker {
           }
           this.config.backup();
         }
+        if (this.isBackfilled && !this.continuation) {
+          await delay(this.config.upkeepDelay);
+        }
       }
 
       resolve(this.id);
@@ -191,7 +195,7 @@ export class SyncWorker {
    * @param {IndexSignatureType} data - Request resposne data
    * @returns {void}
    */
-  private _handleInsertions(data: IndexSignatureType): void {
+  private _handleInsertions(data: KnownPropertiesType): void {
     const parsed = this.config.format(data);
     if (parsed.length && this._recentId !== parsed[parsed.length - 1].id) {
       this.counts._insertions += parsed.length;

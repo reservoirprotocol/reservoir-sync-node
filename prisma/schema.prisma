@@ -27,7 +27,7 @@ model sales {
   timestamp          Int?      @db.Integer
   wash_trading_score Float?
   updated_at         DateTime? @default(now())
-  created_at         DateTime? 
+  created_at         DateTime?
 
   price_currency_contract Bytes?  @db.ByteA
   price_currency_name     String? @db.Text
@@ -40,6 +40,50 @@ model sales {
   price_amount_native  Decimal? @db.Decimal
 }
 
-model orders {
-  id Bytes @id @db.ByteA
+model asks {
+  id                      Bytes   @id @db.ByteA
+  ask_id                  Bytes?  @db.ByteA
+  kind                    String? @db.Text
+  side                    String? @db.Text
+  status                  String? @db.Text
+  token_set_id            String? @db.Text
+  token_set_schema_hash   Bytes?  @db.ByteA
+  contract                Bytes?  @db.ByteA
+  maker                   Bytes?  @db.ByteA
+  taker                   Bytes?  @db.ByteA
+  price_currency_contract Bytes?  @db.ByteA
+  price_currency_name     String? @db.Text
+  price_currency_symbol   String? @db.Text
+  price_currency_decimals Int?    @db.Integer
+
+  price_amount_raw     String?  @db.Text
+  price_amount_decimal Decimal? @db.Decimal
+  price_amount_usd     Decimal? @db.Decimal
+  price_amount_native  Decimal? @db.Decimal
+
+  price_net_amount_raw     String?  @db.Text
+  price_net_amount_decimal Decimal? @db.Decimal
+  price_net_amount_usd     Decimal? @db.Decimal
+  price_net_amount_native  Decimal? @db.Decimal
+
+  valid_from         BigInt?   @db.BigInt
+  valid_until        BigInt?   @db.BigInt
+  quantity_filled    BigInt?   @db.BigInt
+  quantity_remaining BigInt?   @db.BigInt
+
+  criteria_kind                String? @db.Text
+  criteria_data_token_token_id String? @db.Text
+
+  source_id     String? @db.Text
+  source_domain String? @db.Text
+  source_name   String? @db.Text
+  source_icon   String? @db.Text
+  source_url    String? @db.Text
+  fee_bps       BigInt?   @db.BigInt
+  fee_breakdown Json?     @db.JsonB
+  expiration    BigInt?   @db.BigInt
+  is_reservoir  Boolean?  @db.Boolean
+  is_dynamic    Boolean?  @db.Boolean
+  created_at    DateTime? @db.Timestamp
+  updated_at    DateTime? @db.Timestamp
 }

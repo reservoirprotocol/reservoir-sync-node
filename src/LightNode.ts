@@ -1,21 +1,19 @@
-/* eslint-disable no-console */
 import { formatDistance } from 'date-fns';
 import { ServerManager } from './server/Server';
 import {
-  InsertionService,
+  BackupService,
   LoggerService,
-  PARSER_METHODS,
+  RECORD_ROOT,
   REQUEST_METHODS,
   SyncService,
   URL_BASES,
   URL_PATHS,
-} from './services';
-import { BackupService } from './services/BackupService';
+  WebSocketService,
+} from './services/';
 import {
   Backup,
   IndexSignatureType,
   LightNodeConfig,
-  PrismaCreate,
   SyncerConfig,
   Tables,
 } from './types';
@@ -81,6 +79,7 @@ class _LightNode {
       managerCount: this._config.syncer.managerCount,
       apiKey: this._config.syncer.apiKey,
       contracts: [contract],
+      upkeepDelay: 0,
       type: type,
       date: await this._getStartDate(type),
       backup: await this._loadBackup(type),
@@ -97,6 +96,7 @@ class _LightNode {
    */
   private async _launchServices(): Promise<void> {
     ServerManager.launch();
+    WebSocketService.launch();
     await BackupService.launch();
   }
 
@@ -117,6 +117,7 @@ class _LightNode {
         syncer.managers.forEach((manager, id) => {
           if (!manager) return;
           managers.push({
+            type: syncer.config.type,
             Syncer: syncerId,
             Manager: id,
             Year: getYear(manager?.config.date),
@@ -154,7 +155,11 @@ class _LightNode {
         `Memory usage: ${Math.round((used.rss / 1024 / 1024) * 100) / 100} MB`
       );
       console.table(managers);
-      console.table(workers);
+      console.table(
+        workers.sort(
+          (a, b) => new Date(a.date).getDate() - new Date(b.date).getDate()
+        )
+      );
     }, 100);
   }
 
@@ -167,10 +172,9 @@ class _LightNode {
   private async _getStartDate(syncer: SyncerConfig['type']): Promise<string> {
     const res = await REQUEST_METHODS.sales({
       url: `${URL_BASES[this._config.syncer.chain]}${URL_PATHS[syncer]}`,
-      query: createQuery('', this._config.syncer.contracts),
+      query: createQuery('', this._config.syncer.contracts, syncer, false),
       apiKey: this._config.syncer.apiKey,
     });
-
     if (!isSuccessResponse(res))
       throw new Error(
         `FAILED TO GET STARTED DATE: ${res.data.message}:${res.status}`
@@ -178,32 +182,9 @@ class _LightNode {
 
     const data = res.data as IndexSignatureType;
 
-    const parsedData = PARSER_METHODS[syncer](
-      data[syncer],
-      this._config.syncer.contracts
-    ) as PrismaCreate[];
-
-    InsertionService.upsert({
-      data: parsedData.map((value) => {
-        delete value.isDeleted;
-        return value;
-      }),
-      table: syncer,
-    });
-    InsertionService.delete({
-      table: syncer,
-      ids: parsedData
-        .filter((data) => data.isDeleted)
-        .map((value) => {
-          delete value.isDeleted;
-          return value.id;
-        }),
-    });
-    if (
-      data[syncer].length > 0 &&
-      data[syncer][data[syncer].length - 1].updatedAt
-    ) {
-      return data[syncer][data[syncer].length - 1].updatedAt.substring(0, 10);
+    const type = RECORD_ROOT[syncer];
+    if (data[type]?.length > 0 && data[type]?.[data[type]?.length - 1]) {
+      return data[type][data[type].length - 1].updatedAt.substring(0, 10);
     }
     return new Date().toISOString().substring(0, 10);
   }
@@ -216,8 +197,6 @@ class _LightNode {
    */
   private async _createSyncers(): Promise<void> {
     const { syncer, backup } = this._config;
-
-    // Flush method yarn
     if (!backup?.useBackup) {
       await BackupService.flush();
     }
@@ -233,9 +212,26 @@ class _LightNode {
               managerCount: syncer.managerCount,
               apiKey: syncer.apiKey,
               contracts: [contract],
+              upkeepDelay: 0,
               type: 'sales',
               date: await this._getStartDate('sales'),
               backup: await this._loadBackup('sales'),
+            })
+          );
+        }
+        if (syncer.toSync.asks) {
+          this._syncers.set(
+            'asks-syncer',
+            new SyncService({
+              chain: syncer.chain,
+              workerCount: syncer.workerCount,
+              managerCount: syncer.managerCount,
+              apiKey: syncer.apiKey,
+              upkeepDelay: 60,
+              contracts: syncer.contracts,
+              type: 'asks',
+              date: await this._getStartDate('asks'),
+              backup: await this._loadBackup('asks'),
             })
           );
         }
@@ -253,9 +249,26 @@ class _LightNode {
           managerCount: syncer.managerCount,
           apiKey: syncer.apiKey,
           contracts: syncer.contracts,
+          upkeepDelay: 0,
           type: 'sales',
           date: await this._getStartDate('sales'),
           backup: await this._loadBackup('sales'),
+        })
+      );
+    }
+    if (syncer.toSync.asks) {
+      this._syncers.set(
+        'asks-syncer',
+        new SyncService({
+          chain: syncer.chain,
+          workerCount: syncer.workerCount,
+          managerCount: syncer.managerCount,
+          apiKey: syncer.apiKey,
+          upkeepDelay: 60,
+          contracts: syncer.contracts,
+          type: 'asks',
+          date: await this._getStartDate('asks'),
+          backup: await this._loadBackup('asks'),
         })
       );
     }
@@ -281,6 +294,14 @@ class _LightNode {
     LoggerService.set(this._config.logger);
     ServerManager.set(this._config.server);
     BackupService.set(this._config.backup);
+    WebSocketService.set({
+      apiKey: this._config.syncer.apiKey,
+      contracts: this._config.syncer.contracts,
+      chain: this._config.syncer.chain,
+      toConnect: {
+        asks: this._config.syncer.toSync.asks,
+      },
+    });
   }
 
   /**
@@ -293,31 +314,25 @@ class _LightNode {
   private _validateConfig(): void {
     const { server, syncer, logger, backup } = this._config;
 
-    // Validate backup configuration
     if (backup && !backup.redisUrl) {
       throw new Error(`INVALID REDIS URl; ${backup.redisUrl}`);
     }
 
-    // Validate server port
     if (String(server.port).length !== 4)
       throw new Error(`INVALID SERVER PORT: ${server.port}`);
 
-    // Validate server authorization
     if (!server.authorization)
       throw new Error(`INVALID SERVER AUTHORIZATION: ${server.authorization}`);
 
-    // Validate datadog configuration (if present)
     if (logger?.datadog) {
       const { appName, apiKey } = logger.datadog;
       if (!appName || !apiKey)
         throw new Error(`INVALID DATADOG CONFIG: ${appName}-${apiKey}`);
     }
 
-    // Validate api keys
     if (!syncer.apiKey)
       throw new Error(`AN API KEY IS REQUIRED: ${syncer.apiKey}`);
 
-    // Validate the contracts to filter by
     if (syncer?.contracts) {
       syncer.contracts.forEach((contract) => {
         if (!isAddress(contract)) {
@@ -326,7 +341,6 @@ class _LightNode {
       });
     }
 
-    // Validate chain
     if (!syncer.chain) throw new Error(`INVALID CHAIN: ${syncer.chain}`);
   }
   /**
