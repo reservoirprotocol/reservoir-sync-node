@@ -160,7 +160,7 @@ export class SyncWorker {
           /**
            * Set the current pagination token to the one we just recieved
            */
-          this.continuation = res.data.continuation;
+          this.continuation = res.data.continuation || this.continuation;
 
           /**
            * If the dataset is less than 1000 and it is today then we have reached our backfilling point
@@ -180,9 +180,9 @@ export class SyncWorker {
             if (!this.config.review(this)) break;
           }
           this.config.backup();
-        }
-        if (this.isBackfilled && !this.continuation) {
-          await delay(this.config.upkeepDelay);
+          if (this.isBackfilled && !res.data.continuation) {
+            await delay(this.config.upkeepDelay);
+          }
         }
       }
 
