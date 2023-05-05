@@ -87,7 +87,7 @@ export const createQuery = (
     queries.push(`continuation=${continuation}`);
   }
 
-  if (contracts) {
+  if (contracts && type !== 'asks') {
     contracts.forEach((contract) => {
       queries.push(`contract=${contract}`);
     });
