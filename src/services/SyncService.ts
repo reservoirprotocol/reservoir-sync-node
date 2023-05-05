@@ -5,6 +5,7 @@ import {
   ApiResponse,
   AsksSchema,
   Bases,
+  BidsSchema,
   DataType,
   FormatMethods,
   IndexSignatureType,
@@ -20,7 +21,7 @@ import {
   SalesSchema,
   Schemas,
   SyncerConfig,
-  Tables,
+  Tables
 } from '../types';
 import {
   addressToBuffer,
@@ -29,7 +30,7 @@ import {
   incrementDate,
   isSameMonth,
   isValidDate,
-  toBuffer,
+  toBuffer
 } from '../utils';
 import { BackupService } from './BackupService';
 import { InsertionService } from './InsertionService';
@@ -40,13 +41,14 @@ import { SyncManager } from './SyncManager';
  */
 export const URL_PATHS: Paths = {
   sales: '/sales/v4',
-  asks: '/orders/asks/v4', // resolves to orders
-  bids: '', // resolves to orders
+  asks: '/orders/asks/v4',
+  bids: '/orders/bids/v4',
 };
 
 export const RECORD_ROOT: Record<Tables, APIDatasets> = {
   sales: 'sales',
   asks: 'orders',
+  bids: 'orders',
 };
 
 /**
@@ -150,6 +152,67 @@ export const FORMAT_METHODS: FormatMethods = {
       };
     });
   },
+  bids: (bids: BidsSchema[]) => {
+    if (!bids) return [];
+    return bids?.map((bid: BidsSchema) => {
+      return {
+        id: Buffer.from(
+          `${bid?.id}-${bid?.contract}-${bid?.maker}-${bid?.tokenSetId}-${bid?.createdAt}`
+        ),
+        bid_id: bid?.id ? addressToBuffer(bid.id) : null,
+        kind: bid?.kind || null,
+        side: bid?.side || null,
+        status: bid?.status || null,
+        token_set_id: bid?.tokenSetId || null,
+        token_set_schema_hash: bid?.tokenSetSchemaHash
+          ? addressToBuffer(bid.tokenSetSchemaHash)
+          : null,
+        contract: bid?.contract ? addressToBuffer(bid.contract) : null,
+        maker: bid?.maker ? addressToBuffer(bid.maker) : null,
+        taker: bid?.taker ? addressToBuffer(bid.taker) : null,
+        price_currency_contract: bid?.price?.currency?.contract
+          ? addressToBuffer(bid.price.currency.contract)
+          : null,
+        price_currency_name: bid?.price?.currency?.name || null,
+        price_currency_symbol: bid?.price?.currency?.symbol || null,
+        price_currency_decimals: bid?.price?.currency?.decimals || null,
+        price_amount_raw: bid?.price?.amount?.raw || null,
+        price_amount_decimal: bid?.price?.amount?.decimal || null,
+        price_amount_native: bid?.price?.amount?.native || null,
+        price_amount_usd: bid?.price?.amount?.usd || null,
+        price_net_amount_decimal: bid?.price?.netAmount?.decimal || null,
+        price_net_amount_native: bid?.price?.netAmount?.native || null,
+        price_net_amount_raw: bid?.price?.netAmount?.raw || null,
+        price_net_amount_usd: bid?.price?.netAmount?.usd || null,
+        valid_from: bid?.validFrom || null,
+        valid_until: bid?.validUntil || null,
+        quantity_filled: bid?.quantityFilled || null,
+        quantity_remaining: bid?.quantityRemaining || null,
+        criteria_kind: bid?.criteria?.kind || null,
+        criteria_data_token_image: bid?.criteria?.data?.token?.image || null,
+        criteria_data_token_name: bid?.criteria?.data?.token?.name || null,
+        criteria_data_token_token_id:
+          bid?.criteria?.data?.token?.tokenId || null,
+        criteria_data_collection_id:
+          bid?.criteria?.data?.collection?.id || null,
+        criteria_data_collection_image:
+          bid?.criteria?.data?.collection?.image || null,
+        criteria_data_collection_name:
+          bid?.criteria?.data?.collection?.name || null,
+        source_domain: bid?.source?.domain || null,
+        source_icon: bid?.source?.icon || null,
+        source_url: bid?.source?.url || null,
+        source_id: bid?.source?.id || null,
+        fee_bps: bid?.feeBps || null,
+        fee_breakdown: JSON.stringify(bid.feeBreakdown),
+        expiration: bid?.expiration || null,
+        is_reservoir: bid?.isReservoir || null,
+        is_dynamic: bid?.isDynamic || null,
+        updated_at: bid?.updatedAt || null,
+        created_at: bid?.createdAt || null,
+      };
+    });
+  },
 };
 
 /**
@@ -173,6 +236,14 @@ export const PARSER_METHODS: ParserMethods = {
       });
     }
     return FORMAT_METHODS['asks'](asks) as PrismaAsksCreate[];
+  },
+  bids: (bids, contracts) => {
+    if (contracts && contracts.length > 0) {
+      bids = bids.filter((bid) => {
+        contracts.includes(bid.contract.toLowerCase());
+      });
+    }
+    return FORMAT_METHODS['bids'](bids) as PrismaAsksCreate[];
   },
 };
 /**
@@ -211,6 +282,37 @@ export const REQUEST_METHODS: RequestMethods = {
     }
   },
   asks: async ({ url, query, apiKey }): Promise<ApiResponse> => {
+    try {
+      const _res = await axios.get(`${url}?${query}`, {
+        timeout: 100000,
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+        },
+      });
+      if (_res.status !== 200) throw _res;
+      return {
+        status: _res.status,
+        data: _res.data,
+      };
+    } catch (err: any) {
+      if (isAxiosError(err)) {
+        return {
+          status: err.response?.status || 500,
+          data: err.response?.data,
+        };
+      }
+      return {
+        status: 500,
+        data: {
+          status: 500,
+          message: 'Unknown error.',
+          error: err,
+        },
+      };
+    }
+  },
+  bids: async ({ url, query, apiKey }): Promise<ApiResponse> => {
     try {
       const _res = await axios.get(`${url}?${query}`, {
         timeout: 100000,
