@@ -83,7 +83,6 @@ class _WebSocketService {
    * @returns void
    */
   private _onConnected(): void {
-    console.log(`On Connected`);
     if (this._config?.contracts && this._config.contracts.length > 0) {
       this._config.contracts.forEach((contract) => {
         if (this._config?.toConnect.asks) {
@@ -94,7 +93,6 @@ class _WebSocketService {
     }
 
     if (this._config?.toConnect.asks) {
-      console.log(`Doing asks`);
       this._subscribe('ask.created');
       this._subscribe('ask.updated');
     }
@@ -106,7 +104,6 @@ class _WebSocketService {
    * @returns void
    */
   private _onMessage(message: Buffer): void {
-    console.log(message.toString());
     try {
       const { type, status, data, event }: SocketMessage = JSON.parse(
         message.toString('utf-8')
@@ -120,13 +117,6 @@ class _WebSocketService {
       }
 
       if (event.includes('ask')) {
-        console.log({
-          table: 'asks',
-          data: PARSER_METHODS['asks'](
-            [data] as DataType<'asks'>,
-            this._config?.contracts
-          ),
-        });
         InsertionService.upsert({
           table: 'asks',
           data: PARSER_METHODS['asks'](
@@ -159,7 +149,6 @@ class _WebSocketService {
    * Subcribe to WebSocket events
    */
   private _subscribe(event: MessageEvent, contract?: string): void {
-    console.log(`Sending: ${event}:${contract}`);
     this._ws?.send(
       JSON.stringify({
         type: 'subscribe',

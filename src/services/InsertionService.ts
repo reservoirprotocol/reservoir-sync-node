@@ -121,7 +121,6 @@ class _InsertionService {
     const [rejected, _] = promises.reduce(
       ([rejected, fulfilled], p, i) => {
         if (p.status === 'rejected') {
-          console.log(p.reason);
           return [rejected.concat(data[i].id), fulfilled];
         } else {
           return [rejected, fulfilled.concat(data[i].id)];
