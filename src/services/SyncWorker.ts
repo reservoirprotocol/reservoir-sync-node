@@ -1,5 +1,5 @@
 import { Counts, KnownPropertiesType, Status, WorkerConfig } from '../types';
-import { delay, isSuccessResponse, isTodayUTC } from '../utils';
+import { upkeepDelay, isSuccessResponse, isTodayUTC } from '../utils';
 
 export class SyncWorker {
   /**
@@ -182,7 +182,7 @@ export class SyncWorker {
           this.config.backup();
         }
         if (this.isBackfilled && !this.continuation) {
-          await delay(this.config.delay);
+          await upkeepDelay(this.config.upkeepDelay);
         }
       }
 

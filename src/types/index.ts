@@ -177,7 +177,7 @@ export interface WorkerConfig {
   id: string;
   type: Tables;
   continuation: string;
-  delay: number;
+  upkeepDelay: number;
   request: SyncServiceInstance['_request'];
   format: SyncServiceInstance['_format'];
   insert: SyncServiceInstance['_insert'];
@@ -412,7 +412,7 @@ export interface ServerConfig {
 export interface ManagerConfig {
   id: string;
   date: string;
-  delay: number;
+  upkeepDelay: number;
   count: CountType;
   insert: InsertType;
   format: FormatType;
@@ -444,7 +444,7 @@ export interface BaseSyncerConfig {
 }
 export interface SyncerConfig extends BaseSyncerConfig {
   date: string;
-  delay: number;
+  upkeepDelay: number;
   type: Tables;
   backup: Backup | null;
 }
