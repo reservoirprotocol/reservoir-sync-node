@@ -1,11 +1,11 @@
-import WebSocket, { OPEN } from 'ws';
+import WebSocket from 'ws';
 import {
   DataType,
   MessageEvent,
   SocketError,
   SocketMessage,
   URLS,
-  WebSocketConfig,
+  WebSocketConfig
 } from '../types';
 import { InsertionService } from './InsertionService';
 import { LoggerService } from './LoggerService';
