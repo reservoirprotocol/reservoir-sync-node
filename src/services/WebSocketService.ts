@@ -117,7 +117,7 @@ class _WebSocketService {
         return;
       }
 
-      if (event.includes('ask')) {
+      if (event?.includes('ask')) {
         InsertionService.upsert({
           table: 'asks',
           data: PARSER_METHODS['asks'](
