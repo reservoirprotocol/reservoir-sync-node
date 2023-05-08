@@ -98,12 +98,12 @@ class _ServerManager {
    * @throws Will throw an error if there's an issue starting the server.
    */
   public launch(): void {
+    this.app.use('*', this.middleware);
     this.routes.forEach((route) => {
       this.app.use(route.path, route.handlers);
     });
 
     this.app.use('/graphql', createHandler({ schema }));
-    this.app.use('*', this.middleware);
     this.app.use('*', this.defaultHandler);
 
     this.app.listen(this._PORT, () => {
