@@ -136,13 +136,15 @@ To launch the LightNode, run the command below:
 yarn start
 ```
 ### Advanced Usage Guide
+
+#### Scripts
 The LightNode also has several scripts that can be used to reset the backup and database:
 
 ```
 yarn database:purge // -> Resets database forcefully
 yarn backup:purge // -> Flushes the current backup
 ```
-
+#### OTA Updates
 The LightNode's express server provides a `/sync/create` endpoint, which allows you to add new contracts for backfilling and upkeep. To utilize this feature, you need to send a POST request with the required query parameters:
 
 - `type=TABLE_NAME`
