@@ -118,11 +118,6 @@ To configure please setup the `.env` as shown below:
 ```env
 DATABASE_URL=your-postgres-database-url
 ```
-Once you have setup your ENV, you must prepare the database using the following scripts:
-```bash
-
-```
-
 For assistance setting up Prisma please visit their [documentation](https://www.prisma.io/docs).
 
 ### Configuration - (Redis) Backups
