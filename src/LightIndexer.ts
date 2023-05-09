@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { formatDistance } from 'date-fns';
 import { ServerManager } from './server/Server';
 import {
@@ -9,11 +10,11 @@ import {
   URL_BASES,
   URL_PATHS,
   WebSocketService,
-} from './services/';
+} from './services';
 import {
   Backup,
   IndexSignatureType,
-  LightNodeConfig,
+  LightIndexerConfig,
   SyncerConfig,
   Tables,
 } from './types';
@@ -27,21 +28,21 @@ import {
 } from './utils/utils';
 
 /**
- * LightNode class represents a lightweight node for syncing data.
+ * LightIndexer class represents a lightweight node for syncing data.
  * It is responsible for setting up and managing synchronization services, called SyncerServices.
- * The LightNode class is initialized with a configuration object, which contains information
+ * The LightIndexer class is initialized with a configuration object, which contains information
  * about the synchronization process, API keys, contracts, and other settings.
  */
-class _LightNode {
+class _LightIndexer {
   /**
-   * LightNode configuration
-   * @type {LightNodeConfig}
+   * LightIndexer configuration
+   * @type {LightIndexerConfig}
    * @access private
    */
-  private _config!: LightNodeConfig;
+  private _config!: LightIndexerConfig;
 
   /**
-   * LightNode syncers
+   * LightIndexer syncers
    * @type {Map<string, SyncService>}
    * @access private
    */
@@ -49,12 +50,12 @@ class _LightNode {
 
   /**
    * # launch
-   * Launches the LightNode instance
-   * @param {LightNodeConfig} _config - The configuration object for the LightNode.
+   * Launches the LightIndexer instance
+   * @param {LightIndexerConfig} _config - The configuration object for the LightIndexer.
    * @returns {void}
    * @access public
    */
-  public async launch(_config: LightNodeConfig): Promise<void> {
+  public async launch(_config: LightIndexerConfig): Promise<void> {
     this._config = _config;
     this._validateConfig();
     this._setServices();
@@ -102,7 +103,7 @@ class _LightNode {
 
   /**
    * # _logSyncers
-   * Logs information about the LightNode syncer
+   * Logs information about the LightIndexer syncer
    * @returns {void}
    * @access private
    */
@@ -165,9 +166,9 @@ class _LightNode {
 
   /**
    * # _getStartDate
-   * Gets the start date for the lightnode
-   * @param {LightNodeConfig} syncer - The type of the syncer, which is used to parse and insert in a generic way.
-   * @returns {string} - The start date for the LightNode.
+   * Gets the start date for the LightIndexer
+   * @param {LightIndexerConfig} syncer - The type of the syncer, which is used to parse and insert in a generic way.
+   * @returns {string} - The start date for the LightIndexer.
    */
   private async _getStartDate(syncer: SyncerConfig['type']): Promise<string> {
     const res = await REQUEST_METHODS.sales({
@@ -191,7 +192,7 @@ class _LightNode {
 
   /**
    * # _createSyncers
-   * Creates the LightNode syncers
+   * Creates the LightIndexer syncers
    * @returns {void}
    * @access private
    */
@@ -276,7 +277,7 @@ class _LightNode {
 
   /**
    * # _launchSyncers
-   * Launches the LightNode syncers
+   * Launches the LightIndexer syncers
    * @returns {void}
    * @access private
    */
@@ -286,7 +287,7 @@ class _LightNode {
 
   /**
    * # _setServivices
-   * Sets internal services for the LightNode
+   * Sets internal services for the LightIndexer
    * @returns {void}
    * @access private
    */
@@ -306,7 +307,7 @@ class _LightNode {
 
   /**
    * # _validateConfig
-   * Validates the LightNode configuration
+   * Validates the LightIndexer configuration
    * @returns {void}
    * @access private
    * @throws {Error} - If any part of the configuration is invalid.
@@ -345,14 +346,14 @@ class _LightNode {
   }
   /**
    * # _loadBackup
-   * Loads a backup of the most recent state of the LightNode
+   * Loads a backup of the most recent state of the LightIndexer
    * @param {String} type - SyncerType
    * @access private
-   * @returns {Backup} - LightNode Backup
+   * @returns {Backup} - LightIndexer Backup
    */
   private async _loadBackup(type: string): Promise<Backup | null> {
     return BackupService.load(type);
   }
 }
 
-export const LightNode = new _LightNode();
+export const LightIndexer = new _LightIndexer();

@@ -7,7 +7,6 @@ import {
   Bases,
   DataType,
   FormatMethods,
-  IndexSignatureType,
   KnownPropertiesType,
   Managers,
   ParserMethods,
@@ -135,7 +134,8 @@ export const FORMAT_METHODS: FormatMethods = {
         quantity_filled: ask?.quantityFilled || null,
         quantity_remaining: ask?.quantityRemaining || null,
         criteria_kind: ask?.criteria?.kind || null,
-        criteria_data_token_token_id: ask?.criteria?.data?.token?.tokenId || null,
+        criteria_data_token_token_id:
+          ask?.criteria?.data?.token?.tokenId || null,
         source_domain: ask?.source?.domain || null,
         source_icon: ask?.source?.icon || null,
         source_url: ask?.source?.url || null,
@@ -181,6 +181,7 @@ export const PARSER_METHODS: ParserMethods = {
 export const REQUEST_METHODS: RequestMethods = {
   sales: async ({ url, query, apiKey }): Promise<ApiResponse> => {
     try {
+      console.log(`${url}?${query}`);
       const _res = await axios.get(`${url}?${query}`, {
         timeout: 100000,
         headers: {
@@ -193,7 +194,8 @@ export const REQUEST_METHODS: RequestMethods = {
         status: _res.status,
         data: _res.data,
       };
-    } catch (err: any) {
+    } catch (err: unknown) {
+      console.log(err);
       if (isAxiosError(err)) {
         return {
           status: err.response?.status || 500,
@@ -205,7 +207,7 @@ export const REQUEST_METHODS: RequestMethods = {
         data: {
           status: 500,
           message: 'Unknown error.',
-          error: err,
+          error: err as string,
         },
       };
     }
@@ -224,7 +226,7 @@ export const REQUEST_METHODS: RequestMethods = {
         status: _res.status,
         data: _res.data,
       };
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (isAxiosError(err)) {
         return {
           status: err.response?.status || 500,
@@ -236,7 +238,7 @@ export const REQUEST_METHODS: RequestMethods = {
         data: {
           status: 500,
           message: 'Unknown error.',
-          error: err,
+          error: err as string,
         },
       };
     }
@@ -404,7 +406,7 @@ export class SyncService {
   }
   /**
    * # _createBackup
-   * Backups the current state of the LightNode
+   * Backups the current state of the LightIndexer
    * @access private
    * @returns {void}
    */
@@ -436,7 +438,7 @@ export class SyncService {
   private _deleteManager(id: string): void {
     this.managers.delete(id);
   }
-  private _reviewManager(manager: SyncManager): Boolean {
+  private _reviewManager(manager: SyncManager): boolean {
     /**
      * If the manager has a worker that hit's a cursor - it is reported as backfilled and becomes our primary manager
      * This then means that all the other managers just need to finish what they are working on and will be queued for deletion once they are done
@@ -490,6 +492,7 @@ export class SyncService {
         return manager?.launch();
       })
     );
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     promises.forEach((promise: any) => {
       this._deleteManager(promise.value);
     });

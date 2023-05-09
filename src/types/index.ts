@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { SyncService } from '@/services/SyncService';
 import { SyncWorker } from '@/services/SyncWorker';
 import { Prisma } from '@prisma/client';
@@ -334,7 +335,7 @@ export interface RequestMethods {
   }) => Promise<ApiResponse>;
 }
 
-export type ParserRaw<T> = {
+export type ParserRaw = {
   sales: any;
   asks: any;
 };
@@ -356,7 +357,7 @@ export type DataType<T extends keyof ParserMethods> = ParserMethods[T] extends (
   ? D
   : never;
 
-export interface ParserRawData<T> {
+export interface ParserRawData {
   sales: SalesSchema;
   asks: AsksSchema;
 }
@@ -448,7 +449,7 @@ export interface SyncerConfig extends BaseSyncerConfig {
   type: Tables;
   backup: Backup | null;
 }
-export interface LightNodeSyncerConfig extends BaseSyncerConfig {
+export interface LightIndexerSyncerConfig extends BaseSyncerConfig {
   apiKey: string;
   chain: Chains;
   contracts?: string[];
@@ -461,11 +462,11 @@ export interface BackupConfig {
   redisUrl?: string;
   useBackup?: boolean;
 }
-export interface LightNodeConfig {
+export interface LightIndexerConfig {
   server: ServerConfig;
   logger?: LoggerConfig;
   backup?: BackupConfig;
-  syncer: LightNodeSyncerConfig;
+  syncer: LightIndexerSyncerConfig;
 }
 
 export interface Path {

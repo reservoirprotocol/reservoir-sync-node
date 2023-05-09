@@ -3,7 +3,7 @@ import express, {
   type Request,
   type Response,
 } from 'express';
-import { LightNode } from '../../../LightNode';
+import { LightIndexer } from '../../../LightIndexer';
 import { InsertionService } from '../../../services/InsertionService';
 import { Tables } from '../../../types';
 import { isAddress } from '../../../utils';
@@ -46,7 +46,7 @@ handler.post('/create', async (_req: Request, _res: Response) => {
     });
   }
 
-  await LightNode.createSyncer(type, contract);
+  await LightIndexer.createSyncer(type, contract);
 
   return _res.status(200).json({
     error: null,
