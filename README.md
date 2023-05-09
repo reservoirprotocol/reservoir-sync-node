@@ -5,13 +5,6 @@
 
 ![LightIndexer Logo Placeholder](https://dashboard.reservoir.tools/reservoir.svg)
 
-### Table of Contents
-
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [Usage](#usage)
-- [Contribute](#contribute)
-
 ### Installation
 
 To install the required dependencies for the LightIndexer, run:
