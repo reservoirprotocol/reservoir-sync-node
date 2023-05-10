@@ -270,12 +270,7 @@ export class SyncManager {
   private _continueWork(worker: SyncWorker): Boolean {
     const _date = incrementDate(this.date, { days: 1 });
 
-    if (
-      (isSameMonth(_date, this.date) && isValidDate(_date),
-      !Array.from(this.workers.values()).some((worker) =>
-        isSameDay(_date, worker.date)
-      ))
-    ) {
+    if (isSameMonth(_date, this.date) && isValidDate(_date)) {
       this.date = incrementDate(this.date, { days: 1 });
       worker.date = this.date;
       return true;
