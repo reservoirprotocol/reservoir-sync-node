@@ -2,6 +2,7 @@ import { uuid } from 'uuidv4';
 import { ManagerConfig, Status, Workers } from '../types';
 import {
   incrementDate,
+  isSameDay,
   isSameMonth,
   isSuccessResponse,
   isTodayUTC,
@@ -268,6 +269,7 @@ export class SyncManager {
    */
   private _continueWork(worker: SyncWorker): Boolean {
     const _date = incrementDate(this.date, { days: 1 });
+
     if (isSameMonth(_date, this.date) && isValidDate(_date)) {
       this.date = incrementDate(this.date, { days: 1 });
       worker.date = this.date;
