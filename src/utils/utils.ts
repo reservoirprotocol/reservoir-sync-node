@@ -214,7 +214,7 @@ export const getContractInfo = async (
 ): Promise<ContractInfo> => {
   try {
     const res = await axios.get(
-      `https://api.reservoir.tools/search/collections/v2?collectionsSetId=${contract}&limit=1`
+      `https://api.reservoir.tools/collections/v5?id=${contract}`
     );
     if (res.status !== 200)
       throw new Error(`Error getting contract info: ${res.status}`);
