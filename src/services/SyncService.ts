@@ -181,7 +181,6 @@ export const PARSER_METHODS: ParserMethods = {
 export const REQUEST_METHODS: RequestMethods = {
   sales: async ({ url, query, apiKey }): Promise<ApiResponse> => {
     try {
-      console.log(`${url}?${query}`);
       const _res = await axios.get(`${url}?${query}`, {
         timeout: 100000,
         headers: {
@@ -195,7 +194,6 @@ export const REQUEST_METHODS: RequestMethods = {
         data: _res.data,
       };
     } catch (err: unknown) {
-      console.log(err);
       if (isAxiosError(err)) {
         return {
           status: err.response?.status || 500,
