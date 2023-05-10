@@ -156,21 +156,14 @@ export const FORMAT_METHODS: FormatMethods = {
  * Parser methods for the raw API responses
  */
 export const PARSER_METHODS: ParserMethods = {
-  sales: (sales, contracts) => {
-    if (contracts && contracts?.length > 0) {
-      sales = sales.filter((s: { token: { contract: string } }) =>
-        contracts
-          .map((s: string) => s.toLowerCase())
-          .includes(s.token.contract.toLowerCase())
-      );
-    }
+  sales: (sales) => {
     return FORMAT_METHODS['sales'](sales) as PrismaSalesCreate[];
   },
   asks: (asks, contracts) => {
     if (contracts && contracts.length > 0) {
-      asks = asks.filter((ask) => {
-        contracts.includes(ask.contract.toLowerCase());
-      });
+      asks = asks.filter((ask) =>
+        contracts.includes(ask.contract.toLowerCase())
+      );
     }
     return FORMAT_METHODS['asks'](asks) as PrismaAsksCreate[];
   },
@@ -321,7 +314,7 @@ export class SyncService {
    * @returns {Promise<void>} Promise<void>
    */
   private _createManagers(): void {
-    for (let i = 0; i < Number(this.config.managerCount || 1); i++) {
+    for (let i = 0; i < Number(this.config.managerCount || 2); i++) {
       if (i !== 0) {
         const date = incrementDate(`${this._date.substring(0, 7)}-01`, {
           months: 1,
@@ -344,7 +337,7 @@ export class SyncService {
           review: this._reviewManager.bind(this),
           count: this._count.bind(this),
           backup: this._backup.bind(this),
-          workerCount: Number(this.config.workerCount || 1),
+          workerCount: Number(this.config.workerCount || 4),
         })
       );
     }
@@ -365,7 +358,7 @@ export class SyncService {
           review: this._reviewManager.bind(this),
           count: this._count.bind(this),
           backup: this._backup.bind(this),
-          workerCount: Number(this.config.workerCount || 1),
+          workerCount: Number(this.config.workerCount || 4),
         })
       );
     }
@@ -379,7 +372,7 @@ export class SyncService {
   private _restoreManagers(): void {
     this.managers = this.config?.backup?.data.managers.reduce(
       (managers, manager) => {
-        const id = `${this.config.type}-manager-${uuid()}`;
+      const id = `${this.config.type}-manager-${uuid()}`;
         return managers.set(
           id,
           new SyncManager({
@@ -395,7 +388,7 @@ export class SyncService {
             review: this._reviewManager.bind(this),
             backup: this._backup.bind(this),
             workers: manager.workers,
-            workerCount: Number(this.config.workerCount || 1),
+            workerCount: Number(this.config.workerCount || 4),
           })
         );
       },
@@ -475,6 +468,7 @@ export class SyncService {
       manager.config.date = _date;
       return true;
     } else {
+      this._deleteManager(manager.id);
       return false;
     }
   }
