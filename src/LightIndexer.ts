@@ -205,8 +205,9 @@ class _LightIndexer {
     if (syncer.contracts && syncer.contracts.length > 0) {
       for await (const contract of syncer.contracts) {
         if (syncer.toSync.sales) {
+          const { name } = await getContractInfo(contract);
           this._syncers.set(
-            `sales-syncer-${contract}`,
+            `sales-syncer-${name}`,
             new SyncService({
               chain: syncer.chain,
               workerCount: syncer.workerCount,
@@ -221,8 +222,9 @@ class _LightIndexer {
           );
         }
         if (syncer.toSync.asks) {
+          const { name } = await getContractInfo(contract);
           this._syncers.set(
-            'asks-syncer',
+            `asks-syncer-${name}`,
             new SyncService({
               chain: syncer.chain,
               workerCount: syncer.workerCount,
@@ -243,7 +245,7 @@ class _LightIndexer {
 
     if (syncer.toSync.sales) {
       this._syncers.set(
-        'sales-syncer',
+        `sales-syncer-no-contract`,
         new SyncService({
           chain: syncer.chain,
           workerCount: syncer.workerCount,
@@ -259,7 +261,7 @@ class _LightIndexer {
     }
     if (syncer.toSync.asks) {
       this._syncers.set(
-        'asks-syncer',
+        `asks-syncer-no-contract`,
         new SyncService({
           chain: syncer.chain,
           workerCount: syncer.workerCount,
