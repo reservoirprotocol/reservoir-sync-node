@@ -109,7 +109,7 @@ class _SyncNode {
    */
   private _logSyncers(): void {
     const processStart = new Date();
-    process.title = 'Reservoir Light Node';
+    process.title = 'Reservoir Sync Node';
     setInterval(() => {
       let workers: any[] = [];
       let managers: any[] = [];

@@ -1,5 +1,5 @@
 {
-  "name": "reservoir-light-node",
+  "name": "reservoir-sync-node",
   "scripts": {
     "start": "yarn build && yarn database:prepare && node dist/index.js",
     "build": "yarn run clean && tsc",
