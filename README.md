@@ -3,7 +3,7 @@
     Reservoir Sync Node is a customizable lightweight indexer based on the Reservoir indexer. It's easy to set up, customizable, and fast. Sync sales and asks continuously into your infrastructure.
   </p>
 
-![LightIndexer Logo Placeholder](https://dashboard.reservoir.tools/reservoir.svg)
+![SyncNode Logo Placeholder](https://dashboard.reservoir.tools/reservoir.svg)
 
 ### Installation
 

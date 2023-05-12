@@ -5,7 +5,7 @@ import {
   Logger as WinstonLogger,
   transports,
 } from 'winston';
-import { LightIndexerConfig } from '../types';
+import { SyncNodeConfig } from '../types';
 
 /**
  * LoggerService class is responsible for handling logging in your application.
@@ -45,7 +45,7 @@ class _LoggerService {
     });
   }
 
-  public set(config: LightIndexerConfig['logger']): void {
+  public set(config: SyncNodeConfig['logger']): void {
     const datadog = config?.datadog;
     if (datadog && datadog?.apiKey && datadog?.appName) {
       this.logger.transports.push(

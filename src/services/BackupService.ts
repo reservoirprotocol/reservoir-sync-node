@@ -1,5 +1,5 @@
 import { createClient, RedisClientType } from 'redis';
-import { Backup, LightIndexerConfig } from '../types';
+import { Backup, SyncNodeConfig } from '../types';
 import { LoggerService } from './LoggerService';
 
 /**
@@ -27,11 +27,11 @@ class _BackupService {
   /**
    * # set
    * Sets the class variables of the BackupService
-   * @param {LightIndexerConfig['backup']} config - LightIndexer backup config
+   * @param {SyncNodeConfig['backup']} config - SyncNode backup config
    * @access public
    * @returns {void} - void
    */
-  public set(config: LightIndexerConfig['backup']): void {
+  public set(config: SyncNodeConfig['backup']): void {
     this._client = createClient({
       url: config?.redisUrl,
     });
@@ -56,7 +56,7 @@ class _BackupService {
 
   /**
    * # backup
-   * Creates or updates a backup of the LightIndexer
+   * Creates or updates a backup of the SyncNode
    * @param {Backup} data - The data to be created/updated
    * @access public
    * @returns {void} void
@@ -73,10 +73,10 @@ class _BackupService {
   }
   /**
    * # load
-   * Loads a LightIndexer backup
+   * Loads a SyncNode backup
    * @param {String} type - Syncer type
    * @access public
-   * @returns {Backup | null} LightIndexer backup or null if there isn't a backup
+   * @returns {Backup | null} SyncNode backup or null if there isn't a backup
    */
   public async load(type: string): Promise<Backup | null> {
     if (!this._connected) return null;
@@ -98,7 +98,7 @@ class _BackupService {
   }
   /**
    * # delete
-   * Flushes all of the stored LightIndexer states
+   * Flushes all of the stored SyncNode states
    * @access public
    * @returns {void}
    */

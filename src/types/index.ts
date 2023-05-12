@@ -449,7 +449,7 @@ export interface SyncerConfig extends BaseSyncerConfig {
   type: Tables;
   backup: Backup | null;
 }
-export interface LightIndexerSyncerConfig extends BaseSyncerConfig {
+export interface SyncNodeSyncerConfig extends BaseSyncerConfig {
   apiKey: string;
   chain: Chains;
   contracts?: string[];
@@ -462,11 +462,11 @@ export interface BackupConfig {
   redisUrl?: string;
   useBackup?: boolean;
 }
-export interface LightIndexerConfig {
+export interface SyncNodeConfig {
   server: ServerConfig;
   logger?: LoggerConfig;
   backup?: BackupConfig;
-  syncer: LightIndexerSyncerConfig;
+  syncer: SyncNodeSyncerConfig;
 }
 
 export interface Path {

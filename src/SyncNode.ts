@@ -9,14 +9,14 @@ import {
   SyncService,
   URL_BASES,
   URL_PATHS,
-  WebSocketService,
+  WebSocketService
 } from './services';
 import {
   Backup,
   IndexSignatureType,
-  LightIndexerConfig,
+  SyncNodeConfig,
   SyncerConfig,
-  Tables,
+  Tables
 } from './types';
 import {
   createQuery,
@@ -24,25 +24,25 @@ import {
   getMonth,
   getYear,
   isAddress,
-  isSuccessResponse,
+  isSuccessResponse
 } from './utils/utils';
 
 /**
- * LightIndexer class represents a lightweight node for syncing data.
+ * SyncNode class represents a lightweight node for syncing data.
  * It is responsible for setting up and managing synchronization services, called SyncerServices.
- * The LightIndexer class is initialized with a configuration object, which contains information
+ * The SyncNode class is initialized with a configuration object, which contains information
  * about the synchronization process, API keys, contracts, and other settings.
  */
-class _LightIndexer {
+class _SyncNode {
   /**
-   * LightIndexer configuration
-   * @type {LightIndexerConfig}
+   * SyncNode configuration
+   * @type {SyncNodeConfig}
    * @access private
    */
-  private _config!: LightIndexerConfig;
+  private _config!: SyncNodeConfig;
 
   /**
-   * LightIndexer syncers
+   * SyncNode syncers
    * @type {Map<string, SyncService>}
    * @access private
    */
@@ -50,12 +50,12 @@ class _LightIndexer {
 
   /**
    * # launch
-   * Launches the LightIndexer instance
-   * @param {LightIndexerConfig} _config - The configuration object for the LightIndexer.
+   * Launches the SyncNode instance
+   * @param {SyncNodeConfig} _config - The configuration object for the SyncNode.
    * @returns {void}
    * @access public
    */
-  public async launch(_config: LightIndexerConfig): Promise<void> {
+  public async launch(_config: SyncNodeConfig): Promise<void> {
     this._config = _config;
     this._validateConfig();
     this._setServices();
@@ -103,7 +103,7 @@ class _LightIndexer {
 
   /**
    * # _logSyncers
-   * Logs information about the LightIndexer syncer
+   * Logs information about the SyncNode syncer
    * @returns {void}
    * @access private
    */
@@ -166,9 +166,9 @@ class _LightIndexer {
 
   /**
    * # _getStartDate
-   * Gets the start date for the LightIndexer
-   * @param {LightIndexerConfig} syncer - The type of the syncer, which is used to parse and insert in a generic way.
-   * @returns {string} - The start date for the LightIndexer.
+   * Gets the start date for the SyncNode
+   * @param {SyncNodeConfig} syncer - The type of the syncer, which is used to parse and insert in a generic way.
+   * @returns {string} - The start date for the SyncNode.
    */
   private async _getStartDate(syncer: SyncerConfig['type']): Promise<string> {
     const res = await REQUEST_METHODS.sales({
@@ -192,7 +192,7 @@ class _LightIndexer {
 
   /**
    * # _createSyncers
-   * Creates the LightIndexer syncers
+   * Creates the SyncNode syncers
    * @returns {void}
    * @access private
    */
@@ -279,7 +279,7 @@ class _LightIndexer {
 
   /**
    * # _launchSyncers
-   * Launches the LightIndexer syncers
+   * Launches the SyncNode syncers
    * @returns {void}
    * @access private
    */
@@ -289,7 +289,7 @@ class _LightIndexer {
 
   /**
    * # _setServivices
-   * Sets internal services for the LightIndexer
+   * Sets internal services for the SyncNode
    * @returns {void}
    * @access private
    */
@@ -309,7 +309,7 @@ class _LightIndexer {
 
   /**
    * # _validateConfig
-   * Validates the LightIndexer configuration
+   * Validates the SyncNode configuration
    * @returns {void}
    * @access private
    * @throws {Error} - If any part of the configuration is invalid.
@@ -348,14 +348,14 @@ class _LightIndexer {
   }
   /**
    * # _loadBackup
-   * Loads a backup of the most recent state of the LightIndexer
+   * Loads a backup of the most recent state of the SyncNode
    * @param {String} type - SyncerType
    * @access private
-   * @returns {Backup} - LightIndexer Backup
+   * @returns {Backup} - SyncNode Backup
    */
   private async _loadBackup(type: string): Promise<Backup | null> {
     return BackupService.load(type);
   }
 }
 
-export const LightIndexer = new _LightIndexer();
+export const SyncNode = new _SyncNode();
