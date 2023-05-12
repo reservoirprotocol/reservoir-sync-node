@@ -1,13 +1,13 @@
-<h3 align="center">Reservoir Light Indexer</h3>
+<h3 align="center">Reservoir Sync Node</h3>
   <p align="center">
-    Reservoir Light Indexer is a customizable lightweight indexer based on the Reservoir indexer. It's easy to set up, customizable, and fast. Sync sales and asks continuously into your infrastructure.
+    Reservoir Sync Node is a customizable lightweight indexer based on the Reservoir indexer. It's easy to set up, customizable, and fast. Sync sales and asks continuously into your infrastructure.
   </p>
 
 ![LightIndexer Logo Placeholder](https://dashboard.reservoir.tools/reservoir.svg)
 
 ### Installation
 
-To install the required dependencies for the LightIndexer, run:
+To install the required dependencies for the SyncNode, run:
 
 ```bash
 yarn installl
@@ -15,7 +15,7 @@ yarn installl
 
 ### Usage
 
-To launch the LightIndexer, run the command below:
+To launch the SyncNode, run the command below:
 
 ```
 yarn start
@@ -23,4 +23,4 @@ yarn start
 
 ### Configuration - ENV
 
-Learn more about configuration from our [docs](https://docs.reservoir.tools/reference/reservoir-light-indexer).
+Learn more about configuration from our [docs](https://docs.reservoir.tools/reference/reservoir-sync-node).
