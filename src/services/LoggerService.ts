@@ -32,7 +32,7 @@ class _LoggerService {
       format: format.combine(
         format.json(),
         format.colorize({ all: true }),
-        format.label({ label: 'light-node' }),
+        format.label({ label: 'sync-node' }),
         format.timestamp({ format: 'HH:mm:ss:ms' }),
         format.printf(
           (info) => `[${info.label}] [${info.timestamp}] ${info.message}`
