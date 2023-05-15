@@ -9,7 +9,7 @@
     "database:deploy": "npx prisma migrate deploy",
     "purge:asks": "node ./scripts/database-flush-ask.js",
     "purge:sales": "node ./scripts/database-flush-sales.js",
-    "purge:backup": "node ./scripts/redis-flush.js",
+    "purge:backup": "node ./scripts/backup-flush.js",
     "lint": "yarn run lint:fix && yarn run lint:format",
     "lint:fix": "eslint --fix . --ext .ts",
     "lint:format": "prettier --config .prettierrc 'src/**/*.ts' --write",

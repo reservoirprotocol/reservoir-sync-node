@@ -4,7 +4,7 @@ const prisma = new PrismaClient();
 
 async function deleteAllFromModel(model) {
   try {
-    await prisma.$queryRaw(`DROP TABLE IF EXISTS "${model}";`);
+    await prisma.$queryRaw`DROP TABLE IF EXISTS "${model}";`;
   } catch (error) {
     console.error(`Error deleting records from ${model}: ${error}`);
   } finally {
