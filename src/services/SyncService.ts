@@ -397,7 +397,7 @@ export class SyncService {
   }
   /**
    * # _createBackup
-   * Backups the current state of the LightIndexer
+   * Backups the current state of the SyncNode
    * @access private
    * @returns {void}
    */

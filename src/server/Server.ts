@@ -7,7 +7,7 @@ import express, {
 } from 'express';
 import { createHandler } from 'graphql-http/lib/use/express';
 import { LoggerService } from '../services/LoggerService';
-import { LightIndexerConfig, Path } from '../types';
+import { SyncNodeConfig, Path } from '../types';
 import routes from './routes';
 import schema from './Schema';
 
@@ -111,7 +111,7 @@ class _ServerManager {
     });
   }
 
-  public set(config: LightIndexerConfig['server']): void {
+  public set(config: SyncNodeConfig['server']): void {
     this._PORT = Number(config.port);
     this._AUTHORIZATION = `${config.authorization}`;
   }

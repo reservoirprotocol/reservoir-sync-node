@@ -1,13 +1,13 @@
 import 'dotenv/config';
-import { LightIndexer } from './LightIndexer';
-import { Chains, LightIndexerConfig } from './types';
+import { SyncNode } from './SyncNode';
+import { Chains, SyncNodeConfig } from './types';
 
 /**
- * (Required) Configuration object for the LightIndexer instance.
- * @type {LightIndexerConfig}
+ * (Required) Configuration object for the SyncNode instance.
+ * @type {SyncNodeConfig}
  */
 
-const config: LightIndexerConfig = {
+const config: SyncNodeConfig = {
   server: {
     port: process.env.PORT, // (Required)
     authorization: process.env.AUTHORIZATION, // (Required)
@@ -42,6 +42,6 @@ const config: LightIndexerConfig = {
 };
 
 /**
- * Launches the LightIndexer instance with the given configuration.
+ * Launches the SyncNode instance with the given configuration.
  */
-LightIndexer.launch(config);
+SyncNode.launch(config);
