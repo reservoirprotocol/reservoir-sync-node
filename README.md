@@ -10,7 +10,7 @@
 To install the required dependencies for the SyncNode, run:
 
 ```bash
-yarn installl
+yarn install
 ```
 
 ### Usage
