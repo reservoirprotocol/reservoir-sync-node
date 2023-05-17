@@ -216,6 +216,7 @@ export class SyncManager {
    * @returns void
    */
   private _createWorkers(): void {
+    this.date = this.config.date;
     for (let i = 0; i < Number(this.config.workerCount || 1); i++) {
       if (i !== 0) {
         const date = incrementDate(this.date, { days: 1 });
