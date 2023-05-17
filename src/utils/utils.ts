@@ -12,7 +12,7 @@ import {
   parse,
   parseISO,
   startOfDay,
-  startOfMonth
+  startOfMonth,
 } from 'date-fns';
 import { utcToZonedTime } from 'date-fns-tz';
 import { validate } from 'node-cron';
@@ -50,13 +50,17 @@ export const createQuery = (
     'sortDirection=asc',
     'limit=1000',
     'includeCriteriaMetadata=true',
-    'sortBy=updatedAt'
   ];
 
+  if (type === 'sales') {
+    queries.push('orderBy=updated_at');
+  } else {
+    queries.push(`sortBy=updatedAt`);
+  }
 
   if (!isBackfilled && type === 'asks') {
     queries.push('status=active');
-  };
+  }
 
   if (date) {
     let startTimestamp = 0;

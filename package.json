@@ -4,7 +4,7 @@
     "start": "yarn build && yarn database:prepare && node dist/index.js",
     "build": "yarn run clean && tsc",
     "develop": "nodemon",
-    "database:prepare": "yarn database:generate && yarn database:deploy",
+    "database:prepare": "yarn database:deploy && yarn database:generate",
     "database:generate": "npx prisma generate",
     "database:deploy": "npx prisma migrate deploy",
     "purge:asks": "node ./scripts/database-flush-ask.js",

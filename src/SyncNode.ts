@@ -9,14 +9,14 @@ import {
   SyncService,
   URL_BASES,
   URL_PATHS,
-  WebSocketService
+  WebSocketService,
 } from './services';
 import {
   Backup,
   IndexSignatureType,
-  SyncNodeConfig,
   SyncerConfig,
-  Tables
+  SyncNodeConfig,
+  Tables,
 } from './types';
 import {
   createQuery,
@@ -24,7 +24,7 @@ import {
   getMonth,
   getYear,
   isAddress,
-  isSuccessResponse
+  isSuccessResponse,
 } from './utils/utils';
 
 /**
@@ -97,7 +97,9 @@ class _SyncNode {
    */
   private async _launchServices(): Promise<void> {
     ServerManager.launch();
-    WebSocketService.launch();
+    if (this._config.syncer.toSync.asks) {
+      WebSocketService.launch();
+    }
     await BackupService.launch();
   }
 
@@ -184,8 +186,8 @@ class _SyncNode {
     const data = res.data as IndexSignatureType;
 
     const type = RECORD_ROOT[syncer];
-    if (data[type]?.length > 0 && data[type]?.[data[type]?.length - 1]) {
-      return data[type][data[type].length - 1].updatedAt.substring(0, 10);
+    if (data[type]?.length > 0 && data[type]?.[0]) {
+      return data[type][0].updatedAt.substring(0, 10);
     }
     return new Date().toISOString().substring(0, 10);
   }
