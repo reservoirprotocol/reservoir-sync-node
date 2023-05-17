@@ -9,14 +9,14 @@ import {
   SyncService,
   URL_BASES,
   URL_PATHS,
-  WebSocketService
+  WebSocketService,
 } from './services';
 import {
   Backup,
   IndexSignatureType,
   SyncNodeConfig,
   SyncerConfig,
-  Tables
+  Tables,
 } from './types';
 import {
   createQuery,
@@ -24,7 +24,7 @@ import {
   getMonth,
   getYear,
   isAddress,
-  isSuccessResponse
+  isSuccessResponse,
 } from './utils/utils';
 
 /**
@@ -97,7 +97,9 @@ class _SyncNode {
    */
   private async _launchServices(): Promise<void> {
     ServerManager.launch();
-    WebSocketService.launch();
+    if (this._config.syncer.toSync.asks) {
+      WebSocketService.launch();
+    }
     await BackupService.launch();
   }
 
