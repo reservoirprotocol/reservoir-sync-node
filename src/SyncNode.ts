@@ -14,8 +14,8 @@ import {
 import {
   Backup,
   IndexSignatureType,
-  SyncNodeConfig,
   SyncerConfig,
+  SyncNodeConfig,
   Tables,
 } from './types';
 import {
@@ -186,8 +186,8 @@ class _SyncNode {
     const data = res.data as IndexSignatureType;
 
     const type = RECORD_ROOT[syncer];
-    if (data[type]?.length > 0 && data[type]?.[data[type]?.length - 1]) {
-      return data[type][data[type].length - 1].updatedAt.substring(0, 10);
+    if (data[type]?.length > 0 && data[type]?.[0]) {
+      return data[type][0].updatedAt.substring(0, 10);
     }
     return new Date().toISOString().substring(0, 10);
   }
