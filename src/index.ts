@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { LoggerService } from './services';
 import { SyncNode } from './SyncNode';
 import { Chains, SyncNodeConfig } from './types';
 
@@ -45,3 +46,11 @@ const config: SyncNodeConfig = {
  * Launches the SyncNode instance with the given configuration.
  */
 SyncNode.launch(config);
+
+process.on('uncaughtException', (error: Error) => {
+  LoggerService.error(error);
+});
+
+process.on('unhandledRejection', (error: Error) => {
+  LoggerService.error(error);
+});
