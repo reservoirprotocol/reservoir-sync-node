@@ -1,3 +1,5 @@
+/* eslint-disable no-constant-condition */
+/* eslint-disable no-async-promise-executor */
 import { Counts, KnownPropertiesType, Status, WorkerConfig } from '../types';
 import { delay, isSuccessResponse, isTodayUTC } from '../utils';
 

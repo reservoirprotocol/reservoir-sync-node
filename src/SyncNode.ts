@@ -113,8 +113,8 @@ class _SyncNode {
     const processStart = new Date();
     process.title = 'Reservoir Sync Node';
     setInterval(() => {
-      let workers: any[] = [];
-      let managers: any[] = [];
+      const workers: any[] = [];
+      const managers: any[] = [];
 
       this._syncers.forEach((syncer, syncerId) => {
         syncer.managers.forEach((manager, id) => {
