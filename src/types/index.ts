@@ -455,6 +455,7 @@ export interface SyncNodeSyncerConfig extends BaseSyncerConfig {
   contracts?: string[];
   workerCount?: string;
   managerCount?: string;
+  skipBackfill?: boolean;
   toSync: ToSync;
 }
 
