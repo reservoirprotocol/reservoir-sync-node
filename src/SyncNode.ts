@@ -174,11 +174,13 @@ class _SyncNode {
    */
   private async _getStartDate(syncer: SyncerConfig['type']): Promise<string> {
     if (this._config.syncer.skipBackfill)
-      const res = await REQUEST_METHODS.sales({
-        url: `${URL_BASES[this._config.syncer.chain]}${URL_PATHS[syncer]}`,
-        query: createQuery('', this._config.syncer.contracts, syncer, false),
-        apiKey: this._config.syncer.apiKey,
-      });
+      return new Date().toISOString().substring(0, 10);
+
+    const res = await REQUEST_METHODS.sales({
+      url: `${URL_BASES[this._config.syncer.chain]}${URL_PATHS[syncer]}`,
+      query: createQuery('', this._config.syncer.contracts, syncer, false),
+      apiKey: this._config.syncer.apiKey,
+    });
     if (!isSuccessResponse(res))
       throw new Error(
         `FAILED TO GET STARTED DATE: ${res.data.message}:${res.status}`
