@@ -97,9 +97,7 @@ class _SyncNode {
    */
   private async _launchServices(): Promise<void> {
     ServerManager.launch();
-    if (this._config.syncer.toSync.asks) {
-      WebSocketService.launch();
-    }
+    WebSocketService.launch();
     await BackupService.launch();
   }
 
@@ -304,6 +302,7 @@ class _SyncNode {
       contracts: this._config.syncer.contracts,
       chain: this._config.syncer.chain,
       toConnect: {
+        sales: this._config.syncer.toSync.sales,
         asks: this._config.syncer.toSync.asks,
       },
     });
