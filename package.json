@@ -22,6 +22,7 @@
   "packageManager": "yarn@1.22.19",
   "dependencies": {
     "@prisma/client": "4.11.0",
+    "@prisma/sdk": "^4.0.0",
     "@reservoir0x/reservoir-sdk": "^0.6.4",
     "@sentry/node": "^7.44.2",
     "@sentry/types": "^7.44.2",
