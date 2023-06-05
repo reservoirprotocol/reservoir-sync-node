@@ -36,22 +36,22 @@ export class InsertionServivce {
         return;
 
       switch (promise.code) {
-        // Timeout - RETRY
+        // Timeout
         case 'P1008':
           break;
-        // Invalid data format - DONT RETRY
+        // Invalid data format
         case 'P2000':
           break;
-        // Unique constraint failed (Redo ID) - RETRY
+        // Unique constraint failed
         case 'P2002':
           break;
-        // Invalid data - DONT RETRY
+        // Invalid data
         case 'P2005':
           break;
-        // Invalid data - DONT RETRY
+        // Invalid data
         case 'P2006':
           break;
-        // Integer Overflow - DONT RETRY
+        // Integer Overflow
         case 'P2020':
           break;
         default:
@@ -67,25 +67,21 @@ export class InsertionServivce {
    * @returns void
    */
   private async _upsert(table: Tables, data: DataSets): Promise<void> {
-    try {
-      this._handlePrismaPromises(
-        await Promise.allSettled(
-          data.map((set) => {
-            // @ts-ignore Prisma doesn't support model reference by variable name.
-            // See https://github.com/prisma/prisma/discussions/16058#discussioncomment-549368
-            return this._prisma[table].upsert({
-              where: {
-                id: set.id,
-              },
-              create: set,
-              update: set,
-            });
-          })
-        )
-      );
-    } catch (e: unknown) {
-      // Queue this to be rehandled
-    }
+    this._handlePrismaPromises(
+      await Promise.allSettled(
+        data.map((set) => {
+          // @ts-ignore Prisma doesn't support model reference by variable name.
+          // See https://github.com/prisma/prisma/discussions/16058#discussioncomment-549368
+          return this._prisma[table].upsert({
+            where: {
+              id: set.id,
+            },
+            create: set,
+            update: set,
+          });
+        })
+      )
+    );
   }
 
   /**
