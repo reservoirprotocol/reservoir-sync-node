@@ -7,6 +7,10 @@ import {
 } from 'winston';
 
 interface LoggerServiceConfig {
+  datadog: {
+    apiKey: string;
+    appName: string;
+  };
   webhook: {
     endpoint: string;
     events: {
@@ -53,6 +57,17 @@ export class LoggerService {
       ),
       transports: [new transports.Console()],
     });
+
+    const datadog = config?.datadog;
+    if (datadog && datadog?.apiKey && datadog?.appName) {
+      this._logger.transports.push(
+        new transports.Http({
+          host: 'http-intake.logs.datadoghq.com',
+          path: `/api/v2/logs?dd-api-key=<${datadog.apiKey}>&ddsource=nodejs&service=<${datadog.appName}>`,
+          ssl: true,
+        })
+      );
+    }
   }
 
   /**
