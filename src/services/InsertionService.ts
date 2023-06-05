@@ -36,7 +36,23 @@ export class InsertionServivce {
         return;
 
       switch (promise.code) {
-        case '1':
+        // Timeout - RETRY
+        case 'P1008':
+          break;
+        // Invalid data format - DONT RETRY
+        case 'P2000':
+          break;
+        // Unique constraint failed (Redo ID) - RETRY
+        case 'P2002':
+          break;
+        // Invalid data - DONT RETRY
+        case 'P2005':
+          break;
+        // Invalid data - DONT RETRY
+        case 'P2006':
+          break;
+        // Integer Overflow - DONT RETRY
+        case 'P2020':
           break;
         default:
           break;
