@@ -139,7 +139,7 @@ new PrismaSchemaGenerator([
   },
   {
     datasets: ['bids'],
-    table: 'all_orders',
+    table: 'bids',
   },
   {
     datasets: ['sales'],
