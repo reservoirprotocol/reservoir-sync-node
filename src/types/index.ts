@@ -8,6 +8,7 @@ import { SyncManager } from '../services';
 
 export interface ToConnect {
   asks: boolean;
+  sales: boolean;
 }
 
 export interface WebSocketConfig {
@@ -17,7 +18,13 @@ export interface WebSocketConfig {
   toConnect: ToConnect;
 }
 export type MessageType = 'connection';
-export type MessageEvent = 'subscribe' | 'ask.created' | 'ask.updated';
+export type MessageEvent =
+  | 'subscribe'
+  | 'ask.created'
+  | 'ask.updated'
+  | 'sale.created'
+  | 'sale.updated';
+  
 export interface SocketMessage {
   type: MessageType;
   event: MessageEvent;

@@ -97,9 +97,7 @@ class _SyncNode {
    */
   private async _launchServices(): Promise<void> {
     ServerManager.launch();
-    if (this._config.syncer.toSync.asks) {
-      WebSocketService.launch();
-    }
+    WebSocketService.launch();
     await BackupService.launch();
   }
 
@@ -113,8 +111,8 @@ class _SyncNode {
     const processStart = new Date();
     process.title = 'Reservoir Sync Node';
     setInterval(() => {
-      let workers: any[] = [];
-      let managers: any[] = [];
+      const workers: any[] = [];
+      const managers: any[] = [];
 
       this._syncers.forEach((syncer, syncerId) => {
         syncer.managers.forEach((manager, id) => {
@@ -219,7 +217,7 @@ class _SyncNode {
               managerCount: syncer.managerCount,
               apiKey: syncer.apiKey,
               contracts: [contract.toLowerCase()],
-              upkeepDelay: 0,
+              upkeepDelay: 60,
               type: 'sales',
               date: await this._getStartDate('sales'),
               backup: await this._loadBackup('sales'),
@@ -257,7 +255,7 @@ class _SyncNode {
           managerCount: syncer.managerCount,
           apiKey: syncer.apiKey,
           contracts: [],
-          upkeepDelay: 0,
+          upkeepDelay: 60,
           type: 'sales',
           date: await this._getStartDate('sales'),
           backup: await this._loadBackup('sales'),
@@ -307,6 +305,7 @@ class _SyncNode {
       contracts: this._config.syncer.contracts,
       chain: this._config.syncer.chain,
       toConnect: {
+        sales: this._config.syncer.toSync.sales,
         asks: this._config.syncer.toSync.asks,
       },
     });

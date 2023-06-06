@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import WebSocket from 'ws';
 import {
   DataType,
@@ -5,7 +6,7 @@ import {
   SocketError,
   SocketMessage,
   URLS,
-  WebSocketConfig
+  WebSocketConfig,
 } from '../types';
 import { InsertionService } from './InsertionService';
 import { LoggerService } from './LoggerService';
@@ -71,8 +72,8 @@ class _WebSocketService {
   private _connect(): void {
     if (this._isConnected) return;
 
-    this._ws = this._url ? 
-      new WebSocket(`${this._url}api_key=${this._config?.apiKey}`)
+    this._ws = this._url
+      ? new WebSocket(`${this._url}api_key=${this._config?.apiKey}`)
       : null;
 
     this._ws?.on('close', this._onClose.bind(this));
@@ -91,6 +92,10 @@ class _WebSocketService {
           this._subscribe('ask.created', contract);
           this._subscribe('ask.updated', contract);
         }
+        if (this._config?.toConnect.sales) {
+          this._subscribe('sale.created', contract);
+          this._subscribe('sale.updated', contract);
+        }
       });
       return;
     }
@@ -98,6 +103,11 @@ class _WebSocketService {
     if (this._config?.toConnect.asks) {
       this._subscribe('ask.created');
       this._subscribe('ask.updated');
+    }
+
+    if (this._config?.toConnect.sales) {
+      this._subscribe('sale.created');
+      this._subscribe('sale.updated');
     }
   }
   /**
@@ -128,11 +138,11 @@ class _WebSocketService {
           ),
         });
       }
-    } catch (err) {
+    } catch (err: unknown) {
       LoggerService.error(err);
     }
   }
-  private _onClose(code: number, reason: Buffer): void {
+  private _onClose(_code: number, _reason: Buffer): void {
     this._isConnected = false;
     try {
       this._ws?.close();
@@ -140,7 +150,7 @@ class _WebSocketService {
         this._connect();
         if (this._isConnected) clearInterval(reconnect);
       }, 60000);
-    } catch (err) {
+    } catch (err: unknown) {
       LoggerService.error(err);
     }
   }
