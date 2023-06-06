@@ -1,3 +1,4 @@
+import { LoggerService } from '../services';
 import express, { Application, NextFunction, Request, Response } from 'express';
 import { createHandler } from 'graphql-http/lib/handler';
 import routes from './routes';
@@ -24,22 +25,17 @@ class _Server {
   };
 
   /**
-   * The default handler function that returns a 404 error for undefined routes.
-   * @access private
-   * @param _req - The request object.
-   * @param _res - The response object.
-   * @returns {void}
+   * Launches the server
+   * @returns void
    */
-  private _defaultHandler(_req: Request, _res: Response): void {
-    _res.status(404).json({
-      error: {
-        status: 404,
-        message: `Path ${_req.path} not found.`,
-      },
-      data: null,
+  public async launch(): Promise<void> {
+    return new Promise((resolve) => {
+      this._app.listen(this._config.port, () => {
+        LoggerService.info(`Server started`);
+        resolve();
+      });
     });
   }
-
   /**
    * Constructs the server
    * @param config ServerConfig
@@ -80,5 +76,4 @@ class _Server {
   }
 }
 
-export 
-const Server = new _Server();
+export const Server = new _Server();
