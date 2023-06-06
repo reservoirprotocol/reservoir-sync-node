@@ -281,18 +281,32 @@ class GraphQlService {
     const gqlConfig = {
       query: new GraphQLObjectType({
         name: 'Query',
-        fields: {},
+        fields: {
+          sale: {
+            type: new GraphQLList(SaleType),
+            args: { offset: { type: GraphQLInt } },
+            resolve: (parent, args): Promise<sales[]> => {
+              return prisma.sales
+                .findMany({
+                  skip: args.offset || 0,
+                  take: 1000,
+                })
+                .then((sales) => sales);
+            },
+          },
+          ask: {
+            type: new GraphQLList(AskType),
+            args: { offset: { type: GraphQLInt } },
+            resolve: (parent, args): Promise<asks[]> => {
+              return prisma.asks.findMany({
+                skip: args.offset || 0,
+                take: 1000,
+              });
+            },
+          },
+        },
       }),
     };
-
-    config.forEach((c) => {
-
-      
-
-
-      // We create the field using the table name because thats how the data is resolved
-      gqlConfig['query']['_fields'][c.table] = {};
-    });
 
     this.schema = new GraphQLSchema({
       query: new GraphQLObjectType({

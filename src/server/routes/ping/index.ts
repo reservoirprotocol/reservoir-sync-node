@@ -1,7 +1,7 @@
 import express, {
   type Application,
   type Request,
-  type Response,
+  type Response
 } from 'express';
 
 const handler: Application = express();
