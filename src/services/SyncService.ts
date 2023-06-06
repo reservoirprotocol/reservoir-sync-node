@@ -341,27 +341,26 @@ export class SyncService {
         })
       );
     }
-    if (this.config.type === 'asks') {
-      if (isSameMonth(this._date, getToday())) return;
-      const id = `${this.config.type}-manager-${uuid()}`;
-      this.managers.set(
+
+    if (isSameMonth(this._date, getToday())) return;
+    const id = `${this.config.type}-manager-${uuid()}`;
+    this.managers.set(
+      id,
+      new SyncManager({
         id,
-        new SyncManager({
-          id,
-          date: getToday(),
-          type: this.config.type,
-          upkeepDelay: this.config.upkeepDelay,
-          insert: this._insert.bind(this),
-          request: this._request.bind(this),
-          parse: this._parse.bind(this),
-          format: this._format.bind(this),
-          review: this._reviewManager.bind(this),
-          count: this._count.bind(this),
-          backup: this._backup.bind(this),
-          workerCount: Number(this.config.workerCount || 4),
-        })
-      );
-    }
+        date: getToday(),
+        type: this.config.type,
+        upkeepDelay: this.config.upkeepDelay,
+        insert: this._insert.bind(this),
+        request: this._request.bind(this),
+        parse: this._parse.bind(this),
+        format: this._format.bind(this),
+        review: this._reviewManager.bind(this),
+        count: this._count.bind(this),
+        backup: this._backup.bind(this),
+        workerCount: Number(this.config.workerCount || 4),
+      })
+    );
   }
   /**
    * # _restoreManagers
@@ -372,7 +371,7 @@ export class SyncService {
   private _restoreManagers(): void {
     this.managers = this.config?.backup?.data.managers.reduce(
       (managers, manager) => {
-      const id = `${this.config.type}-manager-${uuid()}`;
+        const id = `${this.config.type}-manager-${uuid()}`;
         return managers.set(
           id,
           new SyncManager({
