@@ -3,7 +3,7 @@ import {
   createLogger,
   format,
   Logger as WinstonLogger,
-  transports
+  transports,
 } from 'winston';
 
 interface LoggerServiceConfig {
@@ -32,44 +32,58 @@ class _LoggerService {
    * Winston logger instance
    * @access private
    */
-  private _logger: WinstonLogger;
+  private _logger: WinstonLogger = createLogger({
+    level: 'info',
+    exitOnError: false,
+    format: format.combine(
+      format.json(),
+      format.colorize({ all: true }),
+      format.label({ label: 'sync-node' }),
+      format.timestamp({ format: 'HH:mm:ss:ms' }),
+      format.printf(
+        (info) => `[${info.label}] [${info.timestamp}] ${info.message}`
+      )
+    ),
+    transports: [new transports.File(), new transports.Console()],
+  });
 
   /**
    * # config
    * LoggerService configuration object
    * @access private
    */
-  private _config: LoggerServiceConfig;
+  private _config: LoggerServiceConfig = {
+    datadog: {
+      apiKey: '',
+      appName: '',
+    },
+    webhook: {
+      endpoint: '',
+      events: {},
+    },
+  };
 
-  constructor(config: LoggerServiceConfig) {
+  /**
+   *
+   * @param config LoggerServiceConfig
+   */
+  public construct(config: LoggerServiceConfig): void {
     this._config = config;
-    this._logger = createLogger({
-      level: 'info',
-      exitOnError: false,
-      format: format.combine(
-        format.json(),
-        format.colorize({ all: true }),
-        format.label({ label: 'sync-node' }),
-        format.timestamp({ format: 'HH:mm:ss:ms' }),
-        format.printf(
-          (info) => `[${info.label}] [${info.timestamp}] ${info.message}`
-        )
-      ),
-      transports: [new transports.Console()],
-    });
 
-    const datadog = config?.datadog;
-    if (datadog && datadog?.apiKey && datadog?.appName) {
+    if (
+      this._config.datadog &&
+      this._config.datadog?.apiKey &&
+      this._config.datadog?.appName
+    ) {
       this._logger.transports.push(
         new transports.Http({
           host: 'http-intake.logs.datadoghq.com',
-          path: `/api/v2/logs?dd-api-key=<${datadog.apiKey}>&ddsource=nodejs&service=<${datadog.appName}>`,
+          path: `/api/v2/logs?dd-api-key=<${this._config.datadog.apiKey}>&ddsource=nodejs&service=<${this._config.datadog.appName}>`,
           ssl: true,
         })
       );
     }
   }
-
   /**
    * Log a message with the 'error' level.
    * This method logs an error message, typically used for reporting application errors or exceptions.
