@@ -343,6 +343,8 @@ class GraphQlService {
 const config = [
   {
     datasets: ['asks', 'bids'],
+    name: 'orders',
+    contracts: ['', ]
     table: 'all_orders',
   },
   {
