@@ -1,10 +1,24 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { asks, Prisma, PrismaClient, sales } from '@prisma/client';
 
+/**
+ * {
+    datasets: ['asks', 'bids'],
+    table: 'all_orders',
+  },
+  {
+    datasets: ['bids'],
+    table: 'bids',
+  },
+  {
+    datasets: ['sales'],
+    table: 'sales',
+  },
+ */
 type Tables = 'sales' | 'asks';
 type DataSets = sales[] | asks[];
 
-export class InsertionServivce {
+class _InsertionServivce {
   /**
    * _instance
    * Prisma orm instance
@@ -116,3 +130,5 @@ export class InsertionServivce {
   public count = async (table: Tables): Promise<number> =>
     await this._count(table);
 }
+
+export const InsertionService = new _InsertionServivce();
