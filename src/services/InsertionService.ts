@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { asks, Prisma, PrismaClient, sales } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
+import { AsksSchema, SalesSchema } from './WebSocketService';
 
 /**
  * {
@@ -15,8 +16,17 @@ import { asks, Prisma, PrismaClient, sales } from '@prisma/client';
     table: 'sales',
   },
  */
-type Tables = 'sales' | 'asks';
-type DataSets = sales[] | asks[];
+
+type DataTypes = 'sales' | 'asks';
+
+type DataSets = AsksSchema[] | SalesSchema[];
+
+interface InsertionServiceConfig {
+  mappings: {
+    datasets: DataTypes[];
+    table: string;
+  }[];
+}
 
 class _InsertionServivce {
   /**
@@ -24,10 +34,23 @@ class _InsertionServivce {
    * Prisma orm instance
    * @access private
    */
-  private _prisma: PrismaClient;
+  private _prisma: PrismaClient = new PrismaClient();
 
-  constructor() {
-    this._prisma = new PrismaClient();
+  /**
+   * # _config
+   * Insertion service config
+   * @access private
+   */
+  private _config: InsertionServiceConfig = {
+    mappings: [],
+  };
+
+  /**
+   * Constructs and sets the service
+   * @returns void
+   */
+  public construct(config: InsertionServiceConfig): void {
+    this._config = config;
   }
   /**
    * # launch
@@ -39,6 +62,11 @@ class _InsertionServivce {
     await this._prisma.$connect();
   }
 
+  /**
+   * Handles resolved & rejected prisma promises.
+   * @param promises Prisma promise results
+   * @return void
+   */
   private async _handlePrismaPromises<T>(
     promises: PromiseSettledResult<Prisma.PrismaPromise<T>>[]
   ): Promise<void> {
@@ -80,39 +108,32 @@ class _InsertionServivce {
    * @param data row data
    * @returns void
    */
-  private async _upsert(table: Tables, data: DataSets): Promise<void> {
+  public async upsert(type: DataTypes, data: DataSets): Promise<void> {
     this._handlePrismaPromises(
       await Promise.allSettled(
-        data.map((set) => {
-          // @ts-ignore Prisma doesn't support model reference by variable name.
-          // See https://github.com/prisma/prisma/discussions/16058#discussioncomment-549368
-          return this._prisma[table].upsert({
-            where: {
-              id: set.id,
-            },
-            create: set,
-            update: set,
-          });
-        })
+        this._config.mappings
+          .filter(({ datasets }) => datasets.includes(type))
+          .flatMap(({ table }) =>
+            data.map((set) =>
+              // @ts-ignore Prisma doesn't support model reference by variable name.
+              // See https://github.com/prisma/prisma/discussions/16058#discussioncomment-54936
+              this._prisma[table].upsert({
+                where: { id: set.id },
+                create: set,
+                update: set,
+              })
+            )
+          )
       )
     );
   }
-
-  /**
-   * Creates or updates a row on a table
-   * @param table database table
-   * @param data row data
-   * @returns void
-   */
-  public upsert = async (table: Tables, data: DataSets): Promise<void> =>
-    await this._upsert(table, data);
 
   /** Counts the number of records in a database
    * @access private
    * @param table - database table.
    * @returns int
    */
-  private async _count(table: Tables): Promise<number> {
+  public async _count(table: DataSets): Promise<number> {
     try {
       // @ts-ignore Prisma doesn't support model reference by variable name.
       // See https://github.com/prisma/prisma/discussions/16058#discussioncomment-5493686
@@ -122,13 +143,6 @@ class _InsertionServivce {
       return 0;
     }
   }
-  /** Counts the number of records in a databse
-   * @access public
-   * @param table database table
-   * @returns int
-   */
-  public count = async (table: Tables): Promise<number> =>
-    await this._count(table);
 }
 
 export const InsertionService = new _InsertionServivce();

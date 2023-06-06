@@ -1,4 +1,5 @@
 import WebSocket from 'ws';
+import { InsertionService } from './InsertionService';
 import { LoggerService } from './LoggerService';
 
 enum URLs {
@@ -110,13 +111,68 @@ interface SocketError {
 
 export type MessageType = 'connection';
 
-export type MessageEvent = 'subscribe' | 'ask.created' | 'ask.updated';
+export type MessageEvent =
+  | 'subscribe'
+  | 'ask.created'
+  | 'ask.updated'
+  | 'sale.created'
+  | 'sale.updated';
 
 export interface SocketMessage {
   type: MessageType;
   event: MessageEvent;
   status: string;
-  data: AsksSchema;
+  data: AsksSchema | SalesSchema;
+}
+export interface Collection {
+  id?: string;
+  name: string;
+}
+export interface Token {
+  contract: string;
+  tokenId: string;
+  name?: string;
+  image?: string;
+  collection: Collection;
+}
+export interface Currency {
+  contract: string;
+  name: string;
+  symbol: string;
+  decimals: number;
+}
+export interface Amount {
+  raw: string;
+  decimal: number;
+  usd: number;
+  native: number;
+}
+export interface Price {
+  currency: Currency;
+  amount: Amount;
+}
+export interface SalesSchema {
+  id: string;
+  saleId: string;
+  token: Token;
+  orderId: string;
+  orderSource: string;
+  orderSide: string;
+  orderKind: string;
+  from: string;
+  to: string;
+  amount: string;
+  fillSource: string;
+  block: number;
+  txHash: string;
+  logIndex: number;
+  batchIndex: number;
+  timestamp: number;
+  price: Price;
+  washTradingScore: number;
+  createdAt: string;
+  updatedAt: string;
+  isDeleted: boolean;
 }
 
 class _WebSocketService {
@@ -173,11 +229,17 @@ class _WebSocketService {
       this._config.contracts.forEach((contract) => {
         this._subscribe('ask.created', contract);
         this._subscribe('ask.updated', contract);
+        this._subscribe('sale.created', contract);
+        this._subscribe('sale.updated', contract);
       });
-    } else {
-      this._subscribe('ask.created');
-      this._subscribe('ask.updated');
+      return;
     }
+
+    this._subscribe('ask.created');
+    this._subscribe('ask.updated');
+
+    this._subscribe('sale.created');
+    this._subscribe('sale.updated');
   };
   /**
    * # _onMessage
@@ -200,16 +262,14 @@ class _WebSocketService {
       }
 
       if (event?.includes('ask')) {
-        InsertionService.upsert({
-          table: 'asks',
-          data: PARSER_METHODS['asks'](
-            [data] as DataType<'asks'>,
-            this._config?.contracts
-          ),
-        });
+        InsertionService.upsert('asks', [data as AsksSchema]);
+      }
+
+      if (event?.includes('sales')) {
+        InsertionService.upsert('sales', [data as SalesSchema]);
       }
     } catch (e: unknown) {
-      LoggerService.error(err);
+      LoggerService.error(e);
     }
   }
   /**

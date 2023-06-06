@@ -3,7 +3,7 @@ import {
   createLogger,
   format,
   Logger as WinstonLogger,
-  transports,
+  transports
 } from 'winston';
 
 interface LoggerServiceConfig {
@@ -26,7 +26,7 @@ interface WebhookEvent {
   trace: string[];
 }
 
-export class LoggerService {
+class _LoggerService {
   /**
    * # logger
    * Winston logger instance
@@ -130,3 +130,5 @@ export class LoggerService {
   public sendWebhookEvent = async (event: WebhookEvent): Promise<void> =>
     this._sendWebhookEvent(event);
 }
+
+export const LoggerService = new _LoggerService();
