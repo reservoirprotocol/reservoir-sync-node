@@ -19,13 +19,6 @@ interface LoggerServiceConfig {
   };
 }
 
-interface WebhookEvent {
-  title: string;
-  level: number;
-  timestamp: number;
-  trace: string[];
-}
-
 class _LoggerService {
   /**
    * # logger
@@ -85,13 +78,23 @@ class _LoggerService {
     }
   }
   /**
+   * Log a message with the 'info' level.
+   * This method logs an inf message, typically used for reporting application info.
+   * @param message - The message to log.
+   * @returns {void} - void
+   */
+  public info(message: unknown): WinstonLogger {
+    return this._logger.info(message + '\n');
+  }
+  /**
    * Log a message with the 'error' level.
    * This method logs an error message, typically used for reporting application errors or exceptions.
    * @param message - The message to log.
    * @returns {void} - void
    */
-  public error = (message: unknown): WinstonLogger =>
-    this._logger.error(message + '\n');
+  public error(message: unknown): WinstonLogger {
+    return this._logger.error(message + '\n');
+  }
 
   /**
    * Log a message with the 'warn' level.
@@ -99,8 +102,9 @@ class _LoggerService {
    * @param message - The message to log.
    * @returns {void} - void
    */
-  public warn = (message: string): WinstonLogger =>
-    this._logger.warn(message + '\n');
+  public warn(message: string): WinstonLogger {
+    return this._logger.warn(message + '\n');
+  }
 
   /**
    * Log a message with the 'debug' level.
@@ -108,41 +112,9 @@ class _LoggerService {
    * @param message - The message to log.
    * @returns {void} void
    */
-  public debug = (message: string): WinstonLogger =>
-    this._logger.debug(message + '\n');
-
-  /**
-   * Sends a webhook event
-   * @param event Webhook event
-   * @returns void
-   */
-  private async _sendWebhookEvent(event: WebhookEvent): Promise<void> {
-    const { timestamp, trace, title, level } = event;
-    try {
-      const res = await fetch(this._config.webhook.endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          event: title,
-          level,
-          timestamp,
-          trace,
-        }),
-      });
-      if (!res.ok) throw new Error(``);
-    } catch (e: unknown) {
-      return;
-    }
+  public debug(message: string): WinstonLogger {
+    return this._logger.debug(message + '\n');
   }
-  /**
-   * Sends a webhook event
-   * @param event Webhook event
-   * @returns void
-   */
-  public sendWebhookEvent = async (event: WebhookEvent): Promise<void> =>
-    this._sendWebhookEvent(event);
 }
 
 export const LoggerService = new _LoggerService();
