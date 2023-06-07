@@ -2,21 +2,6 @@
 import { Prisma, PrismaClient } from '@prisma/client';
 import { AsksSchema, SalesSchema } from './WebSocketService';
 
-/**
- * {
-    datasets: ['asks', 'bids'],
-    table: 'all_orders',
-  },
-  {
-    datasets: ['bids'],
-    table: 'bids',
-  },
-  {
-    datasets: ['sales'],
-    table: 'sales',
-  },
- */
-
 type DataTypes = 'sales' | 'asks';
 
 type DataSets = AsksSchema[] | SalesSchema[];
@@ -102,6 +87,13 @@ class _InsertionServivce {
     });
   }
 
+  /**
+   * Returns the prisma client
+   * @returns PrismaClient
+   */
+  public getClient(): PrismaClient {
+    return this._prisma;
+  }
   /**
    * Creates or updates a row on a table
    * @param table database table
