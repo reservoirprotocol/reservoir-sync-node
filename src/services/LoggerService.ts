@@ -1,17 +1,22 @@
-import { LoggerServiceConfig } from '../types';
-import 'dotenv/config';
+import fs from 'fs';
 import {
   createLogger,
   format,
   Logger as WinstonLogger,
   transports,
 } from 'winston';
+import { LoggerServiceConfig } from '../types';
 
+/**
+ * The _LoggerService class provides an interface to the logging framework.
+ * It uses the Winston logging library and supports logging to console, files, and the Datadog service.
+ * The log levels used in this service include 'info', 'warn', 'debug', and 'error'.
+ */
 class _LoggerService {
   /**
-   * # logger
    * Winston logger instance
    * @access private
+   * @type {WinstonLogger}
    */
   private _logger: WinstonLogger = createLogger({
     level: 'info',
@@ -29,9 +34,9 @@ class _LoggerService {
   });
 
   /**
-   * # config
    * LoggerService configuration object
    * @access private
+   * @type {LoggerServiceConfig}
    */
   private _config: LoggerServiceConfig = {
     datadog: {
@@ -41,8 +46,9 @@ class _LoggerService {
   };
 
   /**
-   *
-   * @param config LoggerServiceConfig
+   * Sets up the logger service configuration and adds a new transport for Datadog if required.
+   * @param {LoggerServiceConfig} config - Logger service configuration object.
+   * @returns {void}
    */
   public construct(config: LoggerServiceConfig): void {
     this._config = config;
@@ -61,44 +67,58 @@ class _LoggerService {
       );
     }
   }
+
   /**
-   * Log a message with the 'info' level.
-   * This method logs an inf message, typically used for reporting application info.
-   * @param message - The message to log.
-   * @returns {void} - void
+   * Logs a message at the 'info' level.
+   * @param {unknown} message - The message to log.
+   * @returns {WinstonLogger}
    */
   public info(message: unknown): WinstonLogger {
     return this._logger.info(message + '\n');
   }
+
   /**
-   * Log a message with the 'error' level.
-   * This method logs an error message, typically used for reporting application errors or exceptions.
-   * @param message - The message to log.
-   * @returns {void} - void
+   * Logs a message at the 'error' level.
+   * @param {unknown} message - The message to log.
+   * @returns {WinstonLogger}
    */
   public error(message: unknown): WinstonLogger {
     return this._logger.error(message + '\n');
   }
 
   /**
-   * Log a message with the 'warn' level.
-   * This method logs a warning message, typically used for reporting potential issues or situations that require attention.
-   * @param message - The message to log.
-   * @returns {void} - void
+   * Logs a message at the 'warn' level.
+   * @param {string} message - The message to log.
+   * @returns {WinstonLogger}
    */
   public warn(message: string): WinstonLogger {
     return this._logger.warn(message + '\n');
   }
 
   /**
-   * Log a message with the 'debug' level.
-   * This method logs a debug message, typically used for reporting detailed information about the application's internal state, useful for debugging.
-   * @param message - The message to log.
-   * @returns {void} void
+   * Logs a message at the 'debug' level.
+   * @param {string} message - The message to log.
+   * @returns {WinstonLogger}
    */
   public debug(message: string): WinstonLogger {
     return this._logger.debug(message + '\n');
   }
+
+  /**
+   * Returns the log file
+   * @returns Buffer
+   */
+  public getLogFile(): Buffer | null {
+    try {
+      return fs.readFileSync(`${__dirname}/application.log`);
+    } catch (e: unknown) {
+      return null;
+    }
+  }
 }
 
+/**
+ * The LoggerService is an instance of the _LoggerService class,
+ * allowing for singleton-like usage throughout the application.
+ */
 export const LoggerService = new _LoggerService();

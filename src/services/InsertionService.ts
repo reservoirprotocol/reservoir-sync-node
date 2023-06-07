@@ -2,44 +2,48 @@
 import { DataSets, DataTypes, InsertionServiceConfig } from '../types';
 import { Prisma, PrismaClient } from '@prisma/client';
 
+/**
+ * The _InsertionService class provides an interface to the Prisma ORM.
+ * This service handles database connections, data upserts, and record counting.
+ */
 class _InsertionServivce {
   /**
-   * _instance
-   * Prisma orm instance
+   * Prisma ORM instance
    * @access private
+   * @type {PrismaClient}
    */
   private _prisma: PrismaClient = new PrismaClient();
 
   /**
-   * # _config
-   * Insertion service config
+   * Insertion service configuration object
    * @access private
+   * @type {InsertionServiceConfig}
    */
   private _config: InsertionServiceConfig = {
     mappings: [],
   };
 
   /**
-   * Constructs and sets the service
-   * @returns void
+   * Configures the insertion service with a given configuration.
+   * @param {InsertionServiceConfig} config - Insertion service configuration object.
+   * @returns {void}
    */
   public construct(config: InsertionServiceConfig): void {
     this._config = config;
   }
+
   /**
-   * # launch
-   * Launches the InsertionService
-   * @access public
-   * @returns void
+   * Initiates the connection to the database through Prisma.
+   * @returns {Promise<void>}
    */
   public async launch(): Promise<void> {
     await this._prisma.$connect();
   }
 
   /**
-   * Handles resolved & rejected prisma promises.
-   * @param promises Prisma promise results
-   * @return void
+   * Handles the resolution or rejection of Prisma promises.
+   * @param {PromiseSettledResult<Prisma.PrismaPromise<T>>[]} promises - Prisma promise results.
+   * @returns {Promise<void>}
    */
   private async _handlePrismaPromises<T>(
     promises: PromiseSettledResult<Prisma.PrismaPromise<T>>[]
@@ -77,17 +81,18 @@ class _InsertionServivce {
   }
 
   /**
-   * Returns the prisma client
-   * @returns PrismaClient
+   * Provides the PrismaClient instance for the caller.
+   * @returns {PrismaClient}
    */
   public getClient(): PrismaClient {
     return this._prisma;
   }
+
   /**
-   * Creates or updates a row on a table
-   * @param table database table
-   * @param data row data
-   * @returns void
+   * Inserts new data or updates existing data in the database.
+   * @param {DataTypes} type - Type of the data to be upserted.
+   * @param {DataSets} data - The actual data to be upserted.
+   * @returns {Promise<void>}
    */
   public async upsert(type: DataTypes, data: DataSets): Promise<void> {
     this._handlePrismaPromises(
@@ -109,10 +114,11 @@ class _InsertionServivce {
     );
   }
 
-  /** Counts the number of records in a database
+  /**
+   * Counts the number of records in a specified database table.
    * @access private
-   * @param table - database table.
-   * @returns int
+   * @param {DataSets} table - Name of the database table.
+   * @returns {Promise<number>}
    */
   public async _count(table: DataSets): Promise<number> {
     try {
@@ -126,4 +132,8 @@ class _InsertionServivce {
   }
 }
 
+/**
+ * The InsertionService is an instance of the _InsertionService class,
+ * allowing for singleton-like usage throughout the application.
+ */
 export const InsertionService = new _InsertionServivce();

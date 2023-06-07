@@ -12,18 +12,21 @@ import {
 import { InsertionService } from '../services';
 import { GraphQlServiceConfig, Schemas } from '../types';
 
+/**
+ * The _GraphQlService class provides methods for constructing GraphQL schemas.
+ */
 class _GraphQlService {
   /**
-   * # _schemas
-   * GraphQl schema instances
+   * Collection of GraphQL schemas.
    * @access private
+   * @type {Schemas}
    */
   private _schemas: Schemas = {};
 
   /**
-   * Constructs the GraphQl schemas
-   * @param config GraphQlServiceConfig
-   * @returns void
+   * Constructs the GraphQL schemas based on the provided configuration.
+   * @param {GraphQlServiceConfig} config - Configuration for the GraphQL service.
+   * @returns {void}
    */
   public construct(config: GraphQlServiceConfig): void {
     config.mappings.forEach(({ datasets, table }) => {
@@ -301,12 +304,16 @@ class _GraphQlService {
   }
 
   /**
-   * Returns the GraphQl Schema instance
-   * @returns GraphQlSchema
+   * Returns the collection of GraphQL schemas.
+   * @returns {Schemas} The schemas.
    */
   public getSchema(): Schemas {
     return this._schemas;
   }
 }
 
+/**
+ * The GraphQlService object is an instance of the _GraphQlService class,
+ * allowing for singleton-like usage throughout the application.
+ */
 export const GraphQlService = new _GraphQlService();

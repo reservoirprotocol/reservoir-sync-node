@@ -1,19 +1,25 @@
 import express, { Application, NextFunction, Request, Response } from 'express';
 import { createHandler } from 'graphql-http/lib/handler';
-import { LoggerService } from '../services';
+import { GraphQlService, LoggerService } from '../services';
 import { ServerConfig } from '../types';
 import routes from './routes';
-import { GraphQlService } from './Schema';
 
+/**
+ * The _Server class encapsulates an Express application and provides methods for
+ * setting up the server, including route handlers and middleware.
+ */
 class _Server {
   /**
-   * The Express Application instance.
+   * The Express application instance.
    * @access private
+   * @type {Application}
    */
   private _app: Application = express();
 
   /**
+   * Configuration object for the server.
    * @access private
+   * @type {ServerConfig}
    */
   private _config: ServerConfig = {
     port: 0,
@@ -21,8 +27,8 @@ class _Server {
   };
 
   /**
-   * Launches the server
-   * @returns void
+   * Launches the server and starts listening on the configured port.
+   * @returns {Promise<void>}
    */
   public async launch(): Promise<void> {
     return new Promise((resolve) => {
@@ -32,10 +38,11 @@ class _Server {
       });
     });
   }
+
   /**
-   * Constructs the server
-   * @param config ServerConfig
-   * @returns void
+   * Configures the server with routes, middleware, and other settings.
+   * @param {ServerConfig} config - Server configuration object.
+   * @returns {void}
    */
   public construct(config: ServerConfig) {
     this._config = config;
@@ -77,4 +84,8 @@ class _Server {
   }
 }
 
+/**
+ * The Server object is an instance of the _Server class,
+ * allowing for singleton-like usage throughout the application.
+ */
 export const Server = new _Server();

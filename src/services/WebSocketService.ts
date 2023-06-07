@@ -11,27 +11,38 @@ import {
 import { InsertionService } from './InsertionService';
 import { LoggerService } from './LoggerService';
 
+/**
+ * The _WebSocketService class provides an interface to interact with websockets.
+ * It provides methods for opening and closing a connection, as well as for subscribing to various events.
+ * It utilizes the InsertionService and LoggerService classes.
+ */
 class _WebSocketService {
   /**
-   * # _ws
    * WebSocket connection
    * @access private
+   * @type {WebSocket}
    */
   private _ws: WebSocket | null = null;
+
   /**
-   * # _url
    * WebSocket url
    * @access private
+   * @type {URLs}
    */
   private _url: URLs = URLs['mainnet'];
 
   /**
-   * # _isConnected
    * Connection flag for the websocket
    * @access private
+   * @type {boolean}
    */
   private _isConnected: boolean = false;
 
+  /**
+   * Configuration for the WebSocket service
+   * @access private
+   * @type {WebSocketServiceConfig}
+   */
   private _config: WebSocketServiceConfig = {
     contracts: [],
     apiKey: '',
@@ -39,8 +50,9 @@ class _WebSocketService {
   };
 
   /**
-   * Attempts to connect the websocket
-   * @returns void
+   * Attempts to establish a connection to the WebSocket.
+   * @param {WebSocketServiceConfig} config - WebSocket service configuration object. Defaults to this._config
+   * @returns {void}
    */
   public construct = (config: WebSocketServiceConfig = this._config): void => {
     if (this._isConnected) return;
@@ -55,8 +67,9 @@ class _WebSocketService {
   };
 
   /**
-   * OnConnect callback for WebSocket
-   * @returns void
+   * Callback function for WebSocket connection.
+   * Subscribes to events based on provided contracts.
+   * @returns {void}
    */
   private _onConnect = (): void => {
     if (this._config.contracts && this._config.contracts.length > 0) {
@@ -71,15 +84,15 @@ class _WebSocketService {
 
     this._subscribe('ask.created');
     this._subscribe('ask.updated');
-
     this._subscribe('sale.created');
     this._subscribe('sale.updated');
   };
+
   /**
-   * # _onMessage
-   * Callback binded to WebSocket message event
+   * Callback function for WebSocket messages.
+   * Parses the message and upserts data into the InsertionService as per the event type.
    * @param {Buffer} message - WebSocket message
-   * @returns void
+   * @returns {void}
    */
   private _onMessage(message: Buffer): void {
     try {
@@ -106,9 +119,11 @@ class _WebSocketService {
       LoggerService.error(e);
     }
   }
+
   /**
-   * Onclose callback for WebSocket
-   * @returns void
+   * Callback function for WebSocket closure.
+   * Attempts reconnection every minute until successful.
+   * @returns {void}
    */
   private _onClose = (): void => {
     this._isConnected = false;
@@ -123,18 +138,22 @@ class _WebSocketService {
       LoggerService.error(e);
     }
   };
+
   /**
-   * Callback for WebSocket errors
-   * @param e SocketError
-   * @returns void
+   * Callback function for WebSocket errors.
+   * Logs the error using LoggerService.
+   * @param {WebSocketError} e - WebSocket error object
+   * @returns {void}
    */
   private _onError = (e: WebSocketError): void => {
     LoggerService.error(e);
   };
+
   /**
    * Subscribes to websocket events
-   * @param event MessageEvent
-   * @param contract contract to filter by
+   * @param {MessageEvent} event - The event to subscribe to
+   * @param {string} contract - Contract to filter by
+   * @returns {void}
    */
   private _subscribe = (event: MessageEvent, contract?: string): void => {
     this._ws?.send(
@@ -147,4 +166,8 @@ class _WebSocketService {
   };
 }
 
+/**
+ * The WebSocketService is an instance of the _WebSocketService class,
+ * allowing for singleton-like usage throughout the application.
+ */
 export const WebSocketService = new _WebSocketService();

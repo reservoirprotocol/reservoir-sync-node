@@ -1,13 +1,10 @@
+import { Server } from './server/Server';
 import { InsertionService, LoggerService, WebSocketService } from './services';
-WebSocketService;
-InsertionService;
-LoggerService;
-
-type DataTypes = 'sales' | 'asks';
+import { DataTypes } from './types';
 
 interface SyncNodeConfig {
   server: {
-    port: string;
+    port: number;
     authorization: string;
   };
   syncer: {
@@ -28,23 +25,29 @@ interface SyncNodeConfig {
 class SyncNode {
   /**
    * # _webSocketService
+   * @access private
    */
   private _webSocketService: typeof WebSocketService = WebSocketService;
 
   /**
    * # _insertionService
+   * @access private
    */
   private _insertionService: typeof InsertionService = InsertionService;
 
   /**
    * # _loggerService
+   * @access private
    */
   private _loggerService: typeof LoggerService = LoggerService;
+
+  private _server: typeof Server = Server;
 
   constructor(config: SyncNodeConfig) {
     this._webSocketService.construct();
     this._insertionService.construct(config.syncer);
     this._loggerService.construct(config.logger);
+    this._server.construct(config.server);
   }
 }
 
@@ -59,7 +62,7 @@ const config: SyncNodeConfig = {
     ],
   },
   server: {
-    port: '1111',
+    port: 1111,
     authorization: 'default',
   },
   logger: {
