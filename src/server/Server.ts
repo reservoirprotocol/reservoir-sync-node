@@ -1,7 +1,7 @@
 import express, { Application, NextFunction, Request, Response } from 'express';
-import { createHandler } from 'graphql-http/lib/handler';
 import { GraphQlService, LoggerService } from '../services';
 import { ServerConfig } from '../types';
+import { createHandler } from 'graphql-http/lib/use/express';
 import routes from './routes';
 
 /**

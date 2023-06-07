@@ -80,10 +80,12 @@ export interface InsertionServiceConfig {
 
 export interface SyncNodeConfig {
   server: {
-    port: string;
+    port: number;
     authorization: string;
   };
   syncer: {
+    apiKey: string;
+    chain: Chains;
     mappings: {
       datasets: DataTypes[];
       table: string;

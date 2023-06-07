@@ -54,17 +54,27 @@ class _WebSocketService {
    * @param {WebSocketServiceConfig} config - WebSocket service configuration object. Defaults to this._config
    * @returns {void}
    */
-  public construct = (config: WebSocketServiceConfig = this._config): void => {
+  public construct = (config: WebSocketServiceConfig): void => {
+    this._config = config;
+  };
+
+  /**
+   * Attempts to create a connection to the WebSocket
+   * @returns void
+   */
+  private _connect(): void {
     if (this._isConnected) return;
 
-    this._ws = config.apiKey
-      ? new WebSocket(`${URLs[config.chain]}?api_key=${config.apiKey}`)
+    this._ws = this._config.apiKey
+      ? new WebSocket(
+          `${URLs[this._config.chain]}?api_key=${this._config.apiKey}`
+        )
       : null;
 
     this._ws?.on('close', this._onClose.bind(this));
     this._ws?.on('error', this._onError.bind(this));
     this._ws?.on('message', this._onMessage.bind(this));
-  };
+  }
 
   /**
    * Launches the WebSocketService
@@ -72,13 +82,14 @@ class _WebSocketService {
    */
   public async launch(): Promise<void> {
     return new Promise((resolve) => {
+      this._connect();
       const interval = setInterval(() => {
         if (this._isConnected) {
           clearInterval(interval);
+          LoggerService.info(`Launched WebSocket Service`);
+          resolve();
         }
       }, 100);
-      LoggerService.info(`Launched WebSocket Service`);
-      resolve();
     });
   }
 
@@ -147,7 +158,7 @@ class _WebSocketService {
     try {
       this._ws?.close();
       const r = setInterval(() => {
-        this.construct();
+        this._connect();
         if (this._isConnected) clearInterval(r);
       }, 60000);
     } catch (e: unknown) {

@@ -30,7 +30,12 @@ class _LoggerService {
         (info) => `[${info.label}] [${info.timestamp}] ${info.message}`
       )
     ),
-    transports: [new transports.File(), new transports.Console()],
+    transports: [
+      new transports.File({
+        filename: 'application.log',
+      }),
+      new transports.Console(),
+    ],
   });
 
   /**
