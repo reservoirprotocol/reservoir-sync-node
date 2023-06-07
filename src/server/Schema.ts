@@ -1,6 +1,5 @@
 /* eslint-disable no-unexpected-multiline */
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { InsertionService } from '@/services';
 import {
   GraphQLBoolean,
   GraphQLFloat,
@@ -8,18 +7,10 @@ import {
   GraphQLList,
   GraphQLObjectType,
   GraphQLSchema,
-  GraphQLString
+  GraphQLString,
 } from 'graphql';
-
-interface GraphQlServiceConfig {
-  datsets: string[];
-  table: string;
-  contracts: string[];
-}
-
-interface Schemas {
-  [key: string]: GraphQLSchema;
-}
+import { InsertionService } from '../services';
+import { GraphQlServiceConfig, Schemas } from '../types';
 
 class _GraphQlService {
   /**
@@ -34,13 +25,13 @@ class _GraphQlService {
    * @param config GraphQlServiceConfig
    * @returns void
    */
-  public construct(config: GraphQlServiceConfig[]): void {
-    config.forEach(({ datsets, table }) => {
+  public construct(config: GraphQlServiceConfig): void {
+    config.mappings.forEach(({ datasets, table }) => {
       this._schemas[table] = new GraphQLSchema({
         query: new GraphQLObjectType({
           name: 'Query',
           fields: {
-            ...(datsets.includes('sales') && {
+            ...(datasets.includes('sales') && {
               sale: {
                 type: new GraphQLList(
                   new GraphQLObjectType({
@@ -116,7 +107,7 @@ class _GraphQlService {
                 },
               },
             }),
-            ...(datsets.includes('asks') && {
+            ...(datasets.includes('asks') && {
               ask: {
                 type: new GraphQLList(
                   new GraphQLObjectType({

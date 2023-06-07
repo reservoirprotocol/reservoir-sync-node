@@ -1,17 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
+import { DataSets, DataTypes, InsertionServiceConfig } from '../types';
 import { Prisma, PrismaClient } from '@prisma/client';
-import { AsksSchema, SalesSchema } from './WebSocketService';
-
-type DataTypes = 'sales' | 'asks';
-
-type DataSets = AsksSchema[] | SalesSchema[];
-
-interface InsertionServiceConfig {
-  mappings: {
-    datasets: DataTypes[];
-    table: string;
-  }[];
-}
 
 class _InsertionServivce {
   /**

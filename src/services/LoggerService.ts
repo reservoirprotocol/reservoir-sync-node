@@ -1,3 +1,4 @@
+import { LoggerServiceConfig } from '../types';
 import 'dotenv/config';
 import {
   createLogger,
@@ -5,19 +6,6 @@ import {
   Logger as WinstonLogger,
   transports,
 } from 'winston';
-
-interface LoggerServiceConfig {
-  datadog: {
-    apiKey: string;
-    appName: string;
-  };
-  webhook: {
-    endpoint: string;
-    events: {
-      [key: string]: boolean;
-    };
-  };
-}
 
 class _LoggerService {
   /**
@@ -49,10 +37,6 @@ class _LoggerService {
     datadog: {
       apiKey: '',
       appName: '',
-    },
-    webhook: {
-      endpoint: '',
-      events: {},
     },
   };
 

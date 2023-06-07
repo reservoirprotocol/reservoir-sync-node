@@ -1,13 +1,9 @@
 import express, { Application, NextFunction, Request, Response } from 'express';
 import { createHandler } from 'graphql-http/lib/handler';
 import { LoggerService } from '../services';
+import { ServerConfig } from '../types';
 import routes from './routes';
 import { GraphQlService } from './Schema';
-
-interface ServerConfig {
-  port: number;
-  authorization: string;
-}
 
 class _Server {
   /**
