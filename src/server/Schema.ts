@@ -8,14 +8,14 @@ import {
   GraphQLList,
   GraphQLObjectType,
   GraphQLSchema,
-  GraphQLString,
+  GraphQLString
 } from 'graphql';
 
 interface GraphQlServiceConfig {
   datsets: string[];
   table: string;
+  contracts: string[];
 }
-[];
 
 interface Schemas {
   [key: string]: GraphQLSchema;

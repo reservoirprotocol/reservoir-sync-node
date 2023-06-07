@@ -1,8 +1,8 @@
-import { LoggerService } from '../services';
 import express, { Application, NextFunction, Request, Response } from 'express';
 import { createHandler } from 'graphql-http/lib/handler';
+import { LoggerService } from '../services';
 import routes from './routes';
-import schema from './Schema';
+import { GraphQlService } from './Schema';
 
 interface ServerConfig {
   port: number;
@@ -62,7 +62,12 @@ class _Server {
       this._app.use(route.path, route.handlers);
     });
 
-    this._app.use('/graphql/:path:/', createHandler({ schema }));
+    Object.keys(GraphQlService.getSchema()).forEach((key) => {
+      this._app.use(
+        `/graphql/${key}/`,
+        createHandler({ schema: GraphQlService.getSchema()[key] })
+      );
+    });
 
     this._app.use('*', (req: Request, res: Response) => {
       res.status(404).json({
