@@ -67,6 +67,22 @@ class _WebSocketService {
   };
 
   /**
+   * Launches the WebSocketService
+   * @returns void
+   */
+  public async launch(): Promise<void> {
+    return new Promise((resolve) => {
+      const interval = setInterval(() => {
+        if (this._isConnected) {
+          clearInterval(interval);
+        }
+      }, 100);
+      LoggerService.info(`Launched WebSocket Service`);
+      resolve();
+    });
+  }
+
+  /**
    * Callback function for WebSocket connection.
    * Subscribes to events based on provided contracts.
    * @returns {void}

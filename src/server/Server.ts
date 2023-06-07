@@ -33,7 +33,7 @@ class _Server {
   public async launch(): Promise<void> {
     return new Promise((resolve) => {
       this._app.listen(this._config.port, () => {
-        LoggerService.info(`Server started`);
+        LoggerService.info(`Launched Server on ${this._config.port}`);
         resolve();
       });
     });

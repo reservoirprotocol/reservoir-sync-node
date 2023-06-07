@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { DataSets, DataTypes, InsertionServiceConfig } from '../types';
 import { Prisma, PrismaClient } from '@prisma/client';
+import { LoggerService } from './LoggerService';
 
 /**
  * The _InsertionService class provides an interface to the Prisma ORM.
@@ -38,6 +39,7 @@ class _InsertionServivce {
    */
   public async launch(): Promise<void> {
     await this._prisma.$connect();
+    LoggerService.info(`Launched Insertion Service`);
   }
 
   /**

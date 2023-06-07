@@ -41,6 +41,10 @@ class SyncNode {
    */
   private _loggerService: typeof LoggerService = LoggerService;
 
+  /**
+   * # _server
+   * @access private
+   */
   private _server: typeof Server = Server;
 
   constructor(config: SyncNodeConfig) {
@@ -48,6 +52,16 @@ class SyncNode {
     this._insertionService.construct(config.syncer);
     this._loggerService.construct(config.logger);
     this._server.construct(config.server);
+  }
+  /**
+   * Launches the SyncNode
+   * @async
+   * @returns void
+   */
+  public async launch(): Promise<void> {
+    await this._insertionService.launch();
+    await this._webSocketService.launch();
+    await this._server.launch();
   }
 }
 
