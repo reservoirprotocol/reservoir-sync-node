@@ -2,21 +2,6 @@
 import { Prisma, PrismaClient } from '@prisma/client';
 import { AsksSchema, SalesSchema } from './WebSocketService';
 
-/**
- * {
-    datasets: ['asks', 'bids'],
-    table: 'all_orders',
-  },
-  {
-    datasets: ['bids'],
-    table: 'bids',
-  },
-  {
-    datasets: ['sales'],
-    table: 'sales',
-  },
- */
-
 type DataTypes = 'sales' | 'asks';
 
 type DataSets = AsksSchema[] | SalesSchema[];
