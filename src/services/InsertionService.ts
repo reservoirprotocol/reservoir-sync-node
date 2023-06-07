@@ -1,30 +1,50 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { asks, Prisma, PrismaClient, sales } from '@prisma/client';
+import { DataSets, DataTypes, InsertionServiceConfig } from '../types';
+import { Prisma, PrismaClient } from '@prisma/client';
 
-type Tables = 'sales' | 'asks';
-type DataSets = sales[] | asks[];
-
-export class InsertionServivce {
+/**
+ * The _InsertionService class provides an interface to the Prisma ORM.
+ * This service handles database connections, data upserts, and record counting.
+ */
+class _InsertionServivce {
   /**
-   * _instance
-   * Prisma orm instance
+   * Prisma ORM instance
    * @access private
+   * @type {PrismaClient}
    */
-  private _prisma: PrismaClient;
+  private _prisma: PrismaClient = new PrismaClient();
 
-  constructor() {
-    this._prisma = new PrismaClient();
-  }
   /**
-   * # launch
-   * Launches the InsertionService
-   * @access public
-   * @returns void
+   * Insertion service configuration object
+   * @access private
+   * @type {InsertionServiceConfig}
+   */
+  private _config: InsertionServiceConfig = {
+    mappings: [],
+  };
+
+  /**
+   * Configures the insertion service with a given configuration.
+   * @param {InsertionServiceConfig} config - Insertion service configuration object.
+   * @returns {void}
+   */
+  public construct(config: InsertionServiceConfig): void {
+    this._config = config;
+  }
+
+  /**
+   * Initiates the connection to the database through Prisma.
+   * @returns {Promise<void>}
    */
   public async launch(): Promise<void> {
     await this._prisma.$connect();
   }
 
+  /**
+   * Handles the resolution or rejection of Prisma promises.
+   * @param {PromiseSettledResult<Prisma.PrismaPromise<T>>[]} promises - Prisma promise results.
+   * @returns {Promise<void>}
+   */
   private async _handlePrismaPromises<T>(
     promises: PromiseSettledResult<Prisma.PrismaPromise<T>>[]
   ): Promise<void> {
@@ -61,44 +81,46 @@ export class InsertionServivce {
   }
 
   /**
-   * Creates or updates a row on a table
-   * @param table database table
-   * @param data row data
-   * @returns void
+   * Provides the PrismaClient instance for the caller.
+   * @returns {PrismaClient}
    */
-  private async _upsert(table: Tables, data: DataSets): Promise<void> {
+  public getClient(): PrismaClient {
+    return this._prisma;
+  }
+
+  /**
+   * Inserts new data or updates existing data in the database.
+   * @param {DataTypes} type - Type of the data to be upserted.
+   * @param {DataSets} data - The actual data to be upserted.
+   * @returns {Promise<void>}
+   */
+  public async upsert(type: DataTypes, data: DataSets): Promise<void> {
     this._handlePrismaPromises(
       await Promise.allSettled(
-        data.map((set) => {
-          // @ts-ignore Prisma doesn't support model reference by variable name.
-          // See https://github.com/prisma/prisma/discussions/16058#discussioncomment-549368
-          return this._prisma[table].upsert({
-            where: {
-              id: set.id,
-            },
-            create: set,
-            update: set,
-          });
-        })
+        this._config.mappings
+          .filter(({ datasets }) => datasets.includes(type))
+          .flatMap(({ table }) =>
+            data.map((set) =>
+              // @ts-ignore Prisma doesn't support model reference by variable name.
+              // See https://github.com/prisma/prisma/discussions/16058#discussioncomment-54936
+              this._prisma[table].upsert({
+                where: { id: set.id },
+                create: set,
+                update: set,
+              })
+            )
+          )
       )
     );
   }
 
   /**
-   * Creates or updates a row on a table
-   * @param table database table
-   * @param data row data
-   * @returns void
-   */
-  public upsert = async (table: Tables, data: DataSets): Promise<void> =>
-    await this._upsert(table, data);
-
-  /** Counts the number of records in a database
+   * Counts the number of records in a specified database table.
    * @access private
-   * @param table - database table.
-   * @returns int
+   * @param {DataSets} table - Name of the database table.
+   * @returns {Promise<number>}
    */
-  private async _count(table: Tables): Promise<number> {
+  public async _count(table: DataSets): Promise<number> {
     try {
       // @ts-ignore Prisma doesn't support model reference by variable name.
       // See https://github.com/prisma/prisma/discussions/16058#discussioncomment-5493686
@@ -108,11 +130,10 @@ export class InsertionServivce {
       return 0;
     }
   }
-  /** Counts the number of records in a databse
-   * @access public
-   * @param table database table
-   * @returns int
-   */
-  public count = async (table: Tables): Promise<number> =>
-    await this._count(table);
 }
+
+/**
+ * The InsertionService is an instance of the _InsertionService class,
+ * allowing for singleton-like usage throughout the application.
+ */
+export const InsertionService = new _InsertionServivce();

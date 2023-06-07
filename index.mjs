@@ -51,7 +51,8 @@ class PrismaSchemaGenerator {
         `,
       orders: `
         id                      Bytes   @id @db.ByteA
-        ask_id                  Bytes?  @db.ByteA
+        order_type              String? @db.Text
+        order_id                  Bytes?  @db.ByteA
         kind                    String? @db.Text
         side                    String? @db.Text
         status                  String? @db.Text

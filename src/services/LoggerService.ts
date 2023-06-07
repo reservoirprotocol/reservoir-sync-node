@@ -1,69 +1,67 @@
-import 'dotenv/config';
+import fs from 'fs';
 import {
   createLogger,
   format,
   Logger as WinstonLogger,
   transports,
 } from 'winston';
+import { LoggerServiceConfig } from '../types';
 
-interface LoggerServiceConfig {
-  datadog: {
-    apiKey: string;
-    appName: string;
-  };
-  webhook: {
-    endpoint: string;
-    events: {
-      [key: string]: boolean;
-    };
-  };
-}
-
-interface WebhookEvent {
-  title: string;
-  level: number;
-  timestamp: number;
-  trace: string[];
-}
-
-export class LoggerService {
+/**
+ * The _LoggerService class provides an interface to the logging framework.
+ * It uses the Winston logging library and supports logging to console, files, and the Datadog service.
+ * The log levels used in this service include 'info', 'warn', 'debug', and 'error'.
+ */
+class _LoggerService {
   /**
-   * # logger
    * Winston logger instance
    * @access private
+   * @type {WinstonLogger}
    */
-  private _logger: WinstonLogger;
+  private _logger: WinstonLogger = createLogger({
+    level: 'info',
+    exitOnError: false,
+    format: format.combine(
+      format.json(),
+      format.colorize({ all: true }),
+      format.label({ label: 'sync-node' }),
+      format.timestamp({ format: 'HH:mm:ss:ms' }),
+      format.printf(
+        (info) => `[${info.label}] [${info.timestamp}] ${info.message}`
+      )
+    ),
+    transports: [new transports.File(), new transports.Console()],
+  });
 
   /**
-   * # config
    * LoggerService configuration object
    * @access private
+   * @type {LoggerServiceConfig}
    */
-  private _config: LoggerServiceConfig;
+  private _config: LoggerServiceConfig = {
+    datadog: {
+      apiKey: '',
+      appName: '',
+    },
+  };
 
-  constructor(config: LoggerServiceConfig) {
+  /**
+   * Sets up the logger service configuration and adds a new transport for Datadog if required.
+   * @param {LoggerServiceConfig} config - Logger service configuration object.
+   * @returns {void}
+   */
+  public construct(config: LoggerServiceConfig): void {
     this._config = config;
-    this._logger = createLogger({
-      level: 'info',
-      exitOnError: false,
-      format: format.combine(
-        format.json(),
-        format.colorize({ all: true }),
-        format.label({ label: 'sync-node' }),
-        format.timestamp({ format: 'HH:mm:ss:ms' }),
-        format.printf(
-          (info) => `[${info.label}] [${info.timestamp}] ${info.message}`
-        )
-      ),
-      transports: [new transports.Console()],
-    });
 
-    const datadog = config?.datadog;
-    if (datadog && datadog?.apiKey && datadog?.appName) {
+    if (
+      this._config.datadog &&
+      this._config.datadog?.apiKey &&
+      this._config.datadog?.appName
+    ) {
       this._logger.transports.push(
         new transports.Http({
           host: 'http-intake.logs.datadoghq.com',
-          path: `/api/v2/logs?dd-api-key=<${datadog.apiKey}>&ddsource=nodejs&service=<${datadog.appName}>`,
+          path: `/api/v2/logs?dd-api-key=<${this._config.datadog.apiKey}>&ddsource=nodejs&service=<${this._config.datadog.appName}>`,
           ssl: true,
         })
       );
@@ -71,62 +69,56 @@ export class LoggerService {
   }
 
   /**
-   * Log a message with the 'error' level.
-   * This method logs an error message, typically used for reporting application errors or exceptions.
-   * @param message - The message to log.
-   * @returns {void} - void
+   * Logs a message at the 'info' level.
+   * @param {unknown} message - The message to log.
+   * @returns {WinstonLogger}
    */
-  public error = (message: unknown): WinstonLogger =>
-    this._logger.error(message + '\n');
+  public info(message: unknown): WinstonLogger {
+    return this._logger.info(message + '\n');
+  }
 
   /**
-   * Log a message with the 'warn' level.
-   * This method logs a warning message, typically used for reporting potential issues or situations that require attention.
-   * @param message - The message to log.
-   * @returns {void} - void
+   * Logs a message at the 'error' level.
+   * @param {unknown} message - The message to log.
+   * @returns {WinstonLogger}
    */
-  public warn = (message: string): WinstonLogger =>
-    this._logger.warn(message + '\n');
+  public error(message: unknown): WinstonLogger {
+    return this._logger.error(message + '\n');
+  }
 
   /**
-   * Log a message with the 'debug' level.
-   * This method logs a debug message, typically used for reporting detailed information about the application's internal state, useful for debugging.
-   * @param message - The message to log.
-   * @returns {void} void
+   * Logs a message at the 'warn' level.
+   * @param {string} message - The message to log.
+   * @returns {WinstonLogger}
    */
-  public debug = (message: string): WinstonLogger =>
-    this._logger.debug(message + '\n');
+  public warn(message: string): WinstonLogger {
+    return this._logger.warn(message + '\n');
+  }
 
   /**
-   * Sends a webhook event
-   * @param event Webhook event
-   * @returns void
+   * Logs a message at the 'debug' level.
+   * @param {string} message - The message to log.
+   * @returns {WinstonLogger}
    */
-  private async _sendWebhookEvent(event: WebhookEvent): Promise<void> {
-    const { timestamp, trace, title, level } = event;
+  public debug(message: string): WinstonLogger {
+    return this._logger.debug(message + '\n');
+  }
+
+  /**
+   * Returns the log file
+   * @returns Buffer
+   */
+  public getLogFile(): Buffer | null {
     try {
-      const res = await fetch(this._config.webhook.endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          event: title,
-          level,
-          timestamp,
-          trace,
-        }),
-      });
-      if (!res.ok) throw new Error(``);
+      return fs.readFileSync(`${__dirname}/application.log`);
     } catch (e: unknown) {
-      return;
+      return null;
     }
   }
-  /**
-   * Sends a webhook event
-   * @param event Webhook event
-   * @returns void
-   */
-  public sendWebhookEvent = async (event: WebhookEvent): Promise<void> =>
-    this._sendWebhookEvent(event);
 }
+
+/**
+ * The LoggerService is an instance of the _LoggerService class,
+ * allowing for singleton-like usage throughout the application.
+ */
+export const LoggerService = new _LoggerService();
