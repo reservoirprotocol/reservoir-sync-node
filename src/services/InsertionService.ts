@@ -103,6 +103,13 @@ class _InsertionServivce {
   }
 
   /**
+   * Returns the prisma client
+   * @returns PrismaClient
+   */
+  public getClient(): PrismaClient {
+    return this._prisma;
+  }
+  /**
    * Creates or updates a row on a table
    * @param table database table
    * @param data row data

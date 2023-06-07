@@ -62,7 +62,7 @@ class _Server {
       this._app.use(route.path, route.handlers);
     });
 
-    this._app.use('/graphql', createHandler({ schema }));
+    this._app.use('/graphql/:path:/', createHandler({ schema }));
 
     this._app.use('*', (req: Request, res: Response) => {
       res.status(404).json({
