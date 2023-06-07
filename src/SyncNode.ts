@@ -59,6 +59,7 @@ class SyncNode {
     this._insertionService.construct(config.syncer);
     this._loggerService.construct(config.logger);
     this._server.construct(config.server);
+    LoggerService.info(`Constructed all services.`);
   }
   /**
    * Launches the SyncNode
@@ -69,6 +70,7 @@ class SyncNode {
     await this._insertionService.launch();
     await this._webSocketService.launch();
     await this._server.launch();
+    LoggerService.info(`Launched all services.`);
   }
 }
 
