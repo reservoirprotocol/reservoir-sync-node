@@ -1,5 +1,10 @@
 import { Server } from './server/Server';
-import { InsertionService, LoggerService, WebSocketService } from './services';
+import {
+  GraphQlService,
+  InsertionService,
+  LoggerService,
+  WebSocketService,
+} from './services';
 import { DataTypes } from './types';
 
 interface SyncNodeConfig {
@@ -23,6 +28,7 @@ interface SyncNodeConfig {
 }
 
 class SyncNode {
+  private _graphqlService: typeof GraphQlService = GraphQlService;
   /**
    * # _webSocketService
    * @access private
@@ -49,6 +55,7 @@ class SyncNode {
 
   constructor(config: SyncNodeConfig) {
     this._webSocketService.construct();
+    this._graphqlService.construct(config.syncer);
     this._insertionService.construct(config.syncer);
     this._loggerService.construct(config.logger);
     this._server.construct(config.server);
