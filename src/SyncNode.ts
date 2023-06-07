@@ -39,7 +39,7 @@ export class SyncNode {
 
   constructor(config: SyncNodeConfig) {
     this._webSocketService.construct({
-      contracts: [],
+      contracts: config.syncer.mappings.flatMap((mapping) => mapping.contracts),
       ...config.syncer,
     });
     this._graphqlService.construct(config.syncer);
