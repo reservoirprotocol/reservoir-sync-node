@@ -135,15 +135,13 @@ class PrismaSchemaGenerator {
 
 new PrismaSchemaGenerator([
   {
-    datasets: ['asks', 'bids'],
-    table: 'all_orders',
-  },
-  {
-    datasets: ['bids'],
-    table: 'bids',
+    datasets: ['asks'],
+    table: 'asks',
+    contracts: [],
   },
   {
     datasets: ['sales'],
     table: 'sales',
+    contracts: [],
   },
 ]);

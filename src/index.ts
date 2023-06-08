@@ -4,11 +4,16 @@ import { SyncNodeConfig } from './types';
 const config: SyncNodeConfig = {
   syncer: {
     chain: 'mainnet',
-    apiKey: '',
+    apiKey: process.env.API_KEY as string,
     mappings: [
       {
         datasets: ['asks'],
         table: 'asks',
+        contracts: [],
+      },
+      {
+        datasets: ['sales'],
+        table: 'sales',
         contracts: [],
       },
     ],
