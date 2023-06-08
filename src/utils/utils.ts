@@ -58,7 +58,7 @@ export const createQuery = (
     queries.push(`sortBy=updatedAt`);
   }
 
-  if (!isBackfilled && type === 'asks') {
+  if (!isBackfilled && (type === 'asks' || type === 'bids')) {
     queries.push('status=active');
   }
 
@@ -225,7 +225,7 @@ export const getContractInfo = async (
     return {
       name: res.data.collections[0].slug,
     };
-  } catch (err) {
+  } catch (err: unknown) {
     return {
       name: contract,
     };

@@ -92,6 +92,10 @@ class _WebSocketService {
           this._subscribe('ask.created', contract);
           this._subscribe('ask.updated', contract);
         }
+        if (this._config?.toConnect.bids) {
+          this._subscribe('bid.created', contract);
+          this._subscribe('bid.updated', contract);
+        }
         if (this._config?.toConnect.sales) {
           this._subscribe('sale.created', contract);
           this._subscribe('sale.updated', contract);
@@ -104,7 +108,10 @@ class _WebSocketService {
       this._subscribe('ask.created');
       this._subscribe('ask.updated');
     }
-
+    if (this._config?.toConnect.bids) {
+      this._subscribe('bid.created');
+      this._subscribe('bid.updated');
+    }
     if (this._config?.toConnect.sales) {
       this._subscribe('sale.created');
       this._subscribe('sale.updated');

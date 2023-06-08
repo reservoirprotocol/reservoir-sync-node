@@ -21,6 +21,7 @@ const config: SyncNodeConfig = {
     workerCount: process.env.WORKER_COUNT, // (Optional)
     managerCount: process.env.MANAGER_COUNT, // (Optional)
     toSync: {
+      bids: process.env.SYNC_BIDS === '1',
       asks: process.env.SYNC_ASKS === '1',
       sales: process.env.SYNC_SALES === '1', // (Optional)
     },

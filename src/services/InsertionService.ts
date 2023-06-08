@@ -1,5 +1,6 @@
 import { Prisma, PrismaClient } from '@prisma/client';
 import { Delete, Query, Tables } from '../types';
+import { LoggerService } from './LoggerService';
 
 /**
  * _InsertionService is a wrapper around the Prisma ORM that provides methods to query the database using Prisma.
@@ -10,7 +11,6 @@ class _InsertionService {
    */
   private prisma: PrismaClient = new PrismaClient();
 
-  constructor() {}
   /**
    * Inserts data into the specified table using upsert.
    * @param query - A Query object containing the table name and data to insert.
@@ -23,7 +23,9 @@ class _InsertionService {
   public async delete({ table, ids }: Delete): Promise<void> {
     try {
       await this._delete(table, ids);
-    } catch {}
+    } catch {
+      return;
+    }
   }
   private async _delete(
     table: Tables,
@@ -40,6 +42,14 @@ class _InsertionService {
         });
       case 'asks':
         return await this.prisma.asks.deleteMany({
+          where: {
+            id: {
+              in: ids,
+            },
+          },
+        });
+      case 'bids':
+        return await this.prisma.bids.deleteMany({
           where: {
             id: {
               in: ids,
@@ -67,8 +77,18 @@ class _InsertionService {
         );
       case 'asks':
         return await Promise.allSettled(
-          (data as Prisma.salesCreateInput[]).map((ask) => {
+          (data as Prisma.asksCreateInput[]).map((ask) => {
             return this.prisma.asks.upsert({
+              where: { id: ask.id },
+              update: ask,
+              create: ask,
+            });
+          })
+        );
+      case 'bids':
+        return await Promise.allSettled(
+          (data as Prisma.bidsCreateInput[]).map((ask) => {
+            return this.prisma.bids.upsert({
               where: { id: ask.id },
               update: ask,
               create: ask,
@@ -90,10 +110,14 @@ class _InsertionService {
           return await this.prisma.asks.aggregate({
             _count: true,
           });
+        case 'bids':
+          return await this.prisma.bids.aggregate({
+            _count: true,
+          });
         default:
           throw new Error(`Unsupported Table: ${table}`);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       return { _count: 0 };
     }
   }
@@ -116,9 +140,9 @@ class _InsertionService {
    */
   private async _handlePrismaPromises(
     promises: PromiseSettledResult<unknown>[],
-    { data, table }: Query
+    { data }: Query
   ): Promise<void> {
-    const [rejected, _] = promises.reduce(
+    const [rejected] = promises.reduce(
       ([rejected, fulfilled], p, i) => {
         if (p.status === 'rejected') {
           return [rejected.concat(data[i].id), fulfilled];
@@ -128,6 +152,9 @@ class _InsertionService {
       },
       [[], []] as [Buffer[], Buffer[]]
     );
+    if (rejected.length > 0) {
+      LoggerService.error(`Rejected promises: ${rejected.length}`);
+    }
   }
 }
 

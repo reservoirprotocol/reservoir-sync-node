@@ -9,6 +9,7 @@ import { SyncManager } from '../services';
 export interface ToConnect {
   asks: boolean;
   sales: boolean;
+  bids: boolean;
 }
 
 export interface WebSocketConfig {
@@ -23,8 +24,10 @@ export type MessageEvent =
   | 'ask.created'
   | 'ask.updated'
   | 'sale.created'
-  | 'sale.updated';
-  
+  | 'sale.updated'
+  | 'bid.created'
+  | 'bid.updated';
+
 export interface SocketMessage {
   type: MessageType;
   event: MessageEvent;
@@ -195,6 +198,7 @@ export interface WorkerConfig {
 }
 export type PrismaSalesCreate = Prisma.salesCreateInput;
 export type PrismaAsksCreate = Prisma.asksCreateInput;
+export type PrismaBidsCreate = Prisma.bidsCreateInput;
 
 export type PrismaCreate = PrismaSalesCreate & {
   isDeleted?: boolean;
@@ -288,11 +292,12 @@ export interface AsksFeeBreakdown {
   recipient: string;
 }
 
-export type Tables = 'sales' | 'asks';
+export type Tables = 'sales' | 'asks' | 'bids';
 
 export type RecordRoots = {
   sales: 'sales';
   asks: 'orders';
+  bids: 'orders';
 };
 
 export interface Delete {
@@ -340,6 +345,15 @@ export interface RequestMethods {
     query: string;
     apiKey: string;
   }) => Promise<ApiResponse>;
+  bids: ({
+    url,
+    query,
+    apiKey,
+  }: {
+    url: string;
+    query: string;
+    apiKey: string;
+  }) => Promise<ApiResponse>;
 }
 
 export type ParserRaw = {
@@ -352,9 +366,11 @@ export type ParserFormatted = {
 };
 
 export type ParserMethods = {
-  [K in 'sales' | 'asks']: K extends 'sales'
+  [K in 'sales' | 'asks' | 'bids']: K extends 'sales'
     ? (sales: SalesSchema[], contracts?: string[]) => PrismaSalesCreate[]
-    : (asks: AsksSchema[], contracts?: string[]) => PrismaAsksCreate[];
+    : K extends 'asks'
+    ? (asks: AsksSchema[], contracts?: string[]) => PrismaAsksCreate[]
+    : (bids: BidsSchema[], contracts?: string[]) => PrismaBidsCreate[];
 };
 
 export type DataType<T extends keyof ParserMethods> = ParserMethods[T] extends (
@@ -372,6 +388,7 @@ export interface ParserRawData {
 export interface FormatMethods {
   sales: (sales: SalesSchema[]) => PrismaSalesCreate[];
   asks: (asks: AsksSchema[]) => PrismaAsksCreate[];
+  bids: (bids: BidsSchema[]) => PrismaBidsCreate[];
 }
 export type APIDatasets = 'sales' | 'orders';
 
@@ -442,6 +459,7 @@ export interface LoggerConfig {
 export interface ToSync {
   sales: boolean;
   asks: boolean;
+  bids: boolean;
 }
 export interface BaseSyncerConfig {
   apiKey: string;
