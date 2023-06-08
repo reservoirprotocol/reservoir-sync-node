@@ -1,13 +1,14 @@
 import 'dotenv/config';
-import { LightNode } from './LightNode';
-import { Chains, LightNodeConfig } from './types';
+import { LoggerService } from './services';
+import { SyncNode } from './SyncNode';
+import { Chains, SyncNodeConfig } from './types';
 
 /**
- * (Required) Configuration object for the LightNode instance.
- * @type {LightNodeConfig}
+ * (Required) Configuration object for the SyncNode instance.
+ * @type {SyncNodeConfig}
  */
 
-const config: LightNodeConfig = {
+const config: SyncNodeConfig = {
   server: {
     port: process.env.PORT, // (Required)
     authorization: process.env.AUTHORIZATION, // (Required)
@@ -34,14 +35,22 @@ const config: LightNodeConfig = {
     }),
   // (Optional)
   ...(process.env.REDIS_URL && {
-      backup: {
-        redisUrl: process.env.REDIS_URL,
-        useBackup: process.env.USE_BACKUP == '1',
-      },
-    }),
+    backup: {
+      redisUrl: process.env.REDIS_URL,
+      useBackup: process.env.USE_BACKUP == '1',
+    },
+  }),
 };
 
 /**
- * Launches the LightNode instance with the given configuration.
+ * Launches the SyncNode instance with the given configuration.
  */
-LightNode.launch(config);
+SyncNode.launch(config);
+
+process.on('uncaughtException', (error: Error) => {
+  LoggerService.error(error);
+});
+
+process.on('unhandledRejection', (error: Error) => {
+  LoggerService.error(error);
+});

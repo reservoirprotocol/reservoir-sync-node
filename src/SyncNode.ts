@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { formatDistance } from 'date-fns';
 import { ServerManager } from './server/Server';
 import {
@@ -9,12 +10,12 @@ import {
   URL_BASES,
   URL_PATHS,
   WebSocketService,
-} from './services/';
+} from './services';
 import {
   Backup,
   IndexSignatureType,
-  LightNodeConfig,
   SyncerConfig,
+  SyncNodeConfig,
   Tables,
 } from './types';
 import {
@@ -27,21 +28,21 @@ import {
 } from './utils/utils';
 
 /**
- * LightNode class represents a lightweight node for syncing data.
+ * SyncNode class represents a lightweight node for syncing data.
  * It is responsible for setting up and managing synchronization services, called SyncerServices.
- * The LightNode class is initialized with a configuration object, which contains information
+ * The SyncNode class is initialized with a configuration object, which contains information
  * about the synchronization process, API keys, contracts, and other settings.
  */
-class _LightNode {
+class _SyncNode {
   /**
-   * LightNode configuration
-   * @type {LightNodeConfig}
+   * SyncNode configuration
+   * @type {SyncNodeConfig}
    * @access private
    */
-  private _config!: LightNodeConfig;
+  private _config!: SyncNodeConfig;
 
   /**
-   * LightNode syncers
+   * SyncNode syncers
    * @type {Map<string, SyncService>}
    * @access private
    */
@@ -49,12 +50,12 @@ class _LightNode {
 
   /**
    * # launch
-   * Launches the LightNode instance
-   * @param {LightNodeConfig} _config - The configuration object for the LightNode.
+   * Launches the SyncNode instance
+   * @param {SyncNodeConfig} _config - The configuration object for the SyncNode.
    * @returns {void}
    * @access public
    */
-  public async launch(_config: LightNodeConfig): Promise<void> {
+  public async launch(_config: SyncNodeConfig): Promise<void> {
     this._config = _config;
     this._validateConfig();
     this._setServices();
@@ -78,7 +79,7 @@ class _LightNode {
       workerCount: this._config.syncer.workerCount,
       managerCount: this._config.syncer.managerCount,
       apiKey: this._config.syncer.apiKey,
-      contracts: [contract],
+      contracts: [contract.toLowerCase()],
       upkeepDelay: 0,
       type: type,
       date: await this._getStartDate(type),
@@ -102,16 +103,16 @@ class _LightNode {
 
   /**
    * # _logSyncers
-   * Logs information about the LightNode syncer
+   * Logs information about the SyncNode syncer
    * @returns {void}
    * @access private
    */
   private _logSyncers(): void {
     const processStart = new Date();
-    process.title = 'Reservoir Light Node';
+    process.title = 'Reservoir Sync Node';
     setInterval(() => {
-      let workers: any[] = [];
-      let managers: any[] = [];
+      const workers: any[] = [];
+      const managers: any[] = [];
 
       this._syncers.forEach((syncer, syncerId) => {
         syncer.managers.forEach((manager, id) => {
@@ -165,11 +166,14 @@ class _LightNode {
 
   /**
    * # _getStartDate
-   * Gets the start date for the lightnode
-   * @param {LightNodeConfig} syncer - The type of the syncer, which is used to parse and insert in a generic way.
-   * @returns {string} - The start date for the LightNode.
+   * Gets the start date for the SyncNode
+   * @param {SyncNodeConfig} syncer - The type of the syncer, which is used to parse and insert in a generic way.
+   * @returns {string} - The start date for the SyncNode.
    */
   private async _getStartDate(syncer: SyncerConfig['type']): Promise<string> {
+    if (this._config.syncer.skipBackfill)
+      return new Date().toISOString().substring(0, 10);
+
     const res = await REQUEST_METHODS.sales({
       url: `${URL_BASES[this._config.syncer.chain]}${URL_PATHS[syncer]}`,
       query: createQuery('', this._config.syncer.contracts, syncer, false),
@@ -183,15 +187,15 @@ class _LightNode {
     const data = res.data as IndexSignatureType;
 
     const type = RECORD_ROOT[syncer];
-    if (data[type]?.length > 0 && data[type]?.[data[type]?.length - 1]) {
-      return data[type][data[type].length - 1].updatedAt.substring(0, 10);
+    if (data[type]?.length > 0 && data[type]?.[0]) {
+      return data[type][0].updatedAt.substring(0, 10);
     }
     return new Date().toISOString().substring(0, 10);
   }
 
   /**
    * # _createSyncers
-   * Creates the LightNode syncers
+   * Creates the SyncNode syncers
    * @returns {void}
    * @access private
    */
@@ -204,15 +208,16 @@ class _LightNode {
     if (syncer.contracts && syncer.contracts.length > 0) {
       for await (const contract of syncer.contracts) {
         if (syncer.toSync.sales) {
+          const { name } = await getContractInfo(contract);
           this._syncers.set(
-            `sales-syncer-${contract}`,
+            `sales-syncer-${name}`,
             new SyncService({
               chain: syncer.chain,
               workerCount: syncer.workerCount,
               managerCount: syncer.managerCount,
               apiKey: syncer.apiKey,
-              contracts: [contract],
-              upkeepDelay: 0,
+              contracts: [contract.toLowerCase()],
+              upkeepDelay: 60,
               type: 'sales',
               date: await this._getStartDate('sales'),
               backup: await this._loadBackup('sales'),
@@ -220,15 +225,16 @@ class _LightNode {
           );
         }
         if (syncer.toSync.asks) {
+          const { name } = await getContractInfo(contract);
           this._syncers.set(
-            'asks-syncer',
+            `asks-syncer-${name}`,
             new SyncService({
               chain: syncer.chain,
               workerCount: syncer.workerCount,
               managerCount: syncer.managerCount,
               apiKey: syncer.apiKey,
               upkeepDelay: 60,
-              contracts: syncer.contracts,
+              contracts: syncer.contracts.map((c) => c.toLowerCase()),
               type: 'asks',
               date: await this._getStartDate('asks'),
               backup: await this._loadBackup('asks'),
@@ -242,14 +248,14 @@ class _LightNode {
 
     if (syncer.toSync.sales) {
       this._syncers.set(
-        'sales-syncer',
+        `sales-syncer-no-contract`,
         new SyncService({
           chain: syncer.chain,
           workerCount: syncer.workerCount,
           managerCount: syncer.managerCount,
           apiKey: syncer.apiKey,
-          contracts: syncer.contracts,
-          upkeepDelay: 0,
+          contracts: [],
+          upkeepDelay: 60,
           type: 'sales',
           date: await this._getStartDate('sales'),
           backup: await this._loadBackup('sales'),
@@ -258,14 +264,14 @@ class _LightNode {
     }
     if (syncer.toSync.asks) {
       this._syncers.set(
-        'asks-syncer',
+        `asks-syncer-no-contract`,
         new SyncService({
           chain: syncer.chain,
           workerCount: syncer.workerCount,
           managerCount: syncer.managerCount,
           apiKey: syncer.apiKey,
           upkeepDelay: 60,
-          contracts: syncer.contracts,
+          contracts: [],
           type: 'asks',
           date: await this._getStartDate('asks'),
           backup: await this._loadBackup('asks'),
@@ -276,7 +282,7 @@ class _LightNode {
 
   /**
    * # _launchSyncers
-   * Launches the LightNode syncers
+   * Launches the SyncNode syncers
    * @returns {void}
    * @access private
    */
@@ -286,7 +292,7 @@ class _LightNode {
 
   /**
    * # _setServivices
-   * Sets internal services for the LightNode
+   * Sets internal services for the SyncNode
    * @returns {void}
    * @access private
    */
@@ -299,6 +305,7 @@ class _LightNode {
       contracts: this._config.syncer.contracts,
       chain: this._config.syncer.chain,
       toConnect: {
+        sales: this._config.syncer.toSync.sales,
         asks: this._config.syncer.toSync.asks,
       },
     });
@@ -306,7 +313,7 @@ class _LightNode {
 
   /**
    * # _validateConfig
-   * Validates the LightNode configuration
+   * Validates the SyncNode configuration
    * @returns {void}
    * @access private
    * @throws {Error} - If any part of the configuration is invalid.
@@ -345,14 +352,14 @@ class _LightNode {
   }
   /**
    * # _loadBackup
-   * Loads a backup of the most recent state of the LightNode
+   * Loads a backup of the most recent state of the SyncNode
    * @param {String} type - SyncerType
    * @access private
-   * @returns {Backup} - LightNode Backup
+   * @returns {Backup} - SyncNode Backup
    */
   private async _loadBackup(type: string): Promise<Backup | null> {
     return BackupService.load(type);
   }
 }
 
-export const LightNode = new _LightNode();
+export const SyncNode = new _SyncNode();

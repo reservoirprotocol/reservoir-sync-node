@@ -12,7 +12,7 @@ import {
   parse,
   parseISO,
   startOfDay,
-  startOfMonth
+  startOfMonth,
 } from 'date-fns';
 import { utcToZonedTime } from 'date-fns-tz';
 import { validate } from 'node-cron';
@@ -50,13 +50,17 @@ export const createQuery = (
     'sortDirection=asc',
     'limit=1000',
     'includeCriteriaMetadata=true',
-    'sortBy=updatedAt'
   ];
 
+  if (type === 'sales') {
+    queries.push('orderBy=updated_at');
+  } else {
+    queries.push(`sortBy=updatedAt`);
+  }
 
   if (!isBackfilled && type === 'asks') {
     queries.push('status=active');
-  };
+  }
 
   if (date) {
     let startTimestamp = 0;
@@ -214,7 +218,7 @@ export const getContractInfo = async (
 ): Promise<ContractInfo> => {
   try {
     const res = await axios.get(
-      `https://api.reservoir.tools/search/collections/v2?collectionsSetId=${contract}&limit=1`
+      `https://api.reservoir.tools/collections/v5?id=${contract}`
     );
     if (res.status !== 200)
       throw new Error(`Error getting contract info: ${res.status}`);

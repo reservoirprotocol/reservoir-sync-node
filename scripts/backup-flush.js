@@ -1,3 +1,4 @@
+/* eslint-disable */
 require('dotenv/config');
 const { createClient } = require('redis');
 const CONNECTION_URL = process.env.REDIS_URL;

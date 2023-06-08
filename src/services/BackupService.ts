@@ -1,5 +1,5 @@
 import { createClient, RedisClientType } from 'redis';
-import { Backup, LightNodeConfig } from '../types';
+import { Backup, SyncNodeConfig } from '../types';
 import { LoggerService } from './LoggerService';
 
 /**
@@ -11,7 +11,7 @@ class _BackupService {
    * @access private
    * @type {Boolean}
    */
-  private _connected: Boolean;
+  private _connected: boolean;
   /**
    * Redis client
    * @access private
@@ -27,11 +27,11 @@ class _BackupService {
   /**
    * # set
    * Sets the class variables of the BackupService
-   * @param {LightNodeConfig['backup']} config - LightNode backup config
+   * @param {SyncNodeConfig['backup']} config - SyncNode backup config
    * @access public
    * @returns {void} - void
    */
-  public set(config: LightNodeConfig['backup']): void {
+  public set(config: SyncNodeConfig['backup']): void {
     this._client = createClient({
       url: config?.redisUrl,
     });
@@ -47,7 +47,7 @@ class _BackupService {
       try {
         await this._client.connect();
         this._connected = true;
-      } catch (err) {
+      } catch (err: unknown) {
         LoggerService.error(err);
         this._connected = false;
       }
@@ -56,7 +56,7 @@ class _BackupService {
 
   /**
    * # backup
-   * Creates or updates a backup of the LightNode
+   * Creates or updates a backup of the SyncNode
    * @param {Backup} data - The data to be created/updated
    * @access public
    * @returns {void} void
@@ -67,16 +67,16 @@ class _BackupService {
       await this._client?.hSet(data.type, {
         backup: JSON.stringify(data.data),
       });
-    } catch (err) {
+    } catch (err: unknown) {
       LoggerService.error(err);
     }
   }
   /**
    * # load
-   * Loads a LightNode backup
+   * Loads a SyncNode backup
    * @param {String} type - Syncer type
    * @access public
-   * @returns {Backup | null} LightNode backup or null if there isn't a backup
+   * @returns {Backup | null} SyncNode backup or null if there isn't a backup
    */
   public async load(type: string): Promise<Backup | null> {
     if (!this._connected) return null;
@@ -91,14 +91,14 @@ class _BackupService {
           managers: backup.managers,
         },
       };
-    } catch (err) {
+    } catch (err: unknown) {
       LoggerService.error(err);
       return null;
     }
   }
   /**
    * # delete
-   * Flushes all of the stored LightNode states
+   * Flushes all of the stored SyncNode states
    * @access public
    * @returns {void}
    */
@@ -106,7 +106,7 @@ class _BackupService {
     if (!this._connected) return;
     try {
       await this._client?.flushDb();
-    } catch (err) {
+    } catch (err: unknown) {
       LoggerService.error(err);
     }
   }

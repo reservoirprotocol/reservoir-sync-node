@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { SyncService } from '@/services/SyncService';
 import { SyncWorker } from '@/services/SyncWorker';
 import { Prisma } from '@prisma/client';
@@ -7,6 +8,7 @@ import { SyncManager } from '../services';
 
 export interface ToConnect {
   asks: boolean;
+  sales: boolean;
 }
 
 export interface WebSocketConfig {
@@ -16,7 +18,13 @@ export interface WebSocketConfig {
   toConnect: ToConnect;
 }
 export type MessageType = 'connection';
-export type MessageEvent = 'subscribe' | 'ask.created' | 'ask.updated';
+export type MessageEvent =
+  | 'subscribe'
+  | 'ask.created'
+  | 'ask.updated'
+  | 'sale.created'
+  | 'sale.updated';
+  
 export interface SocketMessage {
   type: MessageType;
   event: MessageEvent;
@@ -187,7 +195,6 @@ export interface WorkerConfig {
 }
 export type PrismaSalesCreate = Prisma.salesCreateInput;
 export type PrismaAsksCreate = Prisma.asksCreateInput;
-export type PrismaBidsCreate = Prisma.bidsCreateInput;
 
 export type PrismaCreate = PrismaSalesCreate & {
   isDeleted?: boolean;
@@ -281,7 +288,7 @@ export interface AsksFeeBreakdown {
   recipient: string;
 }
 
-export type Tables = 'sales' | 'asks' | 'bids';
+export type Tables = 'sales' | 'asks';
 
 export type RecordRoots = {
   sales: 'sales';
@@ -333,22 +340,20 @@ export interface RequestMethods {
     query: string;
     apiKey: string;
   }) => Promise<ApiResponse>;
-  bids: ({
-    url,
-    query,
-    apiKey,
-  }: {
-    url: string;
-    query: string;
-    apiKey: string;
-  }) => Promise<ApiResponse>;
 }
 
+export type ParserRaw = {
+  sales: any;
+  asks: any;
+};
+export type ParserFormatted = {
+  sales: any;
+  asks: any;
+};
+
 export type ParserMethods = {
-  [K in Tables]: K extends 'sales'
+  [K in 'sales' | 'asks']: K extends 'sales'
     ? (sales: SalesSchema[], contracts?: string[]) => PrismaSalesCreate[]
-    : K extends 'bids'
-    ? (bids: BidsSchema[], contracts?: string[]) => PrismaBidsCreate[]
     : (asks: AsksSchema[], contracts?: string[]) => PrismaAsksCreate[];
 };
 
@@ -359,7 +364,7 @@ export type DataType<T extends keyof ParserMethods> = ParserMethods[T] extends (
   ? D
   : never;
 
-export interface ParserRawData<T> {
+export interface ParserRawData {
   sales: SalesSchema;
   asks: AsksSchema;
 }
@@ -367,7 +372,6 @@ export interface ParserRawData<T> {
 export interface FormatMethods {
   sales: (sales: SalesSchema[]) => PrismaSalesCreate[];
   asks: (asks: AsksSchema[]) => PrismaAsksCreate[];
-  bids: (bids: BidsSchema[]) => PrismaBidsCreate[];
 }
 export type APIDatasets = 'sales' | 'orders';
 
@@ -452,12 +456,13 @@ export interface SyncerConfig extends BaseSyncerConfig {
   type: Tables;
   backup: Backup | null;
 }
-export interface LightNodeSyncerConfig extends BaseSyncerConfig {
+export interface SyncNodeSyncerConfig extends BaseSyncerConfig {
   apiKey: string;
   chain: Chains;
   contracts?: string[];
   workerCount?: string;
   managerCount?: string;
+  skipBackfill?: boolean;
   toSync: ToSync;
 }
 
@@ -465,11 +470,11 @@ export interface BackupConfig {
   redisUrl?: string;
   useBackup?: boolean;
 }
-export interface LightNodeConfig {
+export interface SyncNodeConfig {
   server: ServerConfig;
   logger?: LoggerConfig;
   backup?: BackupConfig;
-  syncer: LightNodeSyncerConfig;
+  syncer: SyncNodeSyncerConfig;
 }
 
 export interface Path {

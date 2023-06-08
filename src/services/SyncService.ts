@@ -5,10 +5,8 @@ import {
   ApiResponse,
   AsksSchema,
   Bases,
-  BidsSchema,
   DataType,
   FormatMethods,
-  IndexSignatureType,
   KnownPropertiesType,
   Managers,
   ParserMethods,
@@ -21,7 +19,7 @@ import {
   SalesSchema,
   Schemas,
   SyncerConfig,
-  Tables
+  Tables,
 } from '../types';
 import {
   addressToBuffer,
@@ -30,7 +28,7 @@ import {
   incrementDate,
   isSameMonth,
   isValidDate,
-  toBuffer
+  toBuffer,
 } from '../utils';
 import { BackupService } from './BackupService';
 import { InsertionService } from './InsertionService';
@@ -41,14 +39,13 @@ import { SyncManager } from './SyncManager';
  */
 export const URL_PATHS: Paths = {
   sales: '/sales/v4',
-  asks: '/orders/asks/v4',
-  bids: '/orders/bids/v4',
+  asks: '/orders/asks/v4', // resolves to orders
+  bids: '', // resolves to orders
 };
 
 export const RECORD_ROOT: Record<Tables, APIDatasets> = {
   sales: 'sales',
   asks: 'orders',
-  bids: 'orders',
 };
 
 /**
@@ -137,7 +134,8 @@ export const FORMAT_METHODS: FormatMethods = {
         quantity_filled: ask?.quantityFilled || null,
         quantity_remaining: ask?.quantityRemaining || null,
         criteria_kind: ask?.criteria?.kind || null,
-        criteria_data_token_token_id: ask?.criteria?.data?.token?.tokenId || null,
+        criteria_data_token_token_id:
+          ask?.criteria?.data?.token?.tokenId || null,
         source_domain: ask?.source?.domain || null,
         source_icon: ask?.source?.icon || null,
         source_url: ask?.source?.url || null,
@@ -152,98 +150,22 @@ export const FORMAT_METHODS: FormatMethods = {
       };
     });
   },
-  bids: (bids: BidsSchema[]) => {
-    if (!bids) return [];
-    return bids?.map((bid: BidsSchema) => {
-      return {
-        id: Buffer.from(
-          `${bid?.id}-${bid?.contract}-${bid?.maker}-${bid?.tokenSetId}-${bid?.createdAt}`
-        ),
-        bid_id: bid?.id ? addressToBuffer(bid.id) : null,
-        kind: bid?.kind || null,
-        side: bid?.side || null,
-        status: bid?.status || null,
-        token_set_id: bid?.tokenSetId || null,
-        token_set_schema_hash: bid?.tokenSetSchemaHash
-          ? addressToBuffer(bid.tokenSetSchemaHash)
-          : null,
-        contract: bid?.contract ? addressToBuffer(bid.contract) : null,
-        maker: bid?.maker ? addressToBuffer(bid.maker) : null,
-        taker: bid?.taker ? addressToBuffer(bid.taker) : null,
-        price_currency_contract: bid?.price?.currency?.contract
-          ? addressToBuffer(bid.price.currency.contract)
-          : null,
-        price_currency_name: bid?.price?.currency?.name || null,
-        price_currency_symbol: bid?.price?.currency?.symbol || null,
-        price_currency_decimals: bid?.price?.currency?.decimals || null,
-        price_amount_raw: bid?.price?.amount?.raw || null,
-        price_amount_decimal: bid?.price?.amount?.decimal || null,
-        price_amount_native: bid?.price?.amount?.native || null,
-        price_amount_usd: bid?.price?.amount?.usd || null,
-        price_net_amount_decimal: bid?.price?.netAmount?.decimal || null,
-        price_net_amount_native: bid?.price?.netAmount?.native || null,
-        price_net_amount_raw: bid?.price?.netAmount?.raw || null,
-        price_net_amount_usd: bid?.price?.netAmount?.usd || null,
-        valid_from: bid?.validFrom || null,
-        valid_until: bid?.validUntil || null,
-        quantity_filled: bid?.quantityFilled || null,
-        quantity_remaining: bid?.quantityRemaining || null,
-        criteria_kind: bid?.criteria?.kind || null,
-        criteria_data_token_image: bid?.criteria?.data?.token?.image || null,
-        criteria_data_token_name: bid?.criteria?.data?.token?.name || null,
-        criteria_data_token_token_id:
-          bid?.criteria?.data?.token?.tokenId || null,
-        criteria_data_collection_id:
-          bid?.criteria?.data?.collection?.id || null,
-        criteria_data_collection_image:
-          bid?.criteria?.data?.collection?.image || null,
-        criteria_data_collection_name:
-          bid?.criteria?.data?.collection?.name || null,
-        source_domain: bid?.source?.domain || null,
-        source_icon: bid?.source?.icon || null,
-        source_url: bid?.source?.url || null,
-        source_id: bid?.source?.id || null,
-        fee_bps: bid?.feeBps || null,
-        fee_breakdown: JSON.stringify(bid.feeBreakdown),
-        expiration: bid?.expiration || null,
-        is_reservoir: bid?.isReservoir || null,
-        is_dynamic: bid?.isDynamic || null,
-        updated_at: bid?.updatedAt || null,
-        created_at: bid?.createdAt || null,
-      };
-    });
-  },
 };
 
 /**
  * Parser methods for the raw API responses
  */
 export const PARSER_METHODS: ParserMethods = {
-  sales: (sales, contracts) => {
-    if (contracts && contracts?.length > 0) {
-      sales = sales.filter((s: { token: { contract: string } }) =>
-        contracts
-          .map((s: string) => s.toLowerCase())
-          .includes(s.token.contract.toLowerCase())
-      );
-    }
+  sales: (sales) => {
     return FORMAT_METHODS['sales'](sales) as PrismaSalesCreate[];
   },
   asks: (asks, contracts) => {
     if (contracts && contracts.length > 0) {
-      asks = asks.filter((ask) => {
-        contracts.includes(ask.contract.toLowerCase());
-      });
+      asks = asks.filter((ask) =>
+        contracts.includes(ask.contract.toLowerCase())
+      );
     }
     return FORMAT_METHODS['asks'](asks) as PrismaAsksCreate[];
-  },
-  bids: (bids, contracts) => {
-    if (contracts && contracts.length > 0) {
-      bids = bids.filter((bid) => {
-        contracts.includes(bid.contract.toLowerCase());
-      });
-    }
-    return FORMAT_METHODS['bids'](bids) as PrismaAsksCreate[];
   },
 };
 /**
@@ -264,7 +186,7 @@ export const REQUEST_METHODS: RequestMethods = {
         status: _res.status,
         data: _res.data,
       };
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (isAxiosError(err)) {
         return {
           status: err.response?.status || 500,
@@ -276,7 +198,7 @@ export const REQUEST_METHODS: RequestMethods = {
         data: {
           status: 500,
           message: 'Unknown error.',
-          error: err,
+          error: err as string,
         },
       };
     }
@@ -295,7 +217,7 @@ export const REQUEST_METHODS: RequestMethods = {
         status: _res.status,
         data: _res.data,
       };
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (isAxiosError(err)) {
         return {
           status: err.response?.status || 500,
@@ -307,38 +229,7 @@ export const REQUEST_METHODS: RequestMethods = {
         data: {
           status: 500,
           message: 'Unknown error.',
-          error: err,
-        },
-      };
-    }
-  },
-  bids: async ({ url, query, apiKey }): Promise<ApiResponse> => {
-    try {
-      const _res = await axios.get(`${url}?${query}`, {
-        timeout: 100000,
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-        },
-      });
-      if (_res.status !== 200) throw _res;
-      return {
-        status: _res.status,
-        data: _res.data,
-      };
-    } catch (err: any) {
-      if (isAxiosError(err)) {
-        return {
-          status: err.response?.status || 500,
-          data: err.response?.data,
-        };
-      }
-      return {
-        status: 500,
-        data: {
-          status: 500,
-          message: 'Unknown error.',
-          error: err,
+          error: err as string,
         },
       };
     }
@@ -423,7 +314,7 @@ export class SyncService {
    * @returns {Promise<void>} Promise<void>
    */
   private _createManagers(): void {
-    for (let i = 0; i < Number(this.config.managerCount || 1); i++) {
+    for (let i = 0; i < Number(this.config.managerCount || 2); i++) {
       if (i !== 0) {
         const date = incrementDate(`${this._date.substring(0, 7)}-01`, {
           months: 1,
@@ -446,31 +337,30 @@ export class SyncService {
           review: this._reviewManager.bind(this),
           count: this._count.bind(this),
           backup: this._backup.bind(this),
-          workerCount: Number(this.config.workerCount || 1),
+          workerCount: Number(this.config.workerCount || 4),
         })
       );
     }
-    if (this.config.type === 'asks') {
-      if (isSameMonth(this._date, getToday())) return;
-      const id = `${this.config.type}-manager-${uuid()}`;
-      this.managers.set(
+
+    if (isSameMonth(this._date, getToday())) return;
+    const id = `${this.config.type}-manager-${uuid()}`;
+    this.managers.set(
+      id,
+      new SyncManager({
         id,
-        new SyncManager({
-          id,
-          date: getToday(),
-          type: this.config.type,
-          upkeepDelay: this.config.upkeepDelay,
-          insert: this._insert.bind(this),
-          request: this._request.bind(this),
-          parse: this._parse.bind(this),
-          format: this._format.bind(this),
-          review: this._reviewManager.bind(this),
-          count: this._count.bind(this),
-          backup: this._backup.bind(this),
-          workerCount: Number(this.config.workerCount || 1),
-        })
-      );
-    }
+        date: getToday(),
+        type: this.config.type,
+        upkeepDelay: this.config.upkeepDelay,
+        insert: this._insert.bind(this),
+        request: this._request.bind(this),
+        parse: this._parse.bind(this),
+        format: this._format.bind(this),
+        review: this._reviewManager.bind(this),
+        count: this._count.bind(this),
+        backup: this._backup.bind(this),
+        workerCount: Number(this.config.workerCount || 4),
+      })
+    );
   }
   /**
    * # _restoreManagers
@@ -497,7 +387,7 @@ export class SyncService {
             review: this._reviewManager.bind(this),
             backup: this._backup.bind(this),
             workers: manager.workers,
-            workerCount: Number(this.config.workerCount || 1),
+            workerCount: Number(this.config.workerCount || 4),
           })
         );
       },
@@ -506,7 +396,7 @@ export class SyncService {
   }
   /**
    * # _createBackup
-   * Backups the current state of the LightNode
+   * Backups the current state of the SyncNode
    * @access private
    * @returns {void}
    */
@@ -538,7 +428,7 @@ export class SyncService {
   private _deleteManager(id: string): void {
     this.managers.delete(id);
   }
-  private _reviewManager(manager: SyncManager): Boolean {
+  private _reviewManager(manager: SyncManager): boolean {
     /**
      * If the manager has a worker that hit's a cursor - it is reported as backfilled and becomes our primary manager
      * This then means that all the other managers just need to finish what they are working on and will be queued for deletion once they are done
@@ -577,6 +467,7 @@ export class SyncService {
       manager.config.date = _date;
       return true;
     } else {
+      this._deleteManager(manager.id);
       return false;
     }
   }
@@ -592,6 +483,7 @@ export class SyncService {
         return manager?.launch();
       })
     );
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     promises.forEach((promise: any) => {
       this._deleteManager(promise.value);
     });

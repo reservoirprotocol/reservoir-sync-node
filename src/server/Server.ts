@@ -7,7 +7,7 @@ import express, {
 } from 'express';
 import { createHandler } from 'graphql-http/lib/use/express';
 import { LoggerService } from '../services/LoggerService';
-import { LightNodeConfig, Path } from '../types';
+import { SyncNodeConfig, Path } from '../types';
 import routes from './routes';
 import schema from './Schema';
 
@@ -98,12 +98,12 @@ class _ServerManager {
    * @throws Will throw an error if there's an issue starting the server.
    */
   public launch(): void {
+    this.app.use('*', this.middleware);
     this.routes.forEach((route) => {
       this.app.use(route.path, route.handlers);
     });
 
     this.app.use('/graphql', createHandler({ schema }));
-    this.app.use('*', this.middleware);
     this.app.use('*', this.defaultHandler);
 
     this.app.listen(this._PORT, () => {
@@ -111,7 +111,7 @@ class _ServerManager {
     });
   }
 
-  public set(config: LightNodeConfig['server']): void {
+  public set(config: SyncNodeConfig['server']): void {
     this._PORT = Number(config.port);
     this._AUTHORIZATION = `${config.authorization}`;
   }

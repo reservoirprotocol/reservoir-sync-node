@@ -5,7 +5,7 @@ import {
   Logger as WinstonLogger,
   transports,
 } from 'winston';
-import { LightNodeConfig } from '../types';
+import { SyncNodeConfig } from '../types';
 
 /**
  * LoggerService class is responsible for handling logging in your application.
@@ -32,7 +32,7 @@ class _LoggerService {
       format: format.combine(
         format.json(),
         format.colorize({ all: true }),
-        format.label({ label: 'light-node' }),
+        format.label({ label: 'sync-node' }),
         format.timestamp({ format: 'HH:mm:ss:ms' }),
         format.printf(
           (info) => `[${info.label}] [${info.timestamp}] ${info.message}`
@@ -45,7 +45,7 @@ class _LoggerService {
     });
   }
 
-  public set(config: LightNodeConfig['logger']): void {
+  public set(config: SyncNodeConfig['logger']): void {
     const datadog = config?.datadog;
     if (datadog && datadog?.apiKey && datadog?.appName) {
       this.logger.transports.push(
@@ -73,7 +73,7 @@ class _LoggerService {
    * @param message - The message to log.
    * @returns {void} - void
    */
-  public error(message: unknown ): void {
+  public error(message: unknown): void {
     this.logger.error(message + '\n');
   }
 
