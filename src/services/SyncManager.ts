@@ -1,8 +1,9 @@
+/* eslint-disable no-constant-condition */
+/* eslint-disable no-async-promise-executor */
 import { uuid } from 'uuidv4';
 import { ManagerConfig, Status, Workers } from '../types';
 import {
   incrementDate,
-  isSameDay,
   isSameMonth,
   isSuccessResponse,
   isTodayUTC,
@@ -243,7 +244,7 @@ export class SyncManager {
    * @access private
    * @returns {void} - void
    */
-  private _reviewWorker(worker: SyncWorker): Boolean {
+  private _reviewWorker(worker: SyncWorker): boolean {
     const _reqs = worker.counts.requests;
 
     this.requestCount += _reqs['2xx'] += _reqs['4xx'] += _reqs['5xx'];
@@ -268,7 +269,7 @@ export class SyncManager {
    * @access private
    * @returns void
    */
-  private _continueWork(worker: SyncWorker): Boolean {
+  private _continueWork(worker: SyncWorker): boolean {
     const _date = incrementDate(this.date, { days: 1 });
 
     if (isSameMonth(_date, this.date) && isValidDate(_date)) {
@@ -292,8 +293,10 @@ export class SyncManager {
         return worker?.sync();
       })
     );
-    promises.forEach((promise: any) => {
-      this._deleteWorker(promise.value);
+    promises.forEach((promise) => {
+      if (promise.status === 'fulfilled') {
+        this._deleteWorker(promise.value);
+      }
     });
   }
   /**
