@@ -66,7 +66,7 @@ class _InsertionService {
               update: sale,
               create: sale,
             });
-            if (!isUpkeeping && record.created_at === record.updated_at) {
+            if (isUpkeeping && record.created_at === record.updated_at) {
               LoggerService.error(
                 `Warning: Upkeeping caused a create operation in 'sales' table`
               );
