@@ -2,7 +2,6 @@ import { uuid } from 'uuidv4';
 import { ManagerConfig, Status, Workers } from '../types';
 import {
   incrementDate,
-  isSameDay,
   isSameMonth,
   isSuccessResponse,
   isTodayUTC,

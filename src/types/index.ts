@@ -24,7 +24,7 @@ export type MessageEvent =
   | 'ask.updated'
   | 'sale.created'
   | 'sale.updated';
-  
+
 export interface SocketMessage {
   type: MessageType;
   event: MessageEvent;
@@ -302,6 +302,7 @@ export interface Delete {
 
 export interface Query {
   table: Tables;
+  isBackfilling: boolean;
   data: PrismaCreate[];
 }
 export interface Bases {
