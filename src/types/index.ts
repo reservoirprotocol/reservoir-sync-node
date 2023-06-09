@@ -436,6 +436,7 @@ export interface ManagerConfig {
 export interface DatadogConfig {
   appName?: string;
   apiKey?: string;
+  logLevel?: 'info' | 'error' | 'ok';
 }
 export interface LoggerConfig {
   datadog?: DatadogConfig;

@@ -225,7 +225,7 @@ export const getContractInfo = async (
     return {
       name: res.data.collections[0].slug,
     };
-  } catch (err) {
+  } catch (err: unknown) {
     return {
       name: contract,
     };

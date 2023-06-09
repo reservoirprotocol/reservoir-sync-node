@@ -31,6 +31,7 @@ const config: SyncNodeConfig = {
       datadog: {
         appName: process.env.DATADOG_APP_NAME,
         apiKey: process.env.DATADOG_API_KEY,
+        logLevel: 'info',
       },
     }),
   // (Optional)
