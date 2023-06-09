@@ -293,8 +293,10 @@ export class SyncManager {
         return worker?.sync();
       })
     );
-    promises.forEach((promise: any) => {
-      this._deleteWorker(promise.value);
+    promises.forEach((promise) => {
+      if (promise.status === 'fulfilled') {
+        this._deleteWorker(promise.value);
+      }
     });
   }
   /**

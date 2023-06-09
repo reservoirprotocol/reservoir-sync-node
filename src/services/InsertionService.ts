@@ -18,12 +18,13 @@ class _InsertionService {
    */
   public async upsert(query: Query): Promise<void> {
     if (!query.data.length) return;
-    this._handlePrismaPromises(await this._upsert(query), query);
+    await this._upsert(query);
   }
   public async delete({ table, ids }: Delete): Promise<void> {
     try {
       await this._delete(table, ids);
-    } catch {
+    } catch (e: unknown) {
+      LoggerService.error(e);
       return;
     }
   }
@@ -107,6 +108,7 @@ class _InsertionService {
           throw new Error(`Unsupported Table: ${table}`);
       }
     } catch (e: unknown) {
+      LoggerService.error(e);
       return { _count: 0 };
     }
   }
@@ -118,33 +120,6 @@ class _InsertionService {
   public async tableCount(table: Tables): Promise<number> {
     const { _count: count } = await this._count(table);
     return count;
-  }
-
-  /**
-   * Handles the settled promises returned by the insert method.
-   * @param promises - An array of settled promises.
-   * @param data - An array of data objects to be inserted.
-   * @param table - The table name for insertion.
-   * @returns A Promise that resolves when the handling is complete.
-   */
-  private async _handlePrismaPromises(
-    promises: PromiseSettledResult<unknown>[],
-    { data, table }: Query
-  ): Promise<void> {
-    const [rejected, resolved] = promises.reduce(
-      ([rejected, fulfilled], p, i) => {
-        if (p.status === 'rejected') {
-          return [rejected.concat(data[i].id), fulfilled];
-        } else {
-          return [rejected, fulfilled.concat(data[i].id)];
-        }
-      },
-      [[], []] as [Buffer[], Buffer[]]
-    );
-    data;
-    table;
-    rejected;
-    resolved;
   }
 }
 
