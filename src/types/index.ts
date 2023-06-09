@@ -450,6 +450,7 @@ export interface ManagerConfig {
   type: Tables;
 }
 export interface DatadogConfig {
+  logLevel: 'info' | 'ok' | 'error'; 
   appName?: string;
   apiKey?: string;
 }
