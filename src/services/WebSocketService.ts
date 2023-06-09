@@ -145,6 +145,15 @@ class _WebSocketService {
           ),
         });
       }
+      if (event?.includes('bid')) {
+        InsertionService.upsert({
+          table: 'bids',
+          data: PARSER_METHODS['bids'](
+            [data] as DataType<'bids'>,
+            this._config?.contracts
+          ),
+        });
+      }
     } catch (err: unknown) {
       LoggerService.error(err);
     }
