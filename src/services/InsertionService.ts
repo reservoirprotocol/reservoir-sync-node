@@ -55,7 +55,7 @@ class _InsertionService {
   private async _upsert({
     table,
     data,
-    isBackfilling,
+    isUpkeeping,
   }: Query): Promise<PromiseSettledResult<unknown>[]> {
     switch (table) {
       case 'sales':
@@ -66,7 +66,7 @@ class _InsertionService {
               update: sale,
               create: sale,
             });
-            if (isBackfilling && record.created_at === record.updated_at) {
+            if (!isUpkeeping && record.created_at === record.updated_at) {
               LoggerService.error(
                 `Warning: Upkeeping caused a create operation in 'sales' table`
               );
@@ -81,7 +81,7 @@ class _InsertionService {
               update: ask,
               create: ask,
             });
-            if (isBackfilling && record.created_at === record.updated_at) {
+            if (isUpkeeping && record.created_at === record.updated_at) {
               LoggerService.error(
                 `Warning: Upkeeping caused a create operation in 'asks' table`
               );

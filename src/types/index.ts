@@ -302,7 +302,7 @@ export interface Delete {
 
 export interface Query {
   table: Tables;
-  isBackfilling: boolean;
+  isUpkeeping?: boolean;
   data: PrismaCreate[];
 }
 export interface Bases {
