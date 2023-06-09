@@ -239,10 +239,11 @@ export class SyncManager {
    * # _reviewWorkers
    * Reviews the status of the workers
    * @param {SyncWorker} worker - worker instance
+   * @param {Boolean} isToday - flag indicating worker date
    * @access private
    * @returns {void} - void
    */
-  private _reviewWorker(worker: SyncWorker): Boolean {
+  private _reviewWorker(worker: SyncWorker, isToday: boolean): boolean {
     const _reqs = worker.counts.requests;
 
     this.requestCount += _reqs['2xx'] += _reqs['4xx'] += _reqs['5xx'];
@@ -253,7 +254,7 @@ export class SyncManager {
     _reqs['4xx'] = 0;
     _reqs['5xx'] = 0;
 
-    if (worker.isBackfilled) {
+    if (worker.isBackfilled && isToday) {
       this.isBackfilled = true;
       this.status = 'upkeeping';
       return true;
@@ -267,10 +268,13 @@ export class SyncManager {
    * @access private
    * @returns void
    */
-  private _continueWork(worker: SyncWorker): Boolean {
+  private _continueWork(worker: SyncWorker): boolean {
     const _date = incrementDate(this.date, { days: 1 });
 
-    if (isSameMonth(_date, this.date) && isValidDate(_date)) {
+    if (
+      (isSameMonth(_date, this.date) || worker.isBackfilled) &&
+      isValidDate(_date)
+    ) {
       this.date = incrementDate(this.date, { days: 1 });
       worker.date = this.date;
       return true;
