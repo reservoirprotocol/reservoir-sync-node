@@ -14,6 +14,7 @@ import {
 import {
   Backup,
   IndexSignatureType,
+  Status,
   SyncerConfig,
   SyncNodeConfig,
   Tables,
@@ -111,33 +112,57 @@ class _SyncNode {
     const processStart = new Date();
     process.title = 'Reservoir Sync Node';
     setInterval(() => {
-      const workers: any[] = [];
-      const managers: any[] = [];
+      interface WorkersLog {
+        worker: string;
+        date: string;
+        insertions: number;
+        status: Status;
+        busy: boolean;
+        backfilled: boolean;
+        continuation: string;
+        '2xx': number;
+        '4xx': number;
+        '5xx': number;
+      }
+      interface ManagersLog {
+        busy: boolean;
+        status: Status;
+        type: Tables;
+        syncer: string;
+        manager: string;
+        year: string;
+        month: string;
+        requests: number;
+        insertions: number;
+        backfilled: boolean;
+      }
+      const workers: WorkersLog[] = [];
+      const managers: ManagersLog[] = [];
 
       this._syncers.forEach((syncer, syncerId) => {
         syncer.managers.forEach((manager, id) => {
           if (!manager) return;
           managers.push({
             type: syncer.config.type,
-            Syncer: syncerId,
-            Manager: id,
-            Year: getYear(manager?.config.date),
-            Month: getMonth(manager?.config.date),
-            Requests: manager?.requestCount,
-            Insertions: manager?.insertCount,
-            Status: manager?.status,
-            Busy: manager?.isBusy,
-            Backfilled: manager?.isBackfilled,
+            syncer: syncerId,
+            manager: id,
+            year: getYear(manager?.config.date),
+            month: getMonth(manager?.config.date),
+            requests: manager?.requestCount,
+            insertions: manager?.insertCount,
+            status: manager?.status,
+            busy: manager?.isBusy,
+            backfilled: manager?.isBackfilled,
           });
           manager.workers.forEach((worker, id) => {
             workers.push({
-              Worker: id,
-              Date: worker?.date.substring(5),
-              Busy: worker?.isBusy,
-              Status: worker?.status,
-              Backfilled: worker?.isBackfilled,
-              Insertions: worker?.counts?._insertions,
-              Continuation: worker?.continuation,
+              worker: id,
+              date: worker?.date.substring(5),
+              busy: worker?.isBusy,
+              status: worker?.status,
+              backfilled: worker?.isBackfilled,
+              insertions: worker?.counts?._insertions,
+              continuation: worker?.continuation,
               '2xx': worker?.counts._requests['2xx'],
               '4xx': worker?.counts._requests['4xx'],
               '5xx': worker?.counts?._requests['5xx'],

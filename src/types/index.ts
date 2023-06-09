@@ -1,22 +1,75 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { SyncService } from '@/services/SyncService';
-import { SyncWorker } from '@/services/SyncWorker';
 import { Prisma } from '@prisma/client';
 import { HttpStatusCode } from 'axios';
 import { Application } from 'express';
-import { SyncManager } from '../services';
+import { SyncManager, SyncService, SyncWorker } from '../services';
 
-export interface ToConnect {
-  asks: boolean;
-  sales: boolean;
-}
+export type KnownPropertiesType = {
+  continuation: string;
+} & {
+  [key in APIDatasets]: Schemas;
+};
 
-export interface WebSocketConfig {
-  contracts?: string[];
-  apiKey: string;
-  chain: Chains;
-  toConnect: ToConnect;
-}
+export type Managers = Map<string, SyncManager>;
+export type Workers = Map<string, SyncWorker>;
+export type Schemas = SalesSchema[] | AsksSchema[] | BidsSchema[];
+export type SchemasObject = {
+  sales: SalesSchema[];
+  asks: AsksSchema[];
+};
+export type GenericResponse = KnownPropertiesType;
+
+export type ErrorType = {
+  status: number;
+  error: string;
+  message: string;
+};
+
+export type SuccessType = KnownPropertiesType;
+
+export type SuccessResponse<T = SuccessType> = {
+  data: T;
+  status: HttpStatusCode;
+};
+
+export type ErrorResponse<T = ErrorType> = {
+  data: T;
+  status: HttpStatusCode;
+};
+
+export type ApiResponse<T = SuccessType> = SuccessResponse<T> | ErrorResponse;
+
+export type Chain = keyof Chains;
+
+export type Chains = 'mainnet' | 'goerli';
+export type ParserMethods = {
+  [K in 'sales' | 'asks']: K extends 'sales'
+    ? (sales: SalesSchema[], contracts?: string[]) => PrismaSalesCreate[]
+    : (asks: AsksSchema[], contracts?: string[]) => PrismaAsksCreate[];
+};
+
+export type ParserRaw = {
+  sales: any;
+  asks: any;
+};
+export type ParserFormatted = {
+  sales: any;
+  asks: any;
+};
+export type Tables = 'sales' | 'asks';
+
+export type RecordRoots = {
+  sales: 'sales';
+  asks: 'orders';
+};
+
+export type DataType<T extends keyof ParserMethods> = ParserMethods[T] extends (
+  data: infer D,
+  contracts?: string[]
+) => any
+  ? D
+  : never;
+
 export type MessageType = 'connection';
 export type MessageEvent =
   | 'subscribe'
@@ -24,7 +77,38 @@ export type MessageEvent =
   | 'ask.updated'
   | 'sale.created'
   | 'sale.updated';
-  
+export type Status = 'backfilling' | 'upkeeping';
+
+export enum URLS {
+  'goerli' = 'wss://ws.dev.reservoir.tools?',
+  'mainnet' = 'wss://ws.reservoir.tools?',
+}
+export type IndexSignatureType = {
+  sales: SalesSchema[];
+  orders: AsksSchema[] | BidsSchema[];
+};
+
+export type SyncManagerInstance = InstanceType<typeof SyncManager>;
+export type SyncServiceInstance = InstanceType<typeof SyncService>;
+
+export type RequestType = SyncServiceInstance['_request'];
+export type InsertType = SyncServiceInstance['_insert'];
+export type CountType = SyncServiceInstance['_count'];
+export type ParseType = SyncServiceInstance['_parse'];
+export type FormatType = SyncServiceInstance['_format'];
+export type BackupType = SyncServiceInstance['_backup'];
+export type ReviewType = SyncServiceInstance['_reviewManager'];
+
+export interface ToConnect {
+  asks: boolean;
+  sales: boolean;
+}
+export interface WebSocketConfig {
+  contracts?: string[];
+  apiKey: string;
+  chain: Chains;
+  toConnect: ToConnect;
+}
 export interface SocketMessage {
   type: MessageType;
   event: MessageEvent;
@@ -36,12 +120,6 @@ export interface SocketError {
   message: string;
   stack?: string;
 }
-
-export enum URLS {
-  'goerli' = 'wss://ws.dev.reservoir.tools?',
-  'mainnet' = 'wss://ws.reservoir.tools?',
-}
-
 export interface ContractInfo {
   name: string;
 }
@@ -49,12 +127,10 @@ export interface WorkerBackup {
   date: string;
   continuation: string;
 }
-
 export interface ManagerBackup {
   date: string;
   workers: WorkerBackup[];
 }
-
 export interface Backup {
   type: string;
   data: {
@@ -62,7 +138,6 @@ export interface Backup {
     managers: ManagerBackup[];
   };
 }
-
 export interface Counts {
   insertions: number;
   _insertions: number;
@@ -77,9 +152,6 @@ export interface Counts {
     '5xx': 0;
   };
 }
-
-export type Status = 'backfilling' | 'upkeeping';
-
 export interface Collection {
   id?: string;
   name: string;
@@ -130,14 +202,6 @@ export interface SalesSchema {
   updatedAt: string;
   isDeleted: boolean;
 }
-
-export type Schemas = SalesSchema[] | AsksSchema[] | BidsSchema[];
-
-export type SchemasObject = {
-  sales: SalesSchema[];
-  asks: AsksSchema[];
-};
-
 export interface BidsSchema {
   id: string;
   kind: string;
@@ -164,22 +228,6 @@ export interface BidsSchema {
   createdAt: string;
   updatedAt: string;
 }
-export type IndexSignatureType = {
-  sales: SalesSchema[];
-  orders: AsksSchema[] | BidsSchema[];
-};
-
-export type SyncManagerInstance = InstanceType<typeof SyncManager>;
-export type SyncServiceInstance = InstanceType<typeof SyncService>;
-
-export type RequestType = SyncServiceInstance['_request'];
-export type InsertType = SyncServiceInstance['_insert'];
-export type CountType = SyncServiceInstance['_count'];
-export type ParseType = SyncServiceInstance['_parse'];
-export type FormatType = SyncServiceInstance['_format'];
-export type BackupType = SyncServiceInstance['_backup'];
-export type ReviewType = SyncServiceInstance['_reviewManager'];
-
 export interface WorkerConfig {
   date: string;
   id: string;
@@ -288,13 +336,6 @@ export interface AsksFeeBreakdown {
   recipient: string;
 }
 
-export type Tables = 'sales' | 'asks';
-
-export type RecordRoots = {
-  sales: 'sales';
-  asks: 'orders';
-};
-
 export interface Delete {
   table: Tables;
   ids: Buffer[];
@@ -341,29 +382,6 @@ export interface RequestMethods {
     apiKey: string;
   }) => Promise<ApiResponse>;
 }
-
-export type ParserRaw = {
-  sales: any;
-  asks: any;
-};
-export type ParserFormatted = {
-  sales: any;
-  asks: any;
-};
-
-export type ParserMethods = {
-  [K in 'sales' | 'asks']: K extends 'sales'
-    ? (sales: SalesSchema[], contracts?: string[]) => PrismaSalesCreate[]
-    : (asks: AsksSchema[], contracts?: string[]) => PrismaAsksCreate[];
-};
-
-export type DataType<T extends keyof ParserMethods> = ParserMethods[T] extends (
-  data: infer D,
-  contracts?: string[]
-) => any
-  ? D
-  : never;
-
 export interface ParserRawData {
   sales: SalesSchema;
   asks: AsksSchema;
@@ -374,44 +392,11 @@ export interface FormatMethods {
   asks: (asks: AsksSchema[]) => PrismaAsksCreate[];
 }
 export type APIDatasets = 'sales' | 'orders';
-
-export type KnownPropertiesType = {
-  continuation: string;
-} & {
-  [key in APIDatasets]: Schemas;
-};
-
 export interface Request {
   continuation: string;
   date: string;
   isBackfilled: boolean;
 }
-
-export type GenericResponse = KnownPropertiesType;
-
-export type ErrorType = {
-  status: number;
-  error: string;
-  message: string;
-};
-
-export type SuccessType = KnownPropertiesType;
-
-export type SuccessResponse<T = SuccessType> = {
-  data: T;
-  status: HttpStatusCode;
-};
-
-export type ErrorResponse<T = ErrorType> = {
-  data: T;
-  status: HttpStatusCode;
-};
-
-export type ApiResponse<T = SuccessType> = SuccessResponse<T> | ErrorResponse;
-
-export type Chain = keyof Chains;
-
-export type Chains = 'mainnet' | 'goerli';
 
 export interface ServerConfig {
   port?: number | string;
@@ -476,11 +461,7 @@ export interface SyncNodeConfig {
   backup?: BackupConfig;
   syncer: SyncNodeSyncerConfig;
 }
-
 export interface Path {
   handlers: Application;
   path: string;
 }
-
-export type Managers = Map<string, SyncManager>;
-export type Workers = Map<string, SyncWorker>;
