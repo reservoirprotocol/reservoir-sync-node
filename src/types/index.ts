@@ -343,6 +343,7 @@ export interface Delete {
 
 export interface Query {
   table: Tables;
+  isUpkeeping?: boolean;
   data: PrismaCreate[];
 }
 export interface Bases {
@@ -420,6 +421,7 @@ export interface ManagerConfig {
 export interface DatadogConfig {
   appName?: string;
   apiKey?: string;
+  logLevel?: 'info' | 'error' | 'ok';
 }
 export interface LoggerConfig {
   datadog?: DatadogConfig;

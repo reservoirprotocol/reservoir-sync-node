@@ -202,7 +202,7 @@ export class SyncWorker {
     if (parsed.length && this._recentId !== parsed[parsed.length - 1].id) {
       this.counts._insertions += parsed.length;
       this.counts.insertions += parsed.length;
-      this.config.insert(data);
+      this.config.insert(data, this.isBackfilled);
       this._recentId = parsed[parsed.length - 1].id;
     }
   }

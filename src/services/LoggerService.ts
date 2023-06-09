@@ -27,7 +27,11 @@ class _LoggerService {
    */
   constructor() {
     this.logger = createLogger({
-      level: 'info',
+      levels: {
+        info: 0,
+        ok: 1,
+        error: 2,
+      },
       exitOnError: false,
       format: format.combine(
         format.json(),
@@ -39,8 +43,8 @@ class _LoggerService {
         )
       ),
       transports: [
-        new transports.Console(),
-        new transports.File({ filename: 'application.log' }),
+        new transports.Console({ level: 'info' }),
+        new transports.File({ level: 'error', filename: 'application.log' }),
       ],
     });
   }
@@ -50,6 +54,7 @@ class _LoggerService {
     if (datadog && datadog?.apiKey && datadog?.appName) {
       this.logger.transports.push(
         new transports.Http({
+          level: datadog.logLevel,
           host: 'http-intake.logs.datadoghq.com',
           path: `/api/v2/logs?dd-api-key=<${datadog.apiKey}>&ddsource=nodejs&service=<${datadog.appName}>`,
           ssl: true,
