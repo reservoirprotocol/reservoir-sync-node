@@ -109,13 +109,6 @@ export interface WebSocketConfig {
   chain: Chains;
   toConnect: ToConnect;
 }
-export type MessageType = 'connection';
-export type MessageEvent =
-  | 'subscribe'
-  | 'ask.created'
-  | 'ask.updated'
-  | 'sale.created'
-  | 'sale.updated';
 export interface SocketMessage {
   type: MessageType;
   event: MessageEvent;
