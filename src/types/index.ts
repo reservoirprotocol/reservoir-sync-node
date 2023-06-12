@@ -2,13 +2,41 @@
  * TYPES & ENUMS
  */
 
+import { HttpStatusCode } from 'axios';
 import { Application } from 'express';
-import { GraphQLSchema } from 'graphql';
 
 export enum URLs {
   'goerli' = 'wss://ws.dev.reservoir.tools',
   'mainnet' = 'wss://ws.reservoir.tools',
 }
+
+export type KnownPropertiesType = {
+  continuation: string;
+} & {
+  [key in 'sales' | 'orders']: Schemas;
+};
+
+export type GenericResponse = KnownPropertiesType;
+
+export type ErrorType = {
+  status: number;
+  error: string;
+  message: string;
+};
+
+export type SuccessType = KnownPropertiesType;
+
+export type SuccessResponse<T = SuccessType> = {
+  data: T;
+  status: HttpStatusCode;
+};
+
+export type ErrorResponse<T = ErrorType | null> = {
+  data: T;
+  status: HttpStatusCode | null;
+};
+
+export type ApiResponse<T = SuccessType> = SuccessResponse<T> | ErrorResponse;
 
 export type GraphQlServiceConfig = InsertionServiceConfig;
 
@@ -67,9 +95,12 @@ export interface ServerConfig {
   authorization: string;
 }
 
-export interface Schemas {
-  [key: string]: GraphQLSchema;
-}
+export type Schemas = SalesSchema[] | AsksSchema[];
+
+export type SchemasObject = {
+  sales: SalesSchema[];
+  asks: AsksSchema[];
+};
 
 export interface InsertionServiceConfig {
   mappings: {

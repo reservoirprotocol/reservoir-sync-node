@@ -9,11 +9,7 @@
     "outDir": "dist",
     "allowJs": true,
     "lib": ["dom", "es6"],
-    "baseUrl": "./src",
-    "paths": {
-      "@services/*": ["./src/services/*"],
-      "@/*": ["./*"]
-    }
+    "baseUrl": "./src"
   },
   "sourceMap": true,
   "inlineSources": true,
