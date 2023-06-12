@@ -4,6 +4,10 @@ import { InsertionService } from '../services/';
 import { ApiResponse, Schemas } from '../types';
 import { isSuccessResponse } from '../utils';
 
+interface DataMapping {
+  root: 'sales'
+}
+
 export class Worker extends EventEmitter {
   /**
    * Univeral Unique Identifier to use in order to identify itself with the main process
@@ -33,14 +37,18 @@ export class Worker extends EventEmitter {
    * Processes a block given a configuration
    */
   public async _process(): Promise<void> {
+    let continuation: string = '';
+
     while (this._processing) {
       const res = await this._request({
         headers: {},
       });
+
       if (!isSuccessResponse(res)) continue;
 
       this._insert(res.data[this._dataset]);
-      
+
+      continuation = res.data.continuation && continuation;
     }
   }
 
@@ -67,6 +75,4 @@ export class Worker extends EventEmitter {
   private _split(): void {}
 
   private _release(): void {}
-
-  private _format(): void {}
 }
