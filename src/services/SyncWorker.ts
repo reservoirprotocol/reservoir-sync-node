@@ -152,7 +152,7 @@ export class SyncWorker {
           /**
            * Determine whether the last record matches todays date
            */
-          const isToday = isTodayUTC(lastSet?.updatedAt);
+          const isToday = isTodayUTC(lastSet?.updatedAt) as boolean;
 
           /**
            * Handle all the insertion related calls
@@ -179,7 +179,7 @@ export class SyncWorker {
             /**
              * We callback to the review method to either break or recieve new work
              */
-            if (!this.config.review(this)) break;
+            if (!this.config.review(this, isToday)) break;
           }
           this.config.backup();
           if (this.isBackfilled && !res.data.continuation) {
