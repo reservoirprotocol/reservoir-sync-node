@@ -67,7 +67,7 @@ class _InsertionService {
               update: sale,
               create: sale,
             });
-            if (isUpkeeping && record.created_at === record.updated_at) {
+            if (isUpkeeping && record.db_created_at === record.db_updated_at) {
               LoggerService.error(
                 `Warning: Upkeeping caused a create operation in 'sales' table`
               );
@@ -82,7 +82,7 @@ class _InsertionService {
               update: ask,
               create: ask,
             });
-            if (isUpkeeping && record.created_at === record.updated_at) {
+            if (isUpkeeping && record.db_created_at === record.db_updated_at) {
               LoggerService.error(
                 `Warning: Upkeeping caused a create operation in 'asks' table`
               );
