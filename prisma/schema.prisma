@@ -38,6 +38,9 @@ model sales {
   price_amount_decimal Decimal? @db.Decimal
   price_amount_usd     Decimal? @db.Decimal
   price_amount_native  Decimal? @db.Decimal
+
+  db_created_at DateTime? @db.Timestamp
+  db_updated_at DateTime? @db.Timestamp
 }
 
 model asks {
@@ -66,19 +69,19 @@ model asks {
   price_net_amount_usd     Decimal? @db.Decimal
   price_net_amount_native  Decimal? @db.Decimal
 
-  valid_from         BigInt?   @db.BigInt
-  valid_until        BigInt?   @db.BigInt
-  quantity_filled    BigInt?   @db.BigInt
-  quantity_remaining BigInt?   @db.BigInt
+  valid_from         BigInt? @db.BigInt
+  valid_until        BigInt? @db.BigInt
+  quantity_filled    BigInt? @db.BigInt
+  quantity_remaining BigInt? @db.BigInt
 
   criteria_kind                String? @db.Text
   criteria_data_token_token_id String? @db.Text
 
-  source_id     String? @db.Text
-  source_domain String? @db.Text
-  source_name   String? @db.Text
-  source_icon   String? @db.Text
-  source_url    String? @db.Text
+  source_id     String?   @db.Text
+  source_domain String?   @db.Text
+  source_name   String?   @db.Text
+  source_icon   String?   @db.Text
+  source_url    String?   @db.Text
   fee_bps       BigInt?   @db.BigInt
   fee_breakdown Json?     @db.JsonB
   expiration    BigInt?   @db.BigInt
@@ -86,4 +89,7 @@ model asks {
   is_dynamic    Boolean?  @db.Boolean
   created_at    DateTime? @db.Timestamp
   updated_at    DateTime? @db.Timestamp
+
+  db_created_at DateTime? @db.Timestamp
+  db_updated_at DateTime? @db.Timestamp
 }
