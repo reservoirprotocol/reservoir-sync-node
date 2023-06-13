@@ -17,7 +17,7 @@ export interface WebSocketConfig {
   toConnect: ToConnect;
 }
 export type MessageType = 'connection';
-export type MessageEvent = 'subscribe' | 'ask.created' | 'ask.updated';
+export type MessageEvent = 'subscribe' | 'ask.created' | 'ask.updated' | 'sale.updated' | 'sale.created' | 'bid.created' | 'bid.updated';
 export interface SocketMessage {
   type: MessageType;
   event: MessageEvent;
