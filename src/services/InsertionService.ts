@@ -18,12 +18,13 @@ class _InsertionService {
    */
   public async upsert(query: Query): Promise<void> {
     if (!query.data.length) return;
-    this._handlePrismaPromises(await this._upsert(query), query);
+    await this._upsert(query);
   }
   public async delete({ table, ids }: Delete): Promise<void> {
     try {
       await this._delete(table, ids);
-    } catch {
+    } catch (e: unknown) {
+      LoggerService.error(e);
       return;
     }
   }
@@ -63,16 +64,22 @@ class _InsertionService {
   private async _upsert({
     table,
     data,
+    isUpkeeping,
   }: Query): Promise<PromiseSettledResult<unknown>[]> {
     switch (table) {
       case 'sales':
         return await Promise.allSettled(
-          (data as Prisma.salesCreateInput[]).map((sale) => {
-            return this.prisma.sales.upsert({
+          (data as Prisma.salesCreateInput[]).map(async (sale) => {
+            const record = await this.prisma.sales.upsert({
               where: { id: sale.id },
               update: sale,
               create: sale,
             });
+            if (isUpkeeping && record.created_at === record.updated_at) {
+              LoggerService.error(
+                `Warning: Upkeeping caused a create operation in 'sales' table`
+              );
+            }
           })
         );
       case 'asks':
@@ -117,7 +124,8 @@ class _InsertionService {
         default:
           throw new Error(`Unsupported Table: ${table}`);
       }
-    } catch (err: unknown) {
+    } catch (e: unknown) {
+      LoggerService.error(e);
       return { _count: 0 };
     }
   }
@@ -129,32 +137,6 @@ class _InsertionService {
   public async tableCount(table: Tables): Promise<number> {
     const { _count: count } = await this._count(table);
     return count;
-  }
-
-  /**
-   * Handles the settled promises returned by the insert method.
-   * @param promises - An array of settled promises.
-   * @param data - An array of data objects to be inserted.
-   * @param table - The table name for insertion.
-   * @returns A Promise that resolves when the handling is complete.
-   */
-  private async _handlePrismaPromises(
-    promises: PromiseSettledResult<unknown>[],
-    { data }: Query
-  ): Promise<void> {
-    const [rejected] = promises.reduce(
-      ([rejected, fulfilled], p, i) => {
-        if (p.status === 'rejected') {
-          return [rejected.concat(data[i].id), fulfilled];
-        } else {
-          return [rejected, fulfilled.concat(data[i].id)];
-        }
-      },
-      [[], []] as [Buffer[], Buffer[]]
-    );
-    if (rejected.length > 0) {
-      LoggerService.error(`Rejected promises: ${rejected.length}`);
-    }
   }
 }
 

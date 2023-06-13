@@ -27,7 +27,6 @@ class _LoggerService {
    */
   constructor() {
     this.logger = createLogger({
-      level: 'info',
       levels: {
         info: 0,
         ok: 1,

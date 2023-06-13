@@ -601,12 +601,13 @@ export class SyncService {
    * @param {Prisma.ordersCreateInput | Prisma.salesCreateInput} data - An array of objects
    * @returns {Promise<void>} Promise<void>
    */
-  private _insert(data: KnownPropertiesType): void {
+  private _insert(data: KnownPropertiesType, isUpkeeping?: boolean): void {
     InsertionService.upsert({
       data: this._parse(data[RECORD_ROOT[this.config.type]]).map((value) => {
         delete value.isDeleted;
         return value;
       }),
+      isUpkeeping,
       table: this.config.type,
     });
     InsertionService.delete({

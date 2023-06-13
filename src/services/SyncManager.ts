@@ -1,3 +1,5 @@
+/* eslint-disable no-constant-condition */
+/* eslint-disable no-async-promise-executor */
 import { uuid } from 'uuidv4';
 import { ManagerConfig, Status, Workers } from '../types';
 import {
@@ -239,7 +241,7 @@ export class SyncManager {
    * # _reviewWorkers
    * Reviews the status of the workers
    * @param {SyncWorker} worker - worker instance
-   * @param {Boolean} isToday - flag indicating worker date
+   * @param {Boolean} isToday - is today flag
    * @access private
    * @returns {void} - void
    */
@@ -295,8 +297,10 @@ export class SyncManager {
         return worker?.sync();
       })
     );
-    promises.forEach((promise: any) => {
-      this._deleteWorker(promise.value);
+    promises.forEach((promise) => {
+      if (promise.status === 'fulfilled') {
+        this._deleteWorker(promise.value);
+      }
     });
   }
   /**
