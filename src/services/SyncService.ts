@@ -552,10 +552,11 @@ export class SyncService {
     });
 
     if (
-      isValidDate(_date) &&
-      !Array.from(this.managers.values()).some((manager) =>
-        isSameMonth(_date, manager.date)
-      )
+      (isValidDate(_date) &&
+        !Array.from(this.managers.values()).some((manager) =>
+          isSameMonth(_date, manager.date)
+        )) ||
+      manager.isBackfilled
     ) {
       this._date = _date;
       manager.config.date = _date;
