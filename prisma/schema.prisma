@@ -39,8 +39,8 @@ model sales {
   price_amount_usd     Decimal? @db.Decimal
   price_amount_native  Decimal? @db.Decimal
 
-  db_created_at DateTime? @db.Timestamp
-  db_updated_at DateTime? @db.Timestamp
+  db_created_at DateTime @default(now())
+  db_updated_at DateTime @updatedAt
 }
 
 model asks {
@@ -90,6 +90,6 @@ model asks {
   created_at    DateTime? @db.Timestamp
   updated_at    DateTime? @db.Timestamp
 
-  db_created_at DateTime? @db.Timestamp
-  db_updated_at DateTime? @db.Timestamp
+  db_created_at DateTime @default(now())
+  db_updated_at DateTime @updatedAt
 }
