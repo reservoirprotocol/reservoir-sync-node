@@ -13,6 +13,7 @@ import {
   ParserMethods,
   Paths,
   PrismaAsksCreate,
+  PrismaBidsCreate,
   PrismaCreate,
   PrismaSalesCreate,
   Request,
@@ -228,7 +229,7 @@ export const PARSER_METHODS: ParserMethods = {
         contracts.includes(bid.contract.toLowerCase())
       );
     }
-    return FORMAT_METHODS['bids'](bids) as PrismaAsksCreate[];
+    return FORMAT_METHODS['bids'](bids) as PrismaBidsCreate[];
   },
 };
 /**
