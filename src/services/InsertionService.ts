@@ -64,22 +64,16 @@ class _InsertionService {
   private async _upsert({
     table,
     data,
-    isUpkeeping,
   }: Query): Promise<PromiseSettledResult<unknown>[]> {
     switch (table) {
       case 'sales':
         return await Promise.allSettled(
-          (data as Prisma.salesCreateInput[]).map(async (sale) => {
-            const record = await this.prisma.sales.upsert({
+          (data as Prisma.salesCreateInput[]).map((sale) => {
+            return this.prisma.sales.upsert({
               where: { id: sale.id },
               update: sale,
               create: sale,
             });
-            if (isUpkeeping && record.created_at === record.updated_at) {
-              LoggerService.error(
-                `Warning: Upkeeping caused a create operation in 'sales' table`
-              );
-            }
           })
         );
       case 'asks':
