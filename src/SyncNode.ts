@@ -266,6 +266,23 @@ class _SyncNode {
             })
           );
         }
+        if (syncer.toSync.bids) {
+          const { name } = await getContractInfo(contract);
+          this._syncers.set(
+            `bids-syncer-${name}`,
+            new SyncService({
+              chain: syncer.chain,
+              workerCount: syncer.workerCount,
+              managerCount: syncer.managerCount,
+              apiKey: syncer.apiKey,
+              upkeepDelay: 60,
+              contracts: syncer.contracts.map((c) => c.toLowerCase()),
+              type: 'bids',
+              date: await this._getStartDate('bids'),
+              backup: await this._loadBackup('bids'),
+            })
+          );
+        }
       }
 
       return;
@@ -303,6 +320,22 @@ class _SyncNode {
         })
       );
     }
+    if (syncer.toSync.bids) {
+      this._syncers.set(
+        `bids-syncer-no-contract`,
+        new SyncService({
+          chain: syncer.chain,
+          workerCount: syncer.workerCount,
+          managerCount: syncer.managerCount,
+          apiKey: syncer.apiKey,
+          upkeepDelay: 60,
+          contracts: [],
+          type: 'bids',
+          date: await this._getStartDate('bids'),
+          backup: await this._loadBackup('bids'),
+        })
+      );
+    }
   }
 
   /**
@@ -330,6 +363,7 @@ class _SyncNode {
       contracts: this._config.syncer.contracts,
       chain: this._config.syncer.chain,
       toConnect: {
+        bids: this._config.syncer.toSync.bids,
         sales: this._config.syncer.toSync.sales,
         asks: this._config.syncer.toSync.asks,
       },

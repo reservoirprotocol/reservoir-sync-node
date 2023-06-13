@@ -274,8 +274,8 @@ export class SyncManager {
     const _date = incrementDate(this.date, { days: 1 });
 
     if (
-      (isSameMonth(_date, this.date) && isValidDate(_date)) ||
-      worker.isBackfilled
+      (isSameMonth(_date, this.date) || worker.isBackfilled) &&
+      isValidDate(_date)
     ) {
       this.date = incrementDate(this.date, { days: 1 });
       worker.date = this.date;

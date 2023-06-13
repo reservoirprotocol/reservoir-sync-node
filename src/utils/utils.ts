@@ -58,7 +58,7 @@ export const createQuery = (
     queries.push(`sortBy=updatedAt`);
   }
 
-  if (!isBackfilled && type === 'asks') {
+  if (!isBackfilled && (type === 'asks' || type === 'bids')) {
     queries.push('status=active');
   }
 
@@ -247,7 +247,7 @@ export const getToday = (): string => {
  * @returns Boolean
  */
 export const isTodayUTC = (dateString: string) => {
-  if (!dateString) return;
+  if (!dateString) return false;
   return (
     format(utcToZonedTime(new Date(dateString), 'Etc/UTC'), 'yyyy-MM-dd') ===
     format(utcToZonedTime(new Date(), 'Etc/UTC'), 'yyyy-MM-dd')

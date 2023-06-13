@@ -138,7 +138,6 @@ export class SyncWorker {
          * Use a typeguard to ensure that the resposne is 2xx
          */
         if (isSuccessResponse(res)) {
-          res.data.sales;
           /**
            * Format the data into an array
            */ // this.type

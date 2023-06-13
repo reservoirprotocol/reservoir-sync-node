@@ -49,6 +49,14 @@ class _InsertionService {
             },
           },
         });
+      case 'bids':
+        return await this.prisma.bids.deleteMany({
+          where: {
+            id: {
+              in: ids,
+            },
+          },
+        });
       default:
         throw new Error(`Unsupported Table: ${table}`);
     }
@@ -56,37 +64,36 @@ class _InsertionService {
   private async _upsert({
     table,
     data,
-    isUpkeeping,
   }: Query): Promise<PromiseSettledResult<unknown>[]> {
     switch (table) {
       case 'sales':
         return await Promise.allSettled(
-          (data as Prisma.salesCreateInput[]).map(async (sale) => {
-            const record = await this.prisma.sales.upsert({
+          (data as Prisma.salesCreateInput[]).map((sale) => {
+            return this.prisma.sales.upsert({
               where: { id: sale.id },
               update: sale,
               create: sale,
             });
-            if (isUpkeeping && record.created_at === record.updated_at) {
-              LoggerService.error(
-                `Warning: Upkeeping caused a create operation in 'sales' table`
-              );
-            }
           })
         );
       case 'asks':
         return await Promise.allSettled(
-          (data as Prisma.asksCreateInput[]).map(async (ask) => {
-            const record = await this.prisma.asks.upsert({
+          (data as Prisma.asksCreateInput[]).map((ask) => {
+            return this.prisma.asks.upsert({
               where: { id: ask.id },
               update: ask,
               create: ask,
             });
-            if (isUpkeeping && record.created_at === record.updated_at) {
-              LoggerService.error(
-                `Warning: Upkeeping caused a create operation in 'asks' table`
-              );
-            }
+          })
+        );
+      case 'bids':
+        return await Promise.allSettled(
+          (data as Prisma.bidsCreateInput[]).map((ask) => {
+            return this.prisma.bids.upsert({
+              where: { id: ask.id },
+              update: ask,
+              create: ask,
+            });
           })
         );
       default:
@@ -102,6 +109,10 @@ class _InsertionService {
           });
         case 'asks':
           return await this.prisma.asks.aggregate({
+            _count: true,
+          });
+        case 'bids':
+          return await this.prisma.bids.aggregate({
             _count: true,
           });
         default:

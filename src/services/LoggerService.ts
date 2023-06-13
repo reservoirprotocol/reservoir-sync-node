@@ -51,6 +51,7 @@ class _LoggerService {
 
   public set(config: SyncNodeConfig['logger']): void {
     const datadog = config?.datadog;
+
     if (datadog && datadog?.apiKey && datadog?.appName) {
       this.logger.transports.push(
         new transports.Http({
