@@ -21,7 +21,7 @@ import {
   SalesSchema,
   Schemas,
   SyncerConfig,
-  Tables,
+  Tables
 } from '../types';
 import {
   addressToBuffer,
@@ -30,7 +30,7 @@ import {
   incrementDate,
   isSameMonth,
   isValidDate,
-  toBuffer,
+  toBuffer
 } from '../utils';
 import { BackupService } from './BackupService';
 import { InsertionService } from './InsertionService';
@@ -545,28 +545,33 @@ export class SyncService {
    * # _continueWork
    * Determines if a manager should continue working or not based on the date
    * @param {SyncManager} manager - Manager instance
-   * @returns void
+   * @returns boolean - whether the manager should continue working or not
    */
   private _continueWork(manager: SyncManager): boolean {
-    const _date = incrementDate(`${this._date.substring(0, 7)}-01`, {
-      months: 1,
-    });
 
-    if (
-      (isValidDate(_date) &&
-        !Array.from(this.managers.values()).some((manager) =>
-          isSameMonth(_date, manager.date)
-        )) ||
-      manager.isBackfilled
-    ) {
-      this._date = _date;
-      manager.config.date = _date;
-      return true;
-    } else {
+
+    const nextMonth = incrementDate(`${this._date.substring(0, 7)}-01`, { months: 1 });
+
+    if (!isValidDate(nextMonth)) {
       this._deleteManager(manager.id);
       return false;
     }
+
+  
+    const isManagerWorkingInSameMonth = Array.from(this.managers.values())
+      .filter((m) => m.id === manager.id)
+      .some((m) => isSameMonth(nextMonth, m.date));
+
+    if (isManagerWorkingInSameMonth || manager.isBackfilled) {
+      this._date = nextMonth;
+      manager.config.date = nextMonth;
+      return true;
+    }
+
+    this._deleteManager(manager.id);
+    return false;
   }
+
   /**
    * # _launchMangers
    * Initial launch method for the managers

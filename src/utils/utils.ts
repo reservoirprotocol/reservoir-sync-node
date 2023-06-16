@@ -168,8 +168,12 @@ export const isValidDate = (date: Date | string): boolean => {
 
   const inputDateStartOfDay = startOfDay(inputDate);
   const nowStartOfDay = startOfDay(new Date());
+  const timezoneOffset = inputDateStartOfDay.getTimezoneOffset() * 60 * 1000;
+  const inputDateStartOfDayUTC = inputDateStartOfDay.getTime() - timezoneOffset;
+  const nowStartOfDayUTC = nowStartOfDay.getTime() - timezoneOffset;
   return (
-    isPast(inputDateStartOfDay) || isEqual(inputDateStartOfDay, nowStartOfDay)
+    isPast(inputDateStartOfDayUTC) ||
+    isEqual(inputDateStartOfDayUTC, nowStartOfDayUTC)
   );
 };
 /**
