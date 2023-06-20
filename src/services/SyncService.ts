@@ -607,8 +607,8 @@ export class SyncService {
    * @param {Prisma.ordersCreateInput | Prisma.salesCreateInput} data - An array of objects
    * @returns {Promise<void>} Promise<void>
    */
-  private _insert(data: KnownPropertiesType, isUpkeeping?: boolean): void {
-    InsertionService.upsert({
+  private async _insert(data: KnownPropertiesType, isUpkeeping?: boolean): Promise<void> {
+    await InsertionService.upsert({
       data: this._parse(data[RECORD_ROOT[this.config.type]]).map((value) => {
         delete value.isDeleted;
         return value;
@@ -616,7 +616,7 @@ export class SyncService {
       isUpkeeping,
       table: this.config.type,
     });
-    InsertionService.delete({
+    await InsertionService.delete({
       table: this.config.type,
       ids: this._parse(data[RECORD_ROOT[this.config.type]])
         .filter((data) => data.isDeleted)
