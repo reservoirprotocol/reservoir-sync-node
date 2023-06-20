@@ -123,7 +123,7 @@ class _WebSocketService {
    * @param {Buffer} message - WebSocket message
    * @returns void
    */
-  private _onMessage(message: Buffer): void {
+  private async _onMessage(message: Buffer): Promise<void> {
     try {
       const { type, status, data, event }: SocketMessage = JSON.parse(
         message.toString('utf-8')
@@ -137,7 +137,7 @@ class _WebSocketService {
       }
 
       if (event?.includes('ask')) {
-        InsertionService.upsert({
+        await InsertionService.upsert({
           table: 'asks',
           data: PARSER_METHODS['asks'](
             [data] as DataType<'asks'>,
@@ -146,7 +146,7 @@ class _WebSocketService {
         });
       }
       if (event?.includes('bid')) {
-        InsertionService.upsert({
+        await InsertionService.upsert({
           table: 'bids',
           data: PARSER_METHODS['bids'](
             [data] as DataType<'bids'>,
