@@ -1,5 +1,5 @@
-import { SyncNode } from './SyncNode';
-import { SyncNodeConfig } from './types';
+import { Controller } from './queue/Controller';
+import { Chains, DataTypes, SyncNodeConfig } from './types';
 
 const config: SyncNodeConfig = {
   syncer: {
@@ -30,6 +30,40 @@ const config: SyncNodeConfig = {
   },
 };
 
-export const node = new SyncNode(config);
+// export const node = new SyncNode(config);
+type Mode = 'slow' | 'normal' | 'fast';
+interface Mapping {
+  datasets: DataTypes[];
+  type: {
+    root: 'sales' | 'orders';
+    dataset: 'sales' | 'asks' | 'bids';
+  }
+  table: string;
+}
+interface ControllerConfig {
+  apiKey: string;
+  mapping: Mapping;
+  chain: Chains;
+  contracts: string[];
+  delay: number;
+  mode: Mode;
+}
 
-node.launch();
+const controller = new Controller({
+  apiKey: '',
+  mapping: {
+    datasets: [],
+    type: {
+      root: 'sales',
+      dataset: 'sales',
+    },
+    table: '',
+  },
+  chain: 'mainnet',
+  contracts: [],
+  delay: 0,
+  mode: 'slow',
+});
+
+
+// node.launch();

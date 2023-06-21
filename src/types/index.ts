@@ -55,13 +55,69 @@ export type MessageEvent =
   | 'sale.created'
   | 'sale.updated';
 
+export type Mode = 'slow' | 'normal' | 'fast';
+
 /**
  * INTERFACES
  */
 
+/**
+ * API KEY - Reservoir api key
+ * DATA MAPPING - Mapping for custom tables
+ * CHAIN - Chain to sync
+ * CONTRACTS - Specific contracts to filter by
+ * ENABLE WEBSOCKETS - Boolean to enable websockets or not
+ * DELAY - Delay when upkeeping
+ * SYNC MODE - Upkeeping or backfilling
+ * MODE - Mode that determines the count of the worker pool
+ */
+
+export interface Mapping {
+  datasets: DataTypes[];
+  type: {
+    root: 'sales' | 'orders';
+    dataset: 'sales' | 'asks' | 'bids';
+  };
+  table: string;
+}
+export interface ControllerConfig {
+  apiKey: string;
+  mapping: Mapping;
+  chain: Chains;
+  contracts: string[];
+  delay: number;
+  mode: Mode;
+}
+
+export interface QueueEvent {
+  type: 'new.block';
+  block: Block;
+}
+
+export interface WorkersEventData {}
+
+export interface ControllerEvent {
+  type: 'queue' | 'workers';
+  data: {
+    block: Block;
+  };
+}
+
+export interface Timestamps {
+  startTimestamp: number;
+  endTimestamp: number;
+}
+
 export interface Path {
   handlers: Application;
   path: string;
+}
+
+export interface Block {
+  id: string;
+  startDate: string;
+  endDate: string;
+  contract: string;
 }
 
 export interface WebSocketMessage {

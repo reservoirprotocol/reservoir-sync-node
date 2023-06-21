@@ -21,7 +21,7 @@ class _GraphQlService {
    * @access private
    * @type {Schemas}
    */
-  private _schemas: Schemas = {};
+  private _schemas: any = {};
 
   /**
    * Constructs the GraphQL schemas based on the provided configuration.
