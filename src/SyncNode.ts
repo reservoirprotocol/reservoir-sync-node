@@ -9,7 +9,7 @@ import {
   SyncService,
   URL_BASES,
   URL_PATHS,
-  WebSocketService,
+  WebSocketService
 } from './services';
 import {
   Backup,
@@ -17,7 +17,7 @@ import {
   Status,
   SyncerConfig,
   SyncNodeConfig,
-  Tables,
+  Tables
 } from './types';
 import {
   createQuery,
@@ -25,7 +25,7 @@ import {
   getMonth,
   getYear,
   isAddress,
-  isSuccessResponse,
+  isSuccessResponse
 } from './utils/utils';
 
 /**
@@ -400,6 +400,7 @@ class _SyncNode {
       throw new Error(`AN API KEY IS REQUIRED: ${syncer.apiKey}`);
 
     if (syncer?.contracts) {
+      if (syncer.contracts.length > 5) throw new Error(`TOO MANY CONTRACTS RECIEVED (MAX 5): ${syncer.contracts.length}`);
       syncer.contracts.forEach((contract) => {
         if (!isAddress(contract)) {
           throw new Error(`INVALID CONTRACT ADDRESS: ${contract}`);
