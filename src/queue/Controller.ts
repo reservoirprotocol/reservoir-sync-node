@@ -26,7 +26,7 @@ const UrlPaths = {
   bids: '/orders/bids/v5',
 } as const;
 
-interface WorkersEvent {}
+interface WorkersEvent { }
 
 /**
  * Class representing a Controller. It extends EventEmitter.
@@ -74,7 +74,7 @@ export class Controller extends EventEmitter {
    * @param {WorkersEvent} event - The event triggered by the workers.
    * @private
    */
-  private async _handleWorkersEvent(event: WorkersEvent): Promise<void> {}
+  private async _handleWorkersEvent(event: WorkersEvent): Promise<void> { }
 
   /**
    * Handles the queue's events.
@@ -103,6 +103,8 @@ export class Controller extends EventEmitter {
   private async _launch(): Promise<void> {
     const block: Block = await this._getInitialBlock();
 
+    console.log(block);
+
     this.emit('controller.event', {
       type: 'queue',
       data: {
@@ -117,7 +119,7 @@ export class Controller extends EventEmitter {
    * @returns {string} - The normalized parameters.
    * @private
    */
-  private _normalizeParameters(
+  public normalizeParameters(
     params: Record<string | number, unknown>
   ): string {
     const queries: string[] = ['limit=1000', 'includeCriteriaMetadata=true'];
@@ -138,13 +140,13 @@ export class Controller extends EventEmitter {
    */
   private async _getInitialBlock(): Promise<Block> {
     const reqs = await Promise.all([
-      this._request(
-        this._normalizeParameters({
+      this.request(
+        this.normalizeParameters({
           sortDirection: 'asc',
         })
       ),
-      this._request(
-        this._normalizeParameters({
+      this.request(
+        this.normalizeParameters({
           sortDirection: 'desc',
         })
       ),
@@ -155,7 +157,7 @@ export class Controller extends EventEmitter {
         `Intiailizing blocks failed: ${reqs.map((r, i) => `${r.status}:${i}`)}`
       );
 
-return {
+    return {
       id: v4(),
       startDate:
         reqs[0].data[this.config.mapping.type.root][
@@ -175,15 +177,16 @@ return {
    * @returns {Promise<AxiosResponse<SuccessType | ErrorType>>} - The response from the API.
    * @private
    */
-  private async _request(
+  public async request(
     parameters: string
   ): Promise<AxiosResponse<SuccessType | ErrorType>> {
     try {
+      console.log(`${UrlBase[this.config.chain]}${UrlPaths[this.config.mapping.type.dataset]
+        }?${parameters}`);
       const req = await axios<SuccessType | ErrorType>({
         ...this.config,
-        url: `${UrlBase[this.config.chain]}${
-          UrlPaths[this.config.mapping.type.dataset]
-        }?${parameters}`,
+        url: `${UrlBase[this.config.chain]}${UrlPaths[this.config.mapping.type.dataset]
+          }?${parameters}`,
         validateStatus: (_status: number) => true,
         headers: {
           'X-API-KEY': this.config.apiKey,

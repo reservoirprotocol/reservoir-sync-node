@@ -1,13 +1,19 @@
 // Required libraries and modules
-import axios, { AxiosRequestConfig } from 'axios';
 import EventEmitter from 'events';
 import { v4 } from 'uuid';
-import { InsertionService } from '../services/';
-import { ApiResponse, Block, ControllerEvent, Schemas } from '../types';
+import { Block, ControllerEvent } from '../types';
+import { isSuccessResponse, parseTimestamp } from '../utils';
 import { Controller } from './Controller';
 
 // Define an empty WorkerEvent interface
-interface WorkerEvent {};
+interface WorkerEvent { };
+
+interface WorkerConfig {
+  id: string;
+  request: InstanceType<typeof Controller>['request'];
+  insert: InstanceType<typeof Controller>['request'];
+  normalize: InstanceType<typeof Controller>['normalizeParameters'];
+}
 
 /**
  * Class representing a Worker which extends EventEmitter.
@@ -21,7 +27,7 @@ class Worker extends EventEmitter {
    * Universal Unique Identifier to use in order to identify itself with the main process
    * @private
    */
-  private _uuid: string;
+  private _id: string;
 
   /**
    * Processing flag for status of worker. Default set to false.
@@ -29,21 +35,18 @@ class Worker extends EventEmitter {
    */
   public _processing: boolean = false;
 
-  /**
-   * Dataset the worker is using. Default is set to 'orders'.
-   * @private
-   */
-  private _dataset: 'sales' | 'orders' = 'orders';
+  private _request: InstanceType<typeof Controller>['request'];
 
-  /**
-   * Root of the worker, default is set to 'sales'.
-   * @private
-   */
-  private _root: 'sales' | 'asks' = 'sales';
+  private _insert: InstanceType<typeof Controller>['request'];
 
-  constructor(uuid: string) {
+  private _normalize: InstanceType<typeof Controller>['normalizeParameters'];
+
+  constructor({ id, request, insert, normalize }: WorkerConfig) {
     super();
-    this._uuid = uuid;
+    this._id = id;
+    this._request = request;
+    this._insert = insert;
+    this._normalize = normalize;
   }
 
   /**
@@ -51,45 +54,36 @@ class Worker extends EventEmitter {
    * Processes a block given a configuration.
    * This function is async and returns a Promise.
    */
-  public async _process(block: Block): Promise<void> {
+  public async _process({ startDate, endDate, id, }: Block): Promise<void> {
+    this._processing = true;
     let continuation: string = '';
 
+    // Get the startTimestamps from the dates
+    console.log(`Processing block: ${id}`);
+
+    console.log(parseTimestamp(startDate));
+    console.log(parseTimestamp(endDate));
+
     while (this._processing) {
-      const res = await this._request({
-        headers: {},
-      });
+      const res = await this._request(this._normalize({
+        startTimestamp: parseTimestamp(startDate).startTimestamp,
+        endTimestamp: parseTimestamp(endDate).endTimestamp,
+      }));
+      console.log(res.status);
+
+      if (!isSuccessResponse(res)) continue;
+      console.log(res.data);
+      console.log(res.data.sales[0].updatedAt);
+      console.log(res.data.sales[res.data.sales.length - 1].updatedAt);
+
+
+
+      await new Promise(r => setTimeout(r, 1000));
+
+
+
     }
   }
-
-  /**
-   * # _request
-   * Executes a request using axios.
-   * This function is async and returns a Promise.
-   * @param {AxiosRequestConfig} config - The configuration for the axios request.
-   * @returns {Promise<ApiResponse>} - The response from the axios request.
-   */
-  private async _request(config: AxiosRequestConfig): Promise<ApiResponse> {
-    const { data, status } = await axios.request({
-      ...config,
-      validateStatus: (status: number): boolean => {
-        return Boolean(status);
-      },
-    });
-    return {
-      data,
-      status,
-    };
-  }
-
-  /**
-   * # _insert
-   * Inserts or updates data using the InsertionService.
-   * @param {Schemas} data - The data to be inserted or updated.
-   */
-  private _insert(data: Schemas): void {
-    InsertionService.upsert(this._root, data);
-  }
-
   /**
    * # _split
    * Emits a split event.
@@ -102,7 +96,7 @@ class Worker extends EventEmitter {
    * # _release
    * Releases a worker.
    */
-  private _release(): void {}
+  private _release(): void { }
 }
 
 /**
@@ -120,14 +114,12 @@ export class Workers extends EventEmitter {
   constructor(private readonly _controller: Controller) {
     super();
     this._createWorkers();
-
     // Register 'controller.event' event listener on Controller instance
     _controller.on('controller.event', (event: ControllerEvent) => {
       if (event.type !== 'workers') return;
-      
+      console.log(`Got worker event`);
       // Find the first processing worker in the pool
-      const worker = this.pool.find(worker => worker._processing);
-
+      const worker = this.pool.find(worker => !worker._processing);
       if (worker) {
         worker._process(event.data.block);
       }
@@ -136,7 +128,7 @@ export class Workers extends EventEmitter {
     // Register 'worker.event' event listeners for each worker in the pool
     this.pool.forEach(worker => {
       worker.on('worker.event', (event: WorkerEvent) => {
-        
+
       });
     });
   }
@@ -149,11 +141,15 @@ export class Workers extends EventEmitter {
    */
   private _createWorkers() {
     const mode = this._controller.getConfigProperty('mode');
-
     const workerCount = mode === 'fast' ? 15 : mode === 'normal' ? 10 : 5;
 
     for (let i = 0; i < workerCount; i++) {
-      this.pool.push(new Worker(v4()));
+      this.pool.push(new Worker({
+        id: v4(),
+        request: this._controller.request.bind(this._controller),
+        insert: this._controller.request.bind(this._controller),
+        normalize: this._controller.normalizeParameters.bind(this._controller),
+      }));
     }
   }
 }

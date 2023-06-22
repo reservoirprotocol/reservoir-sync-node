@@ -15,6 +15,7 @@ export class Queue extends EventEmitter {
    * Queue of blocks.
    * @private
    */
+  
   private _queue: Block[] = [];
 
   /**
