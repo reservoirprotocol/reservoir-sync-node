@@ -400,7 +400,9 @@ class _SyncNode {
       throw new Error(`AN API KEY IS REQUIRED: ${syncer.apiKey}`);
 
     if (syncer?.contracts) {
-      if (syncer.contracts.length > 5) throw new Error(`TOO MANY CONTRACTS RECIEVED (MAX 5): ${syncer.contracts.length}`);
+      if (syncer.contracts.length > 5) {
+        console.warn((`EXCEEDED MAX CONTRACTS (5) PERFORMANCE MAY BE DEGRADED: ${syncer.contracts.length}`));
+      }
       syncer.contracts.forEach((contract) => {
         if (!isAddress(contract)) {
           throw new Error(`INVALID CONTRACT ADDRESS: ${contract}`);
