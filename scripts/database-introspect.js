@@ -111,7 +111,7 @@ datasource db {
 ${SYNC_NODE_MODELS}
 
 //THESE TABLES WERE INTROSPECTED BY PRISMA FROM THE DATABASE BUT ARE IGNORED ON THE CLIENT
-${ignoredModels.join('\n')}
+${ignoredModels.join('\n\n')}
 `;
 
   fs.writeFileSync('prisma/schema.prisma', updatedSchema, 'utf-8');

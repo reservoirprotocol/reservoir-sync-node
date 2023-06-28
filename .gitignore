@@ -22,3 +22,6 @@ coverage/
 
 # Logs
 application.log
+
+# Prisma migrations
+prisma/migrations/*
