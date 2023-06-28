@@ -1,12 +1,6 @@
 import { AxiosResponse } from 'axios';
 import { addMilliseconds, differenceInMilliseconds, parseISO } from 'date-fns';
-import {
-  ControllerEvent,
-  ErrorType,
-  QueueEvent,
-  SuccessType,
-  Timestamps,
-} from '../types';
+import { ControllerEvent, ErrorType, SuccessType } from '../types';
 
 /**
  * # isSuccessResponse
@@ -36,26 +30,19 @@ export const isErrorResponse = (
   return r.status !== 200;
 };
 
-export function parseTimestamp(date: string): Timestamps {
-  const datePieces = date.split('-').map(Number);
+export function parseTimestamp(date: string): number {
+  const datePieces = date.split('T')[0].split('-').map(Number);
   const [year, month, day] = datePieces;
 
-  let startDate: Date, endDate: Date;
-
-  if (day) {
-    startDate = new Date(year, month - 1, day);
-    endDate = new Date(year, month - 1, day + 1);
-  } else {
-    startDate = new Date(year, month - 1);
-    endDate = new Date(year, month, 0); // Gets the last day of the previous month, i.e., last day of `startDate` month
-  }
+  const startDate = new Date(year, month - 1, day);
 
   const timezoneOffset = startDate.getTimezoneOffset() * 60 * 1000;
-  const startTimestamp = startDate.getTime() - timezoneOffset;
-  const endTimestamp = endDate.getTime() - timezoneOffset;
+  const startTimestamp = (startDate.getTime() - timezoneOffset) / 1000;
 
-  return { startTimestamp, endTimestamp };
+  return startTimestamp;
 }
+// api.reservoir.tools/sales/v5?orderBy=updated_at&sortDirection=asc&startTimestamp=1538352000&endTimestamp=1688083200
+// https: //api.reservoir.tools/sales/v5?limit=1000&includeCriteriaMetadata=true&orderBy=updated_at&startTimestamp=1538377174800&endTimestamp=1688108374800
 
 /**
  * Calculates the middle point between two dates.
@@ -64,7 +51,7 @@ export function parseTimestamp(date: string): Timestamps {
  * @param {string} date2 - The second date as an ISO 8601 string.
  * @return {string} The middle date as an ISO 8601 string.
  */
-function getMiddleDate(date1: string, date2: string): string {
+export function getMiddleDate(date1: string, date2: string): string {
   const parsedDate1 = parseISO(date1);
   const parsedDate2 = parseISO(date2);
 

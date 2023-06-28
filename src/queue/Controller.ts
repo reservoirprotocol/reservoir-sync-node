@@ -6,8 +6,7 @@ import {
   ControllerConfig,
   ControllerEvent,
   ErrorType,
-  QueueEvent,
-  SuccessType
+  SuccessType,
 } from '../types';
 import { isSuccessResponse } from '../utils';
 import { Queue } from './Queue';
@@ -26,7 +25,14 @@ const UrlPaths = {
   bids: '/orders/bids/v5',
 } as const;
 
-interface WorkersEvent { }
+interface WorkersEvent {
+  id: string;
+  type: string;
+  data: {
+    startDate: string;
+    endDate: string;
+  };
+}
 
 /**
  * Class representing a Controller. It extends EventEmitter.
@@ -41,7 +47,7 @@ export class Controller extends EventEmitter {
    * Instance of Queue class.
    * @private
    */
-  private _queue: Queue;
+  public _queue: Queue;
 
   /**
    * # _workers
@@ -57,43 +63,54 @@ export class Controller extends EventEmitter {
   constructor(private readonly config: ControllerConfig) {
     super();
 
-    this._queue = new Queue(this);
+    this._queue = new Queue();
+
     this._workers = new Workers(this);
 
-    // Register 'queue.event' event listener on Queue instance
-    this._queue.on('queue.event', this._handleQueueEvent.bind(this));
-
-    // Register 'workers.event' event listener on Workers instance
-    this._workers.on('workers.event', this._handleWorkersEvent.bind(this));
-
+    this._listen();
     this._launch();
   }
 
-  /**
-   * Handles the workers' events.
-   * @param {WorkersEvent} event - The event triggered by the workers.
-   * @private
-   */
-  private async _handleWorkersEvent(event: WorkersEvent): Promise<void> { }
+  private _listen(): void {
+    this._workers.on('workers.event', (event: WorkersEvent) => {
+      switch (event.type) {
+        case 'block.split':
+          return this._blockSplit(event);
+        case 'busy':
+          return this._workerBusy();
+        case 'worker.release':
+          return this._workerAvailable(event);
+        default:
+          throw new Error(`Unknown event: ${event.type}`);
+      }
+    });
+  }
+  private _workerAvailable(event: WorkersEvent): void {
+    this.emit('controller.event');
+  }
 
-  /**
-   * Handles the queue's events.
-   * @param {QueueEvent} event - The event triggered by the queue.
-   * @private
-   */
-  private async _handleQueueEvent(event: QueueEvent): Promise<void> {
-    switch (event.type) {
-      case 'new.block':
-        this.emit('controller.event', {
-          type: 'workers',
-          data: {
-            block: event.block,
-          },
-        } as ControllerEvent);
-        break;
-      default:
-        throw new Error(`Unknown queue event: ${event.type}`);
-    }
+  private async _workerBusy(): Promise<void> {
+    // Sleep for 5 seconds and then re emit the next block
+    await new Promise((r) => setTimeout(r, 5000));
+
+    // Emit the next block in the queue
+    this.emit('new-block', {});
+  }
+  private _blockSplit(event: WorkersEvent): void {
+    const block: Block = {
+      id: v4(),
+      startDate: event.data.startDate,
+      endDate: event.data.endDate,
+      contract: '',
+      mapping: this.config.mapping,
+    };
+
+    this._queue._insertBlock(block);
+
+    // Emit that there was a new block inserted
+    this.emit('controller.event', {
+      type: 'queue.update',
+    } as ControllerEvent);
   }
 
   /**
@@ -103,14 +120,11 @@ export class Controller extends EventEmitter {
   private async _launch(): Promise<void> {
     const block: Block = await this._getInitialBlock();
 
-    console.log(block);
+    // Insert the initial block into the queue
+    this._queue._insertBlock(block);
 
-    this.emit('controller.event', {
-      type: 'queue',
-      data: {
-        block: block,
-      },
-    } as ControllerEvent);
+    // Start the first workers
+    this.emit('controller.event');
   }
 
   /**
@@ -119,9 +133,7 @@ export class Controller extends EventEmitter {
    * @returns {string} - The normalized parameters.
    * @private
    */
-  public normalizeParameters(
-    params: Record<string | number, unknown>
-  ): string {
+  public normalizeParameters(params: Record<string | number, unknown>): string {
     const queries: string[] = ['limit=1000', 'includeCriteriaMetadata=true'];
 
     const { root } = this.config.mapping.type;
@@ -159,6 +171,7 @@ export class Controller extends EventEmitter {
 
     return {
       id: v4(),
+      mapping: this.config.mapping,
       startDate:
         reqs[0].data[this.config.mapping.type.root][
           reqs[0].data[this.config.mapping.type.root].length - 1
@@ -168,7 +181,7 @@ export class Controller extends EventEmitter {
           reqs[1].data[this.config.mapping.type.root].length - 1
         ].updatedAt,
       contract: '',
-    }
+    };
   }
 
   /**
@@ -181,26 +194,24 @@ export class Controller extends EventEmitter {
     parameters: string
   ): Promise<AxiosResponse<SuccessType | ErrorType>> {
     try {
-      console.log(`${UrlBase[this.config.chain]}${UrlPaths[this.config.mapping.type.dataset]
-        }?${parameters}`);
       const req = await axios<SuccessType | ErrorType>({
         ...this.config,
-        url: `${UrlBase[this.config.chain]}${UrlPaths[this.config.mapping.type.dataset]
-          }?${parameters}`,
-        validateStatus: (_status: number) => true,
+        url: `${UrlBase[this.config.chain]}${
+          UrlPaths[this.config.mapping.type.dataset]
+        }?${parameters}`,
+        validateStatus: () => true,
         headers: {
           'X-API-KEY': this.config.apiKey,
           'X-SYSTEM-TYPE': 'sync-node',
           'Content-Type': 'application/json',
         },
       });
-      req.data;
       return {
         ...req,
         data: req.data,
       };
     } catch (e: unknown) {
-      throw new Error(`Request failed with error: ${e}`);
+      return await this.request(parameters);
     }
   }
 

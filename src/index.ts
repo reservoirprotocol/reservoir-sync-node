@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { Controller } from './queue/Controller';
 import { Chains, DataTypes, SyncNodeConfig } from './types';
 
@@ -37,7 +38,7 @@ interface Mapping {
   type: {
     root: 'sales' | 'orders';
     dataset: 'sales' | 'asks' | 'bids';
-  }
+  };
   table: string;
 }
 interface ControllerConfig {
@@ -50,20 +51,19 @@ interface ControllerConfig {
 }
 
 const controller = new Controller({
-  apiKey: '',
+  apiKey: process.env.API_KEY as string,
   mapping: {
-    datasets: [],
+    datasets: ['sales'],
     type: {
       root: 'sales',
       dataset: 'sales',
     },
-    table: '',
+    table: 'sales',
   },
   chain: 'mainnet',
   contracts: [],
   delay: 0,
-  mode: 'slow',
+  mode: 'fast',
 });
-
 
 // node.launch();

@@ -1,44 +1,21 @@
-import { EventEmitter } from 'events';
-import { Block, ControllerEvent } from 'types';
-import { isQueueEvent } from '../utils';
-import { Controller } from './Controller';
+import { Block } from 'types';
 
 /**
- * Class representing a Queue. It extends EventEmitter. 
+ * Class representing a Queue. It extends EventEmitter.
  * The Queue class emits events to all workers based on their group identifier.
  * @property _queue - An array of blocks, representing the queue.
  * @property controller - An instance of the Controller class.
  */
-export class Queue extends EventEmitter {
+export class Queue {
   /**
    * # _queue
    * Queue of blocks.
    * @private
    */
-  
+
   private _queue: Block[] = [];
 
-  /**
-   * Constructor for the Queue class.
-   * @param {Controller} controller - The Controller instance used to listen for incoming events.
-   */
-  constructor(private readonly controller: Controller) {
-    super();
-
-    // Register 'controller.event' event listener on Controller instance
-    controller.on('controller.event', (event: ControllerEvent) => {
-      if (!isQueueEvent(event)) return;
-
-      // Insert a new block into the queue when a queue event occurs
-      this._insertBlock(event.data.block);
-
-      // Emit 'queue.event' when a new block is added
-      this.emit('queue.event', {
-        type: 'new.block',
-        block: this._getBlock(),
-      });
-    });
-  }
+  public length: number = 0;
 
   /**
    * # _getBlock
@@ -50,10 +27,11 @@ export class Queue extends EventEmitter {
     if (!this._queue.length) return null;
 
     const block: Block | undefined = this._queue.shift();
-
-    this._removeBlock(block);
-
-    return block || null;
+    if (block) {
+      this._removeBlock(block);
+      return block;
+    }
+    return null;
   }
 
   /**

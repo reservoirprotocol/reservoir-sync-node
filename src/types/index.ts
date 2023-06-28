@@ -12,6 +12,7 @@ export enum URLs {
 
 export type KnownPropertiesType = {
   continuation: string;
+  records: Schemas;
 } & {
   [key in 'sales' | 'orders']: Schemas;
 };
@@ -76,7 +77,7 @@ export interface Mapping {
   datasets: DataTypes[];
   type: {
     root: 'sales' | 'orders';
-    dataset: 'sales' | 'asks' | 'bids';
+    dataset: 'sales' | 'asks';
   };
   table: string;
 }
@@ -94,10 +95,8 @@ export interface QueueEvent {
   block: Block;
 }
 
-export interface WorkersEventData {}
-
 export interface ControllerEvent {
-  type: 'queue' | 'workers';
+  type: string;
   data: {
     block: Block;
   };
@@ -118,6 +117,7 @@ export interface Block {
   startDate: string;
   endDate: string;
   contract: string;
+  mapping: Mapping;
 }
 
 export interface WebSocketMessage {
