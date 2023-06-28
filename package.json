@@ -5,7 +5,7 @@
     "build": "yarn run clean && tsc",
     "develop": "nodemon",
     "database:introspect": "npx prisma db pull && node ./scripts/database-introspect.js",
-    "database:prepare": "yarn database:deploy && yarn database:generate",
+    "database:prepare": "yarn database:generate && yarn database:deploy",
     "database:generate": "npx prisma generate",
     "database:deploy": "npx prisma migrate deploy",
     "purge:asks": "node ./scripts/database-flush-ask.js",
