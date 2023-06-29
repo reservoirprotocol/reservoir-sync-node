@@ -1,9 +1,12 @@
 {
   "name": "reservoir-sync-node",
   "scripts": {
-    "start": "yarn build && yarn database:prepare && node dist/index.js",
+    "start": "yarn database:prepare && yarn build && node dist/index.js",
     "build": "yarn run clean && tsc",
     "develop": "nodemon",
+    "database:introspect": "yarn database:apply && yarn database:resolve",
+    "database:apply": "node ./scripts/database-apply.js",
+    "database:resolve": "prisma migrate resolve --applied 20230628214741_sync_node_migration",
     "database:prepare": "yarn database:deploy && yarn database:generate",
     "database:generate": "npx prisma generate",
     "database:deploy": "npx prisma migrate deploy",
