@@ -53,7 +53,7 @@ interface ControllerConfig {
 const controller = new Controller({
   apiKey: process.env.API_KEY as string,
   mapping: {
-    datasets: ['sales'],
+    datasets: 'sales',
     type: {
       root: 'sales',
       dataset: 'sales',
