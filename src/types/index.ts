@@ -74,7 +74,7 @@ export type Mode = 'slow' | 'normal' | 'fast';
  */
 
 export interface Mapping {
-  datasets: DataTypes[];
+  datasets: DataTypes;
   type: {
     root: 'sales' | 'orders';
     dataset: 'sales' | 'asks';

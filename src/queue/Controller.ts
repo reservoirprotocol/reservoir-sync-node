@@ -10,7 +10,7 @@ import {
 } from '../types';
 import { isSuccessResponse } from '../utils';
 import { Queue } from './Queue';
-import { Workers } from './Workers';
+import { Manager } from './Workers';
 
 // Constant for API base URLs
 const UrlBase = {
@@ -27,7 +27,7 @@ const UrlPaths = {
 
 interface WorkersEvent {
   id: string;
-  type: string;
+  type: 'workerks.busy';
   data: {
     startDate: string;
     endDate: string;
@@ -47,14 +47,14 @@ export class Controller extends EventEmitter {
    * Instance of Queue class.
    * @private
    */
-  public _queue: Queue;
+  public queue: Queue;
 
   /**
    * # _workers
    * Instance of Workers class.
    * @private
    */
-  private _workers: Workers;
+  private _manager: Manager;
 
   /**
    * Constructor for the Controller class.
@@ -63,30 +63,10 @@ export class Controller extends EventEmitter {
   constructor(private readonly config: ControllerConfig) {
     super();
 
-    this._queue = new Queue();
+    this.queue = new Queue();
 
-    this._workers = new Workers(this);
-
-    this._listen();
+    this._manager = new Manager(this);
     this._launch();
-  }
-
-  private _listen(): void {
-    this._workers.on('workers.event', (event: WorkersEvent) => {
-      switch (event.type) {
-        case 'block.split':
-          return this._blockSplit(event);
-        case 'busy':
-          return this._workerBusy();
-        case 'worker.release':
-          return this._workerAvailable(event);
-        default:
-          throw new Error(`Unknown event: ${event.type}`);
-      }
-    });
-  }
-  private _workerAvailable(event: WorkersEvent): void {
-    this.emit('controller.event');
   }
 
   private async _workerBusy(): Promise<void> {
@@ -105,7 +85,7 @@ export class Controller extends EventEmitter {
       mapping: this.config.mapping,
     };
 
-    this._queue._insertBlock(block);
+    this.queue._insertBlock(block);
 
     // Emit that there was a new block inserted
     this.emit('controller.event', {
@@ -121,7 +101,7 @@ export class Controller extends EventEmitter {
     const block: Block = await this._getInitialBlock();
 
     // Insert the initial block into the queue
-    this._queue._insertBlock(block);
+    this.queue._insertBlock(block);
 
     // Start the first workers
     this.emit('controller.event');

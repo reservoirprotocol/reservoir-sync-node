@@ -1,6 +1,6 @@
 import { AxiosResponse } from 'axios';
 import { addMilliseconds, differenceInMilliseconds, parseISO } from 'date-fns';
-import { ControllerEvent, ErrorType, SuccessType } from '../types';
+import { ControllerEvent, ErrorType, Schemas, SuccessType } from '../types';
 
 /**
  * # isSuccessResponse
@@ -60,4 +60,18 @@ export function getMiddleDate(date1: string, date2: string): string {
   const middleDate = addMilliseconds(parsedDate1, diff / 2);
 
   return middleDate.toISOString();
+}
+
+/**
+ * Determines the density of the data based on the 'updated_at' date of the first and last record.
+ * The data is considered high density if the time difference between the first and last record is less than the provided threshold.
+ *
+ * @param {Object[]} data - The array of data objects to check.
+ * @param {number} threshold - The maximum time difference in milliseconds to be considered as high-density data.
+ * @returns {boolean} Returns true if the data is high density, false otherwise.
+ */
+export function isHighDensityBlock(data: Schemas, threshold: number) {
+  const dateOne = new Date(data[0].updatedAt).getTime();
+  const dateTwo = new Date(data[data.length - 1].updatedAt).getTime();
+  return Math.abs(dateOne - dateTwo) > threshold;
 }
