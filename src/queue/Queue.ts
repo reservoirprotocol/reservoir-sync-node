@@ -15,8 +15,6 @@ export class Queue {
 
   private _queue: Block[] = [];
 
-  public length: number = 0;
-
   /**
    * # _getBlock
    * Gets the next block in the queue.

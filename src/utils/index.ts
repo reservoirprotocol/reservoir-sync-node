@@ -75,3 +75,21 @@ export function isHighDensityBlock(data: Schemas, threshold: number) {
   const dateTwo = new Date(data[data.length - 1].updatedAt).getTime();
   return Math.abs(dateOne - dateTwo) > threshold;
 }
+
+/**
+ * # toBuffer
+ * @param hexValue - Hex value to slice
+ * @returns Formatted buffer of a Hex
+ */
+export const toBuffer = (hexValue: string) => {
+  return Buffer.from(hexValue, 'hex');
+};
+
+/**
+ * # toBuffer
+ * @param hexValue - Hex value to slice
+ * @returns Formatted buffer of a Hex
+ */
+export const addressToBuffer = (hexValue: string = '') => {
+  return Buffer.from((hexValue || '').slice(2), 'hex');
+};

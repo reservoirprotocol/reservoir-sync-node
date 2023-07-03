@@ -12,7 +12,7 @@ import {
 import { Controller } from './Controller';
 
 interface WorkerEvent {
-  type: 'block.release' | 'block.split' | 'block.status';
+  type: 'worker.release' | 'block.split' | 'block.status';
   block: Block | null;
 }
 
@@ -29,9 +29,9 @@ export class Worker extends EventEmitter {
   constructor(controller: Controller) {
     super();
 
-    this._request = controller.request;
-    this._insert = controller.request;
-    this._normalize = controller.normalize;
+    this._request = controller.request.bind(controller);
+    this._insert = controller.request.bind(controller);
+    this._normalize = controller.normalize.bind(controller);
   }
 
   /**
@@ -141,7 +141,7 @@ export class Worker extends EventEmitter {
    */
   private _logBlockStatus(block: Block) {
     LoggerService.info(
-      `Grained block: ${block.id}\nstartDate: ${block.startDate}\nendDate: ${block.startDate}`
+      `Grained block: ${block.id}\nstartDate: ${block.startDate}\nendDate: ${block.endDate}`
     );
   }
 
@@ -195,7 +195,7 @@ export class Worker extends EventEmitter {
    */
   private _release(block: Block) {
     this.emit('worker.event', {
-      type: 'block.release',
+      type: 'worker.release',
       block: block,
     } as WorkerEvent);
   }

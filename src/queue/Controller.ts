@@ -1,6 +1,6 @@
 import axios, { AxiosResponse } from 'axios';
-import { InsertionService } from 'services';
 import { v4 } from 'uuid';
+import { InsertionService } from '../services';
 import {
   Block,
   ControllerConfig,
@@ -69,14 +69,14 @@ export class Controller {
     this._listen();
   }
   private _listen(): void {
-    this._workers.forEach(({ on }) => {
-      on('worker.event', this._handleWorkerEvent.bind(this));
+    this._workers.forEach((worker) => {
+      worker.on('worker.event', this._handleWorkerEvent.bind(this));
     });
   }
   private _handleWorkerEvent({ type, block }: WorkerEvent): void {
     switch (type) {
-      case 'worker.split':
-        return this._handleWorkerSplit(block);
+      case 'block.split':
+        return this._handleBlockSplit(block);
       case 'worker.release':
         return this.handleWorkerRelease();
       default:
@@ -92,7 +92,7 @@ export class Controller {
 
     worker.process(block);
   }
-  private _handleWorkerSplit(block: Block): void {
+  private _handleBlockSplit(block: Block): void {
     const newBlock: Block = {
       ...block,
       id: v4(),
