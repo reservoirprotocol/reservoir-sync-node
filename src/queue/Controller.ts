@@ -45,17 +45,20 @@ export class Controller {
     this._launch();
   }
   private _createWorkers(): void {
-    const workerCount =
+    const t =
       this._config.mode === 'fast'
         ? 15
         : this._config.mode === 'normal'
         ? 10
         : 5;
-
+    t;
+    const workerCount = 1000;
     for (let i = 0; i < workerCount; i++) {
       const worker = new Worker(this);
       this._workers.push(worker);
     }
+
+    console.log(this._workers);
   }
   /**
    * Starts the controller by emitting the first event.
@@ -74,6 +77,25 @@ export class Controller {
 
     this._listen();
   }
+  private async _delegate(): Promise<void> {
+    let availableWorker = this._workers.find(({ processing }) => !processing);
+
+    while (!availableWorker) {
+      await this.delay(1000);
+      availableWorker = this._workers.find(({ processing }) => !processing);
+    }
+
+    const block = this._queue._getBlock();
+
+    if (block) {
+      availableWorker.process(block);
+    }
+  }
+
+  private delay(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
   private _listen(): void {
     this._workers.forEach((worker) => {
       worker.on('worker.event', this._handleWorkerEvent.bind(this));
@@ -104,6 +126,8 @@ export class Controller {
       id: v4(),
     };
     this._queue._insertBlock(newBlock);
+
+    this._delegate();
   }
 
   public async insert(data: DataSets): Promise<void> {

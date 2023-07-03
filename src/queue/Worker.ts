@@ -48,12 +48,20 @@ export class Worker extends EventEmitter {
   public async process(block: Block): Promise<void> {
     this.processing = true;
     const continuation: string = '';
+    const ascRes = await this._request(
+      this._getNormalizedRequest(block, 'asc')
+    );
+
+    if (!isSuccessResponse(ascRes)) return await this.process(block);
 
     LoggerService.warn(`Graining block: ${block.id}`);
-    while (true) {
-      const [ascRes, descRes] = await this._getResponses(block);
 
-      if (!isSuccessResponse(ascRes) || !isSuccessResponse(descRes)) continue;
+    while (true) {
+      const descRes = await this._request(
+        this._getNormalizedRequest(block, 'desc')
+      );
+
+      if (!isSuccessResponse(descRes)) continue;
 
       const records = this._getMergedRecords(ascRes, descRes, block);
 
@@ -124,7 +132,7 @@ export class Worker extends EventEmitter {
    * @returns {boolean} - Whether the records are high density.
    */
   private _processHighDensity(records: Schemas, block: Block) {
-    const isHighDensity = isHighDensityBlock(records, 10 * 60 * 1000);
+    const isHighDensity = isHighDensityBlock(records, 1 * 60 * 60 * 1000);
 
     if (isHighDensity) {
       const middleDate = getMiddleDate(block.startDate, block.endDate);

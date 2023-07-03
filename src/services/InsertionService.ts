@@ -73,7 +73,6 @@ class _InsertionServivce {
     promises: PromiseSettledResult<Prisma.PrismaPromise<T>>[]
   ): Promise<void> {
     promises.map((promise) => {
-      console.log(promise);
       if (
         !(promise instanceof Prisma.PrismaClientKnownRequestError) ||
         !(promise instanceof Prisma.PrismaClientValidationError)
@@ -123,6 +122,7 @@ class _InsertionServivce {
     type: DataTypes,
     data: AsksSchema[] | SalesSchema[]
   ): Promise<void> {
+    console.log(`Inserting: ${data.length}`);
     // based on the dataset is where we insert
 
     // The only special case is when the datatype is 'orders'
