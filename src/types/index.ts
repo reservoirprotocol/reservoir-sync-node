@@ -57,7 +57,7 @@ export type MessageEvent =
   | 'sale.updated';
 
 export type Mode = 'slow' | 'normal' | 'fast';
-
+export type ControllerType = 'upkeep' | 'backfill';
 /**
  * INTERFACES
  */
@@ -74,16 +74,14 @@ export type Mode = 'slow' | 'normal' | 'fast';
  */
 
 export interface Mapping {
-  datasets: DataTypes;
-  type: {
-    root: 'sales' | 'orders';
-    dataset: 'sales' | 'asks';
-  };
+  datasets: DataTypes[];
   table: string;
 }
+
 export interface ControllerConfig {
   apiKey: string;
-  mapping: Mapping;
+  type: ControllerType;
+  dataset: DataTypes;
   chain: Chains;
   contracts: string[];
   delay: number;
@@ -116,8 +114,8 @@ export interface Block {
   id: string;
   startDate: string;
   endDate: string;
+  datatype: DataTypes;
   contract: string;
-  mapping: Mapping;
 }
 
 export interface WebSocketMessage {
@@ -164,7 +162,6 @@ export interface InsertionServiceConfig {
     table: string;
   }[];
 }
-
 export interface SyncNodeConfig {
   server: {
     port: number;

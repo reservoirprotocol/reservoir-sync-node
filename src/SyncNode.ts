@@ -1,3 +1,4 @@
+import { Controller } from './queue/Controller';
 import { Server } from './server/Server';
 import {
   GraphQlService,
@@ -38,15 +39,27 @@ export class SyncNode {
   private _server: typeof Server = Server;
 
   constructor(config: SyncNodeConfig) {
+    /*
     this._webSocketService.construct({
       contracts: config.syncer.mappings.flatMap((mapping) => mapping.contracts),
       ...config.syncer,
     });
+
+    */
     this._graphqlService.construct(config.syncer);
     this._insertionService.construct(config.syncer);
     this._loggerService.construct(config.logger);
     this._server.construct(config.server);
-    LoggerService.info(`Constructed all services.`);
+
+    new Controller({
+      apiKey: config.syncer.apiKey,
+      dataset: 'sales',
+      type: 'backfill',
+      chain: 'mainnet',
+      contracts: [],
+      delay: 0,
+      mode: 'fast',
+    });
   }
   /**
    * Launches the SyncNode

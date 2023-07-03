@@ -23,6 +23,12 @@ const UrlPaths = {
   bids: '/orders/bids/v5',
 } as const;
 
+const RecordRoots = {
+  asks: 'orders',
+  sales: 'sales',
+  bids: 'orders',
+} as const;
+
 interface WorkerEvent {
   type: string;
   block: Block;
@@ -101,7 +107,7 @@ export class Controller {
   }
 
   public async insert(data: DataSets): Promise<void> {
-    return InsertionService.upsert(this._config.mapping.datasets, data);
+    return InsertionService.upsert(this._config.dataset, data);
   }
   /**
    * Normalizes the parameters for the API request.
@@ -112,7 +118,7 @@ export class Controller {
   public normalize(params: Record<string | number, unknown>): string {
     const queries: string[] = ['limit=1000', 'includeCriteriaMetadata=true'];
 
-    const { root } = this._config.mapping.type;
+    const root = RecordRoots[this._config.dataset];
 
     queries.push(root === 'sales' ? 'orderBy=updated_at' : 'sortBy=updatedAt');
 
@@ -145,17 +151,13 @@ export class Controller {
         `Intiailizing blocks failed: ${reqs.map((r, i) => `${r.status}:${i}`)}`
       );
 
+    const root = RecordRoots[this._config.dataset];
+
     return {
       id: v4(),
-      mapping: this._config.mapping,
-      startDate:
-        reqs[0].data[this._config.mapping.type.root][
-          reqs[0].data[this._config.mapping.type.root].length - 1
-        ].updatedAt,
-      endDate:
-        reqs[1].data[this._config.mapping.type.root][
-          reqs[1].data[this._config.mapping.type.root].length - 1
-        ].updatedAt,
+      datatype: this._config.dataset,
+      startDate: reqs[0].data[root][reqs[0].data[root].length - 1].updatedAt,
+      endDate: reqs[1].data[root][reqs[1].data[root].length - 1].updatedAt,
       contract: '',
     };
   }
@@ -172,7 +174,7 @@ export class Controller {
       const req = await axios<SuccessType | ErrorType>({
         ...this._config,
         url: `${UrlBase[this._config.chain]}${
-          UrlPaths[this._config.mapping.type.dataset]
+          UrlPaths[this._config.dataset]
         }?${parameters}`,
         validateStatus: () => true,
         headers: {

@@ -16,6 +16,12 @@ interface WorkerEvent {
   block: Block | null;
 }
 
+const RecordRoots = {
+  asks: 'orders',
+  sales: 'sales',
+  bids: 'orders',
+} as const;
+
 export class Worker extends EventEmitter {
   public processing: boolean = false;
 
@@ -106,8 +112,8 @@ export class Worker extends EventEmitter {
     block: Block
   ): Schemas {
     return [
-      ...ascRes.data[block.mapping.type.root],
-      ...descRes.data[block.mapping.type.root],
+      ...ascRes.data[RecordRoots[block.datatype]],
+      ...descRes.data[RecordRoots[block.datatype]],
     ] as Schemas;
   }
 
@@ -164,9 +170,9 @@ export class Worker extends EventEmitter {
 
       if (!isSuccessResponse(res)) continue;
 
-      const records = res.data[block.mapping.type.root];
+      const records = res.data[RecordRoots[block.datatype]];
 
-      await InsertionService.upsert(block.mapping.datasets, records);
+      await InsertionService.upsert(block.datatype, records);
 
       if (!records.length || !res.data.continuation) {
         this.processing = false;
