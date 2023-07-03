@@ -132,7 +132,7 @@ export class Worker extends EventEmitter {
    * @returns {boolean} - Whether the records are high density.
    */
   private _processHighDensity(records: Schemas, block: Block) {
-    const isHighDensity = isHighDensityBlock(records, 1 * 60 * 60 * 1000);
+    const isHighDensity = isHighDensityBlock(records, 10 * 60 * 60 * 1000);
 
     if (isHighDensity) {
       const middleDate = getMiddleDate(block.startDate, block.endDate);

@@ -52,7 +52,7 @@ export class Controller {
         ? 10
         : 5;
     t;
-    const workerCount = 1000;
+    const workerCount = 15;
     for (let i = 0; i < workerCount; i++) {
       const worker = new Worker(this);
       this._workers.push(worker);
