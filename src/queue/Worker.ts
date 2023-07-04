@@ -7,6 +7,7 @@ import {
   getMiddleDate,
   isHighDensityBlock,
   isSuccessResponse,
+  isTodayUTC,
   parseTimestamp,
 } from '../utils';
 import { Controller } from './Controller';
@@ -48,6 +49,7 @@ export class Worker extends EventEmitter {
   public async process(block: Block): Promise<void> {
     this.processing = true;
     const continuation: string = '';
+    let isToday = false;
     const ascRes = await this._request(
       this._getNormalizedRequest(block, 'asc')
     );
@@ -69,6 +71,12 @@ export class Worker extends EventEmitter {
         break;
       }
 
+      if (isTodayUTC(records[records.length - 1].updatedAt)) {
+        this._release(block);
+        isToday = true;
+        break;
+      }
+
       if (this._processHighDensity(records, block)) {
         continue;
       }
@@ -76,6 +84,10 @@ export class Worker extends EventEmitter {
       break;
     }
 
+    if (block.startDate === block.endDate || isToday) {
+      this._release(block);
+      return;
+    }
     this._logBlockStatus(block);
     await this._processContinuation(block, continuation);
   }
@@ -132,10 +144,13 @@ export class Worker extends EventEmitter {
    * @returns {boolean} - Whether the records are high density.
    */
   private _processHighDensity(records: Schemas, block: Block) {
-    const isHighDensity = isHighDensityBlock(records, 10 * 60 * 60 * 1000);
+    const isHighDensity = isHighDensityBlock(records, 1 * 60 * 60 * 1000);
 
     if (isHighDensity) {
       const middleDate = getMiddleDate(block.startDate, block.endDate);
+      if (isTodayUTC(middleDate)) return;
+      if (middleDate === block.endDate || middleDate === block.startDate)
+        return;
       this._split({
         ...block,
         startDate: middleDate,

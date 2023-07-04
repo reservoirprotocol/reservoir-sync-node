@@ -1,7 +1,25 @@
 import { AxiosResponse } from 'axios';
-import { addMilliseconds, differenceInMilliseconds, parseISO } from 'date-fns';
-import { ControllerEvent, ErrorType, Schemas, SuccessType } from '../types';
+import {
+  addMilliseconds,
+  differenceInMilliseconds,
+  format,
+  parseISO,
+} from 'date-fns';
+import { utcToZonedTime } from 'date-fns-tz';
 
+import { ControllerEvent, ErrorType, Schemas, SuccessType } from '../types';
+/**
+ * # isTodayUTC
+ * @param dateString - Date string
+ * @returns Boolean
+ */
+export const isTodayUTC = (dateString: string) => {
+  if (!dateString) return false;
+  return (
+    format(utcToZonedTime(new Date(dateString), 'Etc/UTC'), 'yyyy-MM-dd') ===
+    format(utcToZonedTime(new Date(), 'Etc/UTC'), 'yyyy-MM-dd')
+  );
+};
 /**
  * # isSuccessResponse
  * Type predicate function to determine if a response is a SuccessResponse.
