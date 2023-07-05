@@ -35,13 +35,12 @@ interface WorkerEvent {
 }
 
 export class Controller {
-  private _config: ControllerConfig;
-
-  private _queue: Queue = new Queue();
+  
   private _workers: Worker[] = [];
 
-  constructor(config: ControllerConfig) {
-    this._config = config;
+  private _queue: typeof Queue = Queue;
+
+  constructor(private readonly _config: ControllerConfig) {
     this._launch();
   }
   private _createWorkers(): void {
@@ -57,14 +56,14 @@ export class Controller {
       const worker = new Worker(this);
       this._workers.push(worker);
     }
-
-    console.log(this._workers);
   }
   /**
    * Starts the controller by emitting the first event.
    * @private
    */
   private async _launch(): Promise<void> {
+    await this._queue.launch();
+
     this._createWorkers();
 
     const block: Block = await this._getInitialBlock();
@@ -85,7 +84,7 @@ export class Controller {
       availableWorker = this._workers.find(({ processing }) => !processing);
     }
 
-    const block = this._queue._getBlock();
+    const block = await this._queue.getBlock(this._config.dataset);
 
     if (block) {
       availableWorker.process(block);
@@ -104,18 +103,20 @@ export class Controller {
   private _handleWorkerEvent({ type, block }: WorkerEvent): void {
     switch (type) {
       case 'block.split':
-        return this._handleBlockSplit(block);
+        this._handleBlockSplit(block);
+        break;
       case 'worker.release':
-        return this.handleWorkerRelease();
+        this.handleWorkerRelease();
+        break;
       default:
         throw new Error(`Unknown event: ${type}`);
     }
   }
-  private handleWorkerRelease(): void {
+  private async handleWorkerRelease(): Promise<void> {
     const worker = this._workers.find(({ processing }) => !processing);
     if (!worker) return;
 
-    const block = this._queue._getBlock();
+    const block = await this._queue.getBlock(this._config.dataset);
     if (!block) return;
 
     worker.process(block);
@@ -125,7 +126,7 @@ export class Controller {
       ...block,
       id: v4(),
     };
-    this._queue._insertBlock(newBlock);
+    this._queue.insertBlock(newBlock, this._config.dataset);
 
     this._delegate();
   }

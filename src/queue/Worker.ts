@@ -2,26 +2,16 @@
 /* eslint-disable no-case-declarations */
 import EventEmitter from 'events';
 import { InsertionService, LoggerService } from '../services';
-import { Block, Schemas, SuccessResponse } from '../types';
+import { Block, Schemas, SuccessResponse, WorkerEvent } from '../types';
 import {
   getMiddleDate,
   isHighDensityBlock,
   isSuccessResponse,
   isTodayUTC,
   parseTimestamp,
+  RecordRoots
 } from '../utils';
 import { Controller } from './Controller';
-
-interface WorkerEvent {
-  type: 'worker.release' | 'block.split' | 'block.status';
-  block: Block | null;
-}
-
-const RecordRoots = {
-  asks: 'orders',
-  sales: 'sales',
-  bids: 'orders',
-} as const;
 
 export class Worker extends EventEmitter {
   public processing: boolean = false;

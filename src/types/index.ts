@@ -77,6 +77,10 @@ export interface Mapping {
   datasets: DataTypes[];
   table: string;
 }
+export interface WorkerEvent {
+  type: 'worker.release' | 'block.split' | 'block.status';
+  block: Block | null;
+}
 
 export interface ControllerConfig {
   apiKey: string;

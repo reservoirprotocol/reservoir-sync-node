@@ -122,8 +122,6 @@ class _InsertionServivce {
     type: DataTypes,
     data: AsksSchema[] | SalesSchema[]
   ): Promise<void> {
-    console.log(`Inserting: ${data.length}`);
-    // based on the dataset is where we insert
 
     // The only special case is when the datatype is 'orders'
     // Because that means it's both asks and sales

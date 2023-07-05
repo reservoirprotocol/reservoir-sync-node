@@ -111,3 +111,20 @@ export const toBuffer = (hexValue: string) => {
 export const addressToBuffer = (hexValue: string = '') => {
   return Buffer.from((hexValue || '').slice(2), 'hex');
 };
+
+export const UrlBase = {
+  mainnet: 'https://api.reservoir.tools',
+  goerli: 'https://api-goerli.reservoir.tools',
+} as const;
+
+export const UrlPaths = {
+  sales: '/sales/v4',
+  asks: '/orders/asks/v4',
+  bids: '/orders/bids/v5',
+} as const;
+
+export const RecordRoots = {
+  asks: 'orders',
+  sales: 'sales',
+  bids: 'orders',
+} as const;
