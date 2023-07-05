@@ -1,7 +1,7 @@
 import axios, { AxiosResponse } from 'axios';
 import { v4 } from 'uuid';
 import { InsertionService } from '../services';
-import { Queue } from '../services/QueueService';
+import { QueueService } from '../services/QueueService';
 import {
   Block,
   ControllerConfig,
@@ -37,7 +37,7 @@ interface WorkerEvent {
 export class Controller {
   private _workers: Worker[] = [];
 
-  private _queue: typeof Queue = Queue;
+  private _queue: typeof QueueService = QueueService;
 
   constructor(private readonly _config: ControllerConfig) {
     this._launch();
