@@ -1,4 +1,4 @@
-import { Controller } from './queue/Controller';
+import { Controller } from './syncer/Controller';
 import { Server } from './server/Server';
 import {
   GraphQlService,
