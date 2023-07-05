@@ -1,6 +1,6 @@
 import { createClient, type RedisClientType } from 'redis';
 import { Block, DataTypes } from 'types';
-import { LoggerService } from '../services';
+import { LoggerService } from '.';
 
 /**
  * Queue class for managing a Redis-based queue.

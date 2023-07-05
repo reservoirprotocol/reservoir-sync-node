@@ -9,7 +9,7 @@ import {
   SuccessType,
 } from '../types';
 import { isSuccessResponse } from '../utils';
-import { Queue } from './Queue';
+import { Queue } from '../services/QueueService';
 import { Worker } from './Worker';
 
 const UrlBase = {
@@ -35,7 +35,7 @@ interface WorkerEvent {
 }
 
 export class Controller {
-  
+
   private _workers: Worker[] = [];
 
   private _queue: typeof Queue = Queue;
