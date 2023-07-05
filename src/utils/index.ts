@@ -128,3 +128,9 @@ export const RecordRoots = {
   sales: 'sales',
   bids: 'orders',
 } as const;
+
+export const WorkerCounts = {
+  slow: 15,
+  normal: 25,
+  fast: 50,
+} as const;

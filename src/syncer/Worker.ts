@@ -9,26 +9,27 @@ import {
   isSuccessResponse,
   isTodayUTC,
   parseTimestamp,
-  RecordRoots
+  RecordRoots,
 } from '../utils';
 import { Controller } from './Controller';
 
+interface WorkerConfig {
+  request: InstanceType<typeof Controller>['request'];
+  normalize: InstanceType<typeof Controller>['normalize'];
+}
 export class Worker extends EventEmitter {
   public processing: boolean = false;
 
   private _request: InstanceType<typeof Controller>['request'];
-  private _insert: InstanceType<typeof Controller>['request'];
   private _normalize: InstanceType<typeof Controller>['normalize'];
 
   /**
    * @param {WorkerConfig} config - The configuration object for the worker.
    */
-  constructor(controller: Controller) {
+  constructor({ request, normalize }: WorkerConfig) {
     super();
-
-    this._request = controller.request.bind(controller);
-    this._insert = controller.request.bind(controller);
-    this._normalize = controller.normalize.bind(controller);
+    this._request = request;
+    this._normalize = normalize;
   }
 
   /**

@@ -9,25 +9,14 @@ import {
   ErrorType,
   SuccessType,
 } from '../types';
-import { isSuccessResponse } from '../utils';
+import {
+  isSuccessResponse,
+  RecordRoots,
+  UrlBase,
+  UrlPaths,
+  WorkerCounts,
+} from '../utils';
 import { Worker } from './Worker';
-
-const UrlBase = {
-  mainnet: 'https://api.reservoir.tools',
-  goerli: 'https://api-goerli.reservoir.tools',
-} as const;
-
-const UrlPaths = {
-  sales: '/sales/v4',
-  asks: '/orders/asks/v4',
-  bids: '/orders/bids/v5',
-} as const;
-
-const RecordRoots = {
-  asks: 'orders',
-  sales: 'sales',
-  bids: 'orders',
-} as const;
 
 interface WorkerEvent {
   type: string;
@@ -51,16 +40,11 @@ export class Controller {
    * @private
    */
   private _createWorkers(): void {
-    const t =
-      this._config.mode === 'fast'
-        ? 15
-        : this._config.mode === 'normal'
-        ? 10
-        : 5;
-    t;
-    const workerCount = 15;
-    for (let i = 0; i < workerCount; i++) {
-      const worker = new Worker(this);
+    for (let i = 0; i < WorkerCounts[this._config.mode]; i++) {
+      const worker = new Worker({
+        request: this.request,
+        normalize: this.normalize,
+      });
       this._workers.push(worker);
     }
   }
