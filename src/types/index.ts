@@ -2,13 +2,42 @@
  * TYPES & ENUMS
  */
 
+import { HttpStatusCode } from 'axios';
 import { Application } from 'express';
-import { GraphQLSchema } from 'graphql';
 
 export enum URLs {
   'goerli' = 'wss://ws.dev.reservoir.tools',
   'mainnet' = 'wss://ws.reservoir.tools',
 }
+
+export type KnownPropertiesType = {
+  continuation: string;
+  records: Schemas;
+} & {
+  [key in 'sales' | 'orders']: Schemas;
+};
+
+export type GenericResponse = KnownPropertiesType;
+
+export type ErrorType = {
+  status: number;
+  error: string;
+  message: string;
+};
+
+export type SuccessType = KnownPropertiesType;
+
+export type SuccessResponse<T = SuccessType> = {
+  data: T;
+  status: HttpStatusCode;
+};
+
+export type ErrorResponse<T = ErrorType | null> = {
+  data: T;
+  status: HttpStatusCode | null;
+};
+
+export type ApiResponse<T = SuccessType> = SuccessResponse<T> | ErrorResponse;
 
 export type GraphQlServiceConfig = InsertionServiceConfig;
 
@@ -27,13 +56,70 @@ export type MessageEvent =
   | 'sale.created'
   | 'sale.updated';
 
+export type Mode = 'slow' | 'normal' | 'fast';
+export type ControllerType = 'upkeep' | 'backfill';
 /**
  * INTERFACES
  */
 
+/**
+ * API KEY - Reservoir api key
+ * DATA MAPPING - Mapping for custom tables
+ * CHAIN - Chain to sync
+ * CONTRACTS - Specific contracts to filter by
+ * ENABLE WEBSOCKETS - Boolean to enable websockets or not
+ * DELAY - Delay when upkeeping
+ * SYNC MODE - Upkeeping or backfilling
+ * MODE - Mode that determines the count of the worker pool
+ */
+
+export interface Mapping {
+  datasets: DataTypes[];
+  table: string;
+}
+export interface WorkerEvent {
+  type: 'worker.release' | 'block.split' | 'block.status';
+  block: Block | null;
+}
+
+export interface ControllerConfig {
+  apiKey: string;
+  type: ControllerType;
+  dataset: DataTypes;
+  chain: Chains;
+  contracts: string[];
+  delay: number;
+  mode: Mode;
+}
+
+export interface QueueEvent {
+  type: 'new.block';
+  block: Block;
+}
+
+export interface ControllerEvent {
+  type: string;
+  data: {
+    block: Block;
+  };
+}
+
+export interface Timestamps {
+  startTimestamp: number;
+  endTimestamp: number;
+}
+
 export interface Path {
   handlers: Application;
   path: string;
+}
+
+export interface Block {
+  id: string;
+  startDate: string;
+  endDate: string;
+  datatype: DataTypes;
+  contract: string;
 }
 
 export interface WebSocketMessage {
@@ -67,9 +153,12 @@ export interface ServerConfig {
   authorization: string;
 }
 
-export interface Schemas {
-  [key: string]: GraphQLSchema;
-}
+export type Schemas = SalesSchema[] | AsksSchema[];
+
+export type SchemasObject = {
+  sales: SalesSchema[];
+  asks: AsksSchema[];
+};
 
 export interface InsertionServiceConfig {
   mappings: {
@@ -77,7 +166,6 @@ export interface InsertionServiceConfig {
     table: string;
   }[];
 }
-
 export interface SyncNodeConfig {
   server: {
     port: number;

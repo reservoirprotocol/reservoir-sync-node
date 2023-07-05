@@ -1,6 +1,6 @@
+import 'dotenv/config';
 import { SyncNode } from './SyncNode';
 import { SyncNodeConfig } from './types';
-
 const config: SyncNodeConfig = {
   syncer: {
     chain: 'mainnet',
@@ -30,6 +30,6 @@ const config: SyncNodeConfig = {
   },
 };
 
-export const node = new SyncNode(config);
+const node = new SyncNode(config);
 
 node.launch();

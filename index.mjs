@@ -1,4 +1,4 @@
-import prisma from '@prisma/sdk';
+import prisma from 'prisma';
 import 'dotenv/config';
 import fs from 'fs';
 
@@ -132,16 +132,3 @@ class PrismaSchemaGenerator {
     });
   }
 }
-
-new PrismaSchemaGenerator([
-  {
-    datasets: ['asks'],
-    table: 'asks',
-    contracts: [],
-  },
-  {
-    datasets: ['sales'],
-    table: 'sales',
-    contracts: [],
-  },
-]);

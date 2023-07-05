@@ -7,7 +7,7 @@ import {
   GraphQLList,
   GraphQLObjectType,
   GraphQLSchema,
-  GraphQLString,
+  GraphQLString
 } from 'graphql';
 import { InsertionService } from '../services';
 import { GraphQlServiceConfig, Schemas } from '../types';
@@ -21,7 +21,7 @@ class _GraphQlService {
    * @access private
    * @type {Schemas}
    */
-  private _schemas: Schemas = {};
+  private _schemas: Record<string | number, GraphQLSchema> = {};
 
   /**
    * Constructs the GraphQL schemas based on the provided configuration.
@@ -305,9 +305,9 @@ class _GraphQlService {
 
   /**
    * Returns the collection of GraphQL schemas.
-   * @returns {Schemas} The schemas.
+   * @returns {Record<string | number, GraphQLSchema>} The schemas.
    */
-  public getSchema(): Schemas {
+  public getSchema(): Record<string | number, GraphQLSchema> {
     return this._schemas;
   }
 }
