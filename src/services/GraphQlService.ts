@@ -7,10 +7,10 @@ import {
   GraphQLList,
   GraphQLObjectType,
   GraphQLSchema,
-  GraphQLString
+  GraphQLString,
 } from 'graphql';
 import { InsertionService } from '../services';
-import { GraphQlServiceConfig, Schemas } from '../types';
+import { GraphQlServiceConfig } from '../types';
 
 /**
  * The _GraphQlService class provides methods for constructing GraphQL schemas.
