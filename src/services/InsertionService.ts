@@ -122,11 +122,7 @@ class _InsertionServivce {
     type: DataTypes,
     data: AsksSchema[] | SalesSchema[]
   ): Promise<void> {
-
-    // The only special case is when the datatype is 'orders'
-    // Because that means it's both asks and sales
-
-    this._handlePrismaPromises(
+    return this._handlePrismaPromises(
       await Promise.allSettled(
         this._config.mappings
           .filter(({ datasets }) => datasets.includes(type))
@@ -135,7 +131,7 @@ class _InsertionServivce {
               // @ts-ignore Prisma doesn't support model reference by variable name.
               // See https://github.com/prisma/prisma/discussions/16058#discussioncomment-54936
               return this._prisma[table].upsert({
-                where: { id: Buffer.from(set.id, 'utf16le') },
+                where: { id: this._format(type, set).id },
                 create: this._format(type, set),
                 update: this._format(type, set),
               });
@@ -202,10 +198,7 @@ class _InsertionServivce {
     if (type === 'sales') {
       const sale = data as SalesSchema;
       return {
-        id: Buffer.from(
-          `${sale.txHash}-${sale.logIndex}-${sale.batchIndex}`,
-          'utf16le'
-        ),
+        id: Buffer.from(`${sale.txHash}-${sale.logIndex}-${sale.batchIndex}`),
         sale_id: toBuffer(sale.saleId),
         token_id: sale.token?.tokenId,
         contract_id: addressToBuffer(sale.token?.contract),
