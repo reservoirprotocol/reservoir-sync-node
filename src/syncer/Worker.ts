@@ -19,6 +19,7 @@ interface WorkerConfig {
 }
 export class Worker extends EventEmitter {
   public processing: boolean = false;
+  public onlyGrain: boolean = false;
 
   private _request: InstanceType<typeof Controller>['request'];
   private _normalize: InstanceType<typeof Controller>['normalize'];
@@ -40,7 +41,7 @@ export class Worker extends EventEmitter {
   public async process(block: Block): Promise<void> {
     this.processing = true;
     const continuation: string = '';
-    let isToday = false;
+
     const ascRes = await this._request(
       this._getNormalizedRequest(block, 'asc')
     );
@@ -49,7 +50,35 @@ export class Worker extends EventEmitter {
 
     LoggerService.warn(`Graining block: ${block.id}`);
 
+    await this._processGraining(block, ascRes);
+    this._logBlockStatus(block);
+    await this._processContinuation(block, continuation);
+  }
+  private async _processUpkeeping(block: Block): Promise<void> {
+    /**
+     * What happens here is that we fire of the request with a start date of right now OR the last record if we hit a high density block
+     * We fire the request and get back less than 1000 records then we just insert and keep going until we hit 1000 records
+     *
+     * WHEN we hit 1000 records. We need to fire off the second request to check if the block is high density.
+     * IF it is high density, then the current workers startDate is the last records date. The block that gets created has a startDate of the first record/old time and an endDate of the final record/newStart time
+     */
+
     while (true) {
+
+    }
+  }
+  private async _processGraining(
+    block: Block,
+    ascRes: SuccessResponse
+  ): Promise<void> {
+    while (true || this.onlyGrain) {
+      // If its set to only grain then its an upkeeper
+      // When that happens the startDate is always the first record time descending
+      // the end time is 30 minutes. This gives us enough time to split if needed.www
+
+      // We fire the request and check if there are more than 1k records.
+      // If there are then that means we need to check if we need to grain.
+
       const descRes = await this._request(
         this._getNormalizedRequest(block, 'desc')
       );
@@ -64,7 +93,6 @@ export class Worker extends EventEmitter {
 
       if (isTodayUTC(records[records.length - 1].updatedAt)) {
         this._release(block);
-        isToday = true;
         break;
       }
 
@@ -74,13 +102,6 @@ export class Worker extends EventEmitter {
 
       break;
     }
-
-    if (block.startDate === block.endDate || isToday) {
-      this._release(block);
-      return;
-    }
-    this._logBlockStatus(block);
-    await this._processContinuation(block, continuation);
   }
 
   /**
@@ -220,3 +241,13 @@ export class Worker extends EventEmitter {
     } as WorkerEvent);
   }
 }
+
+/**
+ * Set flag to primary = true
+ * We insert while graining;
+ * We dont ever exit the graining loop? This allows us to grain and insert. So we process the contiaunation in the graining loop? Or if we get back a continatuion do we just not process it.
+ * So if the flag is primary then we never break out of the graining loop.
+ *
+ * So when flag upkeeping = true
+ * We never process in that worker, it becomes locked to that grainer and inserts in the grainer
+ */
