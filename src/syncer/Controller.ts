@@ -51,15 +51,7 @@ export class Controller {
    * @private
    */
   private _createWorkers(): void {
-    const t =
-      this._config.mode === 'fast'
-        ? 15
-        : this._config.mode === 'normal'
-        ? 10
-        : 5;
-    t;
-    const workerCount = 15;
-    for (let i = 0; i < workerCount; i++) {
+    for (let i = 0; i < 1; i++) {
       const worker = new Worker(this);
       this._workers.push(worker);
     }
@@ -98,17 +90,11 @@ export class Controller {
    * @private
    */
   private async _delegate(): Promise<void> {
-    let availableWorker = this._workers.find(({ processing }) => !processing);
-
-    while (!availableWorker) {
-      await this.delay(1000);
-      availableWorker = this._workers.find(({ processing }) => !processing);
-    }
+    const worker = this._workers.find(({ processing }) => !processing);
 
     const block = await this._queue.getBlock(this._config.dataset);
-
-    if (block) {
-      availableWorker.process(block);
+    if (block && worker) {
+      worker.process(block);
     }
   }
 
@@ -155,6 +141,9 @@ export class Controller {
       case 'worker.release':
         this.handleWorkerRelease();
         break;
+      case 'worker.idle':
+        this._delegate();
+        break;
       default:
         throw new Error(`Unknown event: ${type}`);
     }
@@ -186,14 +175,14 @@ export class Controller {
    * @param block - The original block to be split.
    * @private
    */
-  private _handleBlockSplit(block: Block): void {
+  private async _handleBlockSplit(block: Block): Promise<void> {
     const newBlock: Block = {
       ...block,
       id: v4(),
     };
-    this._queue.insertBlock(newBlock, this._config.dataset);
+    await this._queue.insertBlock(newBlock, this._config.dataset);
 
-    this._delegate();
+    this.handleWorkerRelease();
   }
 
   /**

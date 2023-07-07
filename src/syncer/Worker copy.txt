@@ -185,16 +185,15 @@ export class Worker extends EventEmitter {
 
       const records = res.data[RecordRoots[block.datatype]];
 
+      await InsertionService.upsert(block.datatype, records);
+
       if (!records.length || !res.data.continuation) {
         this.processing = false;
         this._release(block);
         break;
       }
 
-      await InsertionService.upsert(block.datatype, records);
-
       continuation = res.data.continuation;
-      
     }
   }
 
