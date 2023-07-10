@@ -1,7 +1,7 @@
 import { createClient, type RedisClientType } from 'redis';
-import { Block, DataTypes } from 'types';
 import { LoggerService } from '.';
 import { Worker } from '../syncer/Worker';
+import { Backup, Block, DataTypes } from '../types';
 
 /**
  * Queue class for managing a Redis-based queue.
@@ -32,15 +32,15 @@ class _Queue {
     }
   }
   /**
-   *
+   * Backups the currne state of the node
    * @param datatype
    * @param workers
    */
   public async backup(datatype: DataTypes, workers: Worker[]): Promise<void> {
     try {
       await this._client.hSet(
+        `backups`,
         `${datatype}-backup`,
-        'backup',
         JSON.stringify({
           workers: workers.map(({ block, continuation }) => {
             return { block, continuation };
@@ -48,10 +48,30 @@ class _Queue {
           blocks: await this.getAllBlocks(datatype),
         })
       );
-
-      // We need to store the current blocks, and the current state of the worker
     } catch (e: unknown) {
       return await this.backup(datatype, workers);
+    }
+  }
+
+  public async loadBackup(): Promise<
+    | {
+        [key: string]: Backup;
+      }[]
+    | null
+  > {
+    try {
+      const backups = await this._client.hGetAll('backups');
+      return await Promise.all(
+        Object.keys(backups).map(async (key) => {
+          return {
+            [key]: JSON.parse(
+              (await this._client.hGet('backups', key)) as string
+            ) as Backup,
+          };
+        })
+      );
+    } catch (e: unknown) {
+      return null;
     }
   }
 

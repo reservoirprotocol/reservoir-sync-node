@@ -9,13 +9,7 @@ import {
 } from 'types';
 import { v4 } from 'uuid';
 import { InsertionService, LoggerService, QueueService } from '../services';
-import {
-  isSuccessResponse,
-  RecordRoots,
-  UrlBase,
-  UrlPaths,
-  WorkerCounts,
-} from '../utils';
+import { isSuccessResponse, RecordRoots, UrlBase, UrlPaths } from '../utils';
 import { Worker } from './Worker';
 
 export class Controller {
@@ -60,6 +54,10 @@ export class Controller {
    */
   private async _launch(): Promise<void> {
     await this._queue.launch();
+
+    const backup = await this._queue.loadBackup();
+
+    console.log(backup);
 
     this._createWorkers();
 

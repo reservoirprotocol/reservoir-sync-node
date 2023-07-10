@@ -3,6 +3,7 @@ import {
   GraphQlService,
   InsertionService,
   LoggerService,
+  QueueService,
   WebSocketService,
 } from './services';
 import { Controller } from './syncer/Controller';
@@ -33,6 +34,11 @@ export class SyncNode {
   private _loggerService: typeof LoggerService = LoggerService;
 
   /**
+   * # _queueServivice
+   */
+  private _queueService: typeof QueueService = QueueService;
+
+  /**
    * # _server
    * @access private
    */
@@ -46,7 +52,6 @@ export class SyncNode {
 
     this._loggerService.construct(config.logger);
     this._server.construct(config.server);
-
     new Controller({
       apiKey: config.syncer.apiKey,
       dataset: 'sales',

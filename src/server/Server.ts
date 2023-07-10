@@ -66,7 +66,6 @@ class _Server {
     });
 
     Object.keys(GraphQlService.getSchema()).forEach((key) => {
-      console.log(key);
       this._app.use(
         `/graphql/${key}/`,
         createHandler({ schema: GraphQlService.getSchema()[''] })
