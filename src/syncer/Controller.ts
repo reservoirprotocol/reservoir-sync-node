@@ -9,14 +9,14 @@ import {
 } from 'types';
 import { v4 } from 'uuid';
 import { InsertionService, LoggerService, QueueService } from '../services';
-import { isSuccessResponse, RecordRoots, UrlBase, UrlPaths } from '../utils';
+import {
+  isSuccessResponse,
+  RecordRoots,
+  UrlBase,
+  UrlPaths,
+  WorkerCounts,
+} from '../utils';
 import { Worker } from './Worker';
-
-const WorkerCounts = {
-  fast: 20,
-  normal: 10,
-  slow: 15,
-} as const;
 
 export class Controller {
   /**
@@ -46,7 +46,8 @@ export class Controller {
    * @private
    */
   private _createWorkers(): void {
-    for (let i = 0; i < WorkerCounts[this._config.mode]; i++) {
+    // WorkerCounts[this._config.mode];
+    for (let i = 0; i < 1; i++) {
       this._workers.push(new Worker(this));
     }
   }
@@ -99,16 +100,18 @@ export class Controller {
     block,
   }: WorkerEvent): Promise<void> {
     switch (type) {
-      case 'worker.split': // Means that a worker split its blocks
+      case 'worker.split':
         await this._handleBlockSplit(block);
         break;
-      case 'worker.release': // Means that SOME worker can take a new block
+      case 'worker.release':
         await this._delegate();
         break;
       default:
         throw new Error(`UNKOWN EVENT: ${type}`);
     }
+    await this._queue.backup(this._config.dataset, this._workers);
   }
+
   /**
    * Handles a block split by creating a new block and inserting it into the queue.
    * Delegates further actions after the block is inserted.
