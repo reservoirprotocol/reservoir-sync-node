@@ -1,6 +1,6 @@
 import EventEmitter from 'events';
 import { LoggerService } from '../services';
-import { Block, Schemas, WorkerEvent } from '../types';
+import { Block, Schemas, WorkerEvent, WorkerType } from '../types';
 import {
   delay,
   getMiddleDate,
@@ -27,6 +27,12 @@ export class Worker extends EventEmitter {
    * @access public
    */
   public continuation: string = '';
+
+  /**
+   * Worker type
+   * @access public
+   */
+  public type: WorkerType = 'backfiller';
 
   /**
    * Request method inherited from the controller
@@ -69,6 +75,10 @@ export class Worker extends EventEmitter {
    * @returns {Promise<void>}
    */
   public async process(block: Block): Promise<void> {
+    this.type === 'backfiller' ? this._backfill(block) : this._upkeep();
+  }
+
+  private async _backfill(block: Block): Promise<void> {
     this.busy = true;
     this.continuation = '';
 
@@ -174,6 +184,14 @@ export class Worker extends EventEmitter {
       } else this.continuation = res.data.continuation;
     }
   }
+
+  private async _upkeep(): Promise<void> {
+    this.busy = true;
+    this.continuation = '';
+
+    // We upkeep by forward splitting esentially
+  }
+
   /**
    * Emit a split event for a block.
    * @param {Block} block - The block to emit a split event for.

@@ -37,6 +37,8 @@ export type ErrorResponse<T = ErrorType | null> = {
   status: HttpStatusCode | null;
 };
 
+export type WorkerType = 'backfiller' | 'upkeeper';
+
 export type ApiResponse<T = SuccessType> = SuccessResponse<T> | ErrorResponse;
 
 export type GraphQlServiceConfig = InsertionServiceConfig;
