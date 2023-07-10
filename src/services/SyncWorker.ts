@@ -156,7 +156,7 @@ export class SyncWorker {
           /**
            * Handle all the insertion related calls
            */
-          this._handleInsertions(res.data);
+          await this._handleInsertions(res.data);
 
           /**
            * Set the current pagination token to the one we just recieved
@@ -196,12 +196,12 @@ export class SyncWorker {
    * @param {IndexSignatureType} data - Request resposne data
    * @returns {void}
    */
-  private _handleInsertions(data: KnownPropertiesType): void {
+  private async _handleInsertions(data: KnownPropertiesType): Promise<void> {
     const parsed = this.config.format(data);
     if (parsed.length && this._recentId !== parsed[parsed.length - 1].id) {
       this.counts._insertions += parsed.length;
       this.counts.insertions += parsed.length;
-      this.config.insert(data, this.isBackfilled);
+      await this.config.insert(data, this.isBackfilled);
       this._recentId = parsed[parsed.length - 1].id;
     }
   }

@@ -158,7 +158,7 @@ export class SyncManager {
          * Increment the counts and insert the data
          */
         this.requestCount++;
-        this.config.insert(res.data);
+        await this.config.insert(res.data);
         this.insertCount += data.length;
 
         const lastSet = data[data.length - 1];
