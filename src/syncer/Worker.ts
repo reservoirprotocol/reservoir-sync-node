@@ -69,7 +69,6 @@ export class Worker extends EventEmitter {
    * @returns {Promise<void>}
    */
   public async process(block: Block): Promise<void> {
-    console.log(`STARTING BLOCK`);
     this.busy = true;
     this.continuation = '';
 

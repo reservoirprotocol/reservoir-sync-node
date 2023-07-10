@@ -5,14 +5,12 @@ import {
   DataSets,
   ErrorType,
   SuccessType,
-  WorkerEvent
+  WorkerEvent,
 } from 'types';
 import { v4 } from 'uuid';
 import { InsertionService, LoggerService, QueueService } from '../services';
 import { isSuccessResponse, RecordRoots, UrlBase, UrlPaths } from '../utils';
 import { Worker } from './Worker';
-
-let count = 0;
 
 const WorkerCounts = {
   fast: 20,
@@ -100,7 +98,6 @@ export class Controller {
     type,
     block,
   }: WorkerEvent): Promise<void> {
-    console.log(type);
     switch (type) {
       case 'worker.split': // Means that a worker split its blocks
         await this._handleBlockSplit(block);
@@ -168,12 +165,7 @@ export class Controller {
    */
   private async _delegate(): Promise<void> {
     const worker = this._workers.find(({ busy }) => !busy);
-
-    if (!worker) {
-      console.log(this._workers);
-      process.exit(1);
-    }
-
+    
     if (!worker) {
       // Log event to emit that there isnt a worker
       LoggerService.warn(`ALL WORKERS BUSY`);
