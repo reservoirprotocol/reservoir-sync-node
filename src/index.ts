@@ -5,18 +5,6 @@ const config: SyncNodeConfig = {
   syncer: {
     chain: 'mainnet',
     apiKey: process.env.API_KEY as string,
-    mappings: [
-      {
-        datasets: ['asks'],
-        table: 'asks',
-        contracts: [],
-      },
-      {
-        datasets: ['sales'],
-        table: 'sales',
-        contracts: [],
-      },
-    ],
   },
   server: {
     port: 1111,

@@ -41,8 +41,6 @@ export type WorkerType = 'backfiller' | 'upkeeper';
 
 export type ApiResponse<T = SuccessType> = SuccessResponse<T> | ErrorResponse;
 
-export type GraphQlServiceConfig = InsertionServiceConfig;
-
 export type DataTypes = 'sales' | 'asks';
 
 export type DataSets = AsksSchema[] | SalesSchema[];
@@ -162,12 +160,6 @@ export type SchemasObject = {
   asks: AsksSchema[];
 };
 
-export interface InsertionServiceConfig {
-  mappings: {
-    datasets: DataTypes[];
-    table: string;
-  }[];
-}
 export interface SyncNodeConfig {
   server: {
     port: number;
@@ -176,11 +168,6 @@ export interface SyncNodeConfig {
   syncer: {
     apiKey: string;
     chain: Chains;
-    mappings: {
-      datasets: DataTypes[];
-      table: string;
-      contracts: string[];
-    }[];
   };
   logger: {
     datadog: {

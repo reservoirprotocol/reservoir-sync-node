@@ -1,3 +1,4 @@
+import { Controller } from 'syncer/Controller';
 import { Server } from './server/Server';
 import {
   GraphQlService,
@@ -5,7 +6,6 @@ import {
   LoggerService,
   WebSocketService
 } from './services';
-import { Controller } from './syncer/Controller';
 import { SyncNodeConfig } from './types';
 
 export class SyncNode {
@@ -39,15 +39,11 @@ export class SyncNode {
   private _server: typeof Server = Server;
 
   constructor(config: SyncNodeConfig) {
-    /*
     this._webSocketService.construct({
-      contracts: config.syncer.mappings.flatMap((mapping) => mapping.contracts),
+      contracts: [],
       ...config.syncer,
     });
 
-    */
-    this._graphqlService.construct(config.syncer);
-    this._insertionService.construct(config.syncer);
     this._loggerService.construct(config.logger);
     this._server.construct(config.server);
 

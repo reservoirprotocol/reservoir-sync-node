@@ -1,12 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { Prisma, PrismaClient } from '@prisma/client';
-import {
-  AsksSchema,
-  DataSets,
-  DataTypes,
-  InsertionServiceConfig,
-  SalesSchema,
-} from '../types';
+import { AsksSchema, DataSets, DataTypes, SalesSchema } from '../types';
 import { addressToBuffer, toBuffer } from '../utils';
 import { LoggerService } from './LoggerService';
 
@@ -36,25 +30,7 @@ class _InsertionServivce {
       db: { url: `${process.env.DATABASE_URL}?pool_timeout=0` },
     },
   });
-
-  /**
-   * Insertion service configuration object
-   * @access private
-   * @type {InsertionServiceConfig}
-   */
-  private _config: InsertionServiceConfig = {
-    mappings: [],
-  };
-
-  /**
-   * Configures the insertion service with a given configuration.
-   * @param {InsertionServiceConfig} config - Insertion service configuration object.
-   * @returns {void}
-   */
-  public construct(config: InsertionServiceConfig): void {
-    this._config = config;
-  }
-
+  
   /**
    * Initiates the connection to the database through Prisma.
    * @returns {Promise<void>}
@@ -124,19 +100,15 @@ class _InsertionServivce {
   ): Promise<void> {
     return this._handlePrismaPromises(
       await Promise.allSettled(
-        this._config.mappings
-          .filter(({ datasets }) => datasets.includes(type))
-          .flatMap(({ table }) => {
-            return data.map((set) => {
-              // @ts-ignore Prisma doesn't support model reference by variable name.
-              // See https://github.com/prisma/prisma/discussions/16058#discussioncomment-54936
-              return this._prisma[table].upsert({
-                where: { id: this._format(type, set).id },
-                create: this._format(type, set),
-                update: this._format(type, set),
-              });
-            });
-          })
+        data.map((set) => {
+          // @ts-ignore Prisma doesn't support model reference by variable name.
+          // See https://github.com/prisma/prisma/discussions/16058#discussioncomment-54936
+          return this._prisma[type].upsert({
+            where: { id: this._format(type, set).id },
+            create: this._format(type, set),
+            update: this._format(type, set),
+          });
+        })
       )
     );
   }
