@@ -78,6 +78,11 @@ export class Worker extends EventEmitter {
     this.type === 'backfiller' ? this._backfill(block) : this._upkeep();
   }
 
+  /**
+   * Backfills a block based on its block dates
+   * @param {Block} block - The block to be processed.
+   * @returns {Promise<void>}
+   */
   private async _backfill(block: Block): Promise<void> {
     this.busy = true;
     this.continuation = '';

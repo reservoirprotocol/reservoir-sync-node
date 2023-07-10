@@ -152,7 +152,6 @@ export class Controller {
 
     return {
       id: v4(),
-      datatype: this._config.dataset,
       startDate: reqs[0].data[root][reqs[0].data[root].length - 1].updatedAt,
       endDate: reqs[1].data[root][reqs[1].data[root].length - 1].updatedAt,
       contract: '',
@@ -165,7 +164,7 @@ export class Controller {
    */
   private async _delegate(): Promise<void> {
     const worker = this._workers.find(({ busy }) => !busy);
-    
+
     if (!worker) {
       // Log event to emit that there isnt a worker
       LoggerService.warn(`ALL WORKERS BUSY`);

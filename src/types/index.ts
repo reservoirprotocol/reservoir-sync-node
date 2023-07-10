@@ -118,7 +118,6 @@ export interface Block {
   id: string;
   startDate: string;
   endDate: string;
-  datatype: DataTypes;
   contract: string;
 }
 
