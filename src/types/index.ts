@@ -78,8 +78,8 @@ export interface Mapping {
   table: string;
 }
 export interface WorkerEvent {
-  type: 'worker.release' | 'block.split' | 'block.status' | 'worker.idle';
-  block: Block | null;
+  type: 'worker.release' | 'worker.split' | 'block.status' | 'worker.idle';
+  block: Block;
 }
 
 export interface ControllerConfig {

@@ -1,67 +1,61 @@
 import axios, { AxiosResponse } from 'axios';
-import { v4 } from 'uuid';
-import { InsertionService } from '../services';
-import { Queue } from '../services/QueueService';
 import {
   Block,
   ControllerConfig,
   DataSets,
   ErrorType,
   SuccessType,
-} from '../types';
-import { isSuccessResponse } from '../utils';
+  WorkerEvent
+} from 'types';
+import { v4 } from 'uuid';
+import { InsertionService, LoggerService, QueueService } from '../services';
+import { isSuccessResponse, RecordRoots, UrlBase, UrlPaths } from '../utils';
 import { Worker } from './Worker';
 
-const UrlBase = {
-  mainnet: 'https://api.reservoir.tools',
-  goerli: 'https://api-goerli.reservoir.tools',
-} as const;
+let count = 0;
 
-const UrlPaths = {
-  sales: '/sales/v4',
-  asks: '/orders/asks/v4',
-  bids: '/orders/bids/v5',
+const WorkerCounts = {
+  fast: 20,
+  normal: 10,
+  slow: 15,
 } as const;
-
-const RecordRoots = {
-  asks: 'orders',
-  sales: 'sales',
-  bids: 'orders',
-} as const;
-
-interface WorkerEvent {
-  type: string;
-  block: Block;
-}
 
 export class Controller {
-  private _workers: Worker[] = [];
+  /**
+   * Workers used to process & grain blocks.
+   * @private
+   */
+  private readonly _workers: Worker[] = [];
 
-  private _queue: typeof Queue = Queue;
+  private readonly _queue: typeof QueueService = QueueService;
 
-  constructor(private readonly _config: ControllerConfig) {
+  /**
+   * Configuration object for the controller
+   * @private
+   */
+  private readonly _config: ControllerConfig;
+
+  constructor(config: ControllerConfig) {
+    this._config = config;
     this._launch();
   }
+
   /**
    * Creates workers and adds them to the worker array.
-   *
    * The number of workers to create is defined by the `workerCount` constant.
    * Each new worker is instantiated and added to the worker array.
-   *
+   * @returns void
    * @private
    */
   private _createWorkers(): void {
-    for (let i = 0; i < 1; i++) {
-      const worker = new Worker(this);
-      this._workers.push(worker);
+    for (let i = 0; i < WorkerCounts[this._config.mode]; i++) {
+      this._workers.push(new Worker(this));
     }
   }
 
   /**
    * Launches the controller.
-   *
    * Launches the queue, creates workers, gets the initial block, assigns it to an available worker, and starts listening for worker events.
-   *
    * @returns A Promise that resolves when the controller has launched.
    * @private
    */
@@ -70,45 +64,14 @@ export class Controller {
 
     this._createWorkers();
 
-    const block: Block = await this._getInitialBlock();
+    const worker = this._workers.find(({ busy }) => !busy) as Worker;
 
-    const worker = this._workers.find(
-      ({ processing }) => !processing
-    ) as Worker;
+    const block = await this._getInitialBlock();
 
     worker.process(block);
 
     this._listen();
   }
-
-  /**
-   * Delegates blocks from the queue to available workers.
-   *
-   * Continually checks for an available worker and, once found, assigns it a block from the queue for processing.
-   *
-   * @returns A Promise that resolves when a block has been assigned to a worker or when all workers are busy.
-   * @private
-   */
-  private async _delegate(): Promise<void> {
-    const worker = this._workers.find(({ processing }) => !processing);
-
-    const block = await this._queue.getBlock(this._config.dataset);
-    if (block && worker) {
-      worker.process(block);
-    }
-  }
-
-  /**
-   * Delays the execution of the following code.
-   *
-   * @param ms - The amount of delay in milliseconds.
-   * @returns A Promise that resolves after the specified delay.
-   * @private
-   */
-  private delay(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
-
   /**
    * Sets up listeners for worker events.
    *
@@ -133,41 +96,22 @@ export class Controller {
    * @throws Will throw an error if the event type is unknown.
    * @private
    */
-  private _handleWorkerEvent({ type, block }: WorkerEvent): void {
+  private async _handleWorkerEvent({
+    type,
+    block,
+  }: WorkerEvent): Promise<void> {
+    console.log(type);
     switch (type) {
-      case 'block.split':
-        this._handleBlockSplit(block);
+      case 'worker.split': // Means that a worker split its blocks
+        await this._handleBlockSplit(block);
         break;
-      case 'worker.release':
-        this.handleWorkerRelease();
-        break;
-      case 'worker.idle':
-        this._delegate();
+      case 'worker.release': // Means that SOME worker can take a new block
+        await this._delegate();
         break;
       default:
-        throw new Error(`Unknown event: ${type}`);
+        throw new Error(`UNKOWN EVENT: ${type}`);
     }
   }
-
-  /**
-   * Handles the release of a worker.
-   *
-   * Finds an idle worker and assigns a block from the queue to it for processing.
-   * If no idle workers or blocks are available, the function simply returns.
-   *
-   * @returns A Promise that resolves when the worker release has been handled.
-   * @private
-   */
-  private async handleWorkerRelease(): Promise<void> {
-    const worker = this._workers.find(({ processing }) => !processing);
-    if (!worker) return;
-
-    const block = await this._queue.getBlock(this._config.dataset);
-    if (!block) return;
-
-    worker.process(block);
-  }
-
   /**
    * Handles a block split by creating a new block and inserting it into the queue.
    * Delegates further actions after the block is inserted.
@@ -181,10 +125,8 @@ export class Controller {
       id: v4(),
     };
     await this._queue.insertBlock(newBlock, this._config.dataset);
-
-    this.handleWorkerRelease();
+    this._delegate();
   }
-
   /**
    * Requests the initial block from the API.
    * @returns {Promise<Block>} - The initial block.
@@ -219,10 +161,36 @@ export class Controller {
       contract: '',
     };
   }
+  /**
+   * Delegates blocks from the queue to available workers.
+   * @returns A Promise that resolves when a block has been assigned to a worker or when all workers are busy.
+   * @private
+   */
+  private async _delegate(): Promise<void> {
+    const worker = this._workers.find(({ busy }) => !busy);
 
+    if (!worker) {
+      console.log(this._workers);
+      process.exit(1);
+    }
+
+    if (!worker) {
+      // Log event to emit that there isnt a worker
+      LoggerService.warn(`ALL WORKERS BUSY`);
+      return;
+    }
+
+    const block = await this._queue.getBlock(this._config.dataset);
+
+    if (!block) {
+      LoggerService.warn(`NO BLOCK FOUND AVAILABLE`);
+      return;
+    }
+
+    worker.process(block);
+  }
   /**
    * Inserts or updates a data set using the InsertionService.
-   *
    * @param data - The data to be inserted or updated.
    * @returns A Promise that resolves when the data has been inserted or updated.
    * @public
@@ -265,7 +233,7 @@ export class Controller {
         validateStatus: () => true,
         headers: {
           'X-API-KEY': this._config.apiKey,
-          'X-SYSTEM-TYPE': 'sync-node',
+          'X-SYNC-NODE': 'V2',
           'Content-Type': 'application/json',
         },
       });

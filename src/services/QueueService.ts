@@ -62,4 +62,4 @@ class _Queue {
   }
 }
 
-export const Queue = new _Queue();
+export const QueueService = new _Queue();

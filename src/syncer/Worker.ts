@@ -1,9 +1,8 @@
-/* eslint-disable no-constant-condition */
-/* eslint-disable no-case-declarations */
 import EventEmitter from 'events';
-import { InsertionService, LoggerService } from '../services';
-import { Block, Schemas, SuccessResponse, WorkerEvent } from '../types';
+import { LoggerService } from '../services';
+import { Block, Schemas, WorkerEvent } from '../types';
 import {
+  delay,
   getMiddleDate,
   isHighDensityBlock,
   isSuccessResponse,
@@ -11,24 +10,57 @@ import {
   parseTimestamp,
   RecordRoots,
 } from '../utils';
+
 import { Controller } from './Controller';
 
-export class Worker extends EventEmitter {
-  public processing: boolean = false;
+type ControllerInstance = InstanceType<typeof Controller>;
 
-  private _request: InstanceType<typeof Controller>['request'];
-  private _insert: InstanceType<typeof Controller>['request'];
-  private _normalize: InstanceType<typeof Controller>['normalize'];
+export class Worker extends EventEmitter {
+  /**
+   * Public flag to determine the busy status of a worker
+   * @public
+   */
+  public busy: boolean = false;
 
   /**
-   * @param {WorkerConfig} config - The configuration object for the worker.
+   * Continuation cursor to paginate through results
+   * @access public
    */
+  public continuation: string = '';
+
+  /**
+   * Request method inherited from the controller
+   * @private
+   */
+  private readonly _request: ControllerInstance['request'];
+
+  /**
+   * Normalize parameters method inherited from the controller
+   * @private
+   */
+  private readonly _normalize: ControllerInstance['normalize'];
+
+  /**
+   * Get config property method inhertied from the controller
+   * @private
+   */
+  private readonly _config: ControllerInstance['getConfigProperty'];
+
+  /**
+   * Insert method inherited from the controller
+   * @private
+   */
+  private readonly _insert: ControllerInstance['insert'];
+
   constructor(controller: Controller) {
     super();
 
-    this._request = controller.request.bind(controller);
-    this._insert = controller.request.bind(controller);
-    this._normalize = controller.normalize.bind(controller);
+    const { request, normalize, getConfigProperty, insert } = controller;
+
+    this._insert = insert.bind(controller);
+    this._request = request.bind(controller);
+    this._normalize = normalize.bind(controller);
+    this._config = getConfigProperty.bind(controller);
   }
 
   /**
@@ -37,179 +69,122 @@ export class Worker extends EventEmitter {
    * @returns {Promise<void>}
    */
   public async process(block: Block): Promise<void> {
-    this.processing = true;
-    const continuation: string = '';
-    let isToday = false;
-    const ascRes = await this._request(
-      this._getNormalizedRequest(block, 'asc')
+    console.log(`STARTING BLOCK`);
+    this.busy = true;
+    this.continuation = '';
+
+    const ascReq = await this._request(
+      this._normalize({
+        ...(block.contract && { contract: block.contract }),
+        startTimestamp: parseTimestamp(block.startDate),
+        endTimestamp: parseTimestamp(block.endDate),
+        sortDirection: 'asc',
+      })
     );
 
-    if (!isSuccessResponse(ascRes)) return await this.process(block);
+    if (!isSuccessResponse(ascReq)) {
+      /**
+       * Delay 5 seconds
+       */
+      await delay(ascReq.status === 429 ? 5000 : 0);
 
-    LoggerService.warn(`Graining block: ${block.id}`);
+      return await this.process(block);
+    }
 
+    LoggerService.warn(`GRAINING BLOCK [${block.id}]`);
+
+    // eslint-disable-next-line no-constant-condition
     while (true) {
-      const descRes = await this._request(
-        this._getNormalizedRequest(block, 'desc')
+      const descReq = await this._request(
+        this._normalize({
+          ...(block.contract && { contract: block.contract }),
+          startTimestamp: parseTimestamp(block.startDate),
+          endTimestamp: parseTimestamp(block.endDate),
+          sortDirection: 'desc',
+        })
       );
+      if (!isSuccessResponse(descReq)) {
+        /**
+         * Delay for 5 seconds if the request failed due to a 429
+         */
+        await delay(descReq.status === 429 ? 5000 : 0);
+        continue;
+      }
 
-      if (!isSuccessResponse(descRes)) continue;
-
-      const records = this._getMergedRecords(ascRes, descRes, block);
+      const records = [
+        ...ascReq.data[RecordRoots[this._config('dataset')]],
+        ...descReq.data[RecordRoots[this._config('dataset')]],
+      ] as Schemas;
 
       if (!records.length) {
         break;
       }
 
       if (isTodayUTC(records[records.length - 1].updatedAt)) {
+        this.busy = false;
         this._release(block);
-        isToday = true;
+        return;
+      }
+
+      if (isHighDensityBlock(records, 365 * 24 * 60 * 60 * 1000)) {
+        const middleDate = getMiddleDate(block.startDate, block.endDate);
+        this._split({
+          ...block,
+          startDate: middleDate,
+          endDate: block.endDate,
+        });
+        block.endDate = middleDate;
+      } else {
         break;
       }
-
-      if (this._processHighDensity(records, block)) {
-        continue;
-      }
-
-      break;
     }
 
-    if (block.startDate === block.endDate || isToday) {
-      this._release(block);
-      return;
-    }
-    this._logBlockStatus(block);
-    await this._processContinuation(block, continuation);
-  }
-
-  /**
-   * Get responses for both ascending and descending request.
-   * @param {Block} block - The block to get responses for.
-   * @returns {Promise<any[]>} - The responses for both ascending and descending request.
-   */
-  private async _getResponses(block: Block) {
-    return await Promise.all([
-      this._request(this._getNormalizedRequest(block, 'asc')),
-      this._request(this._getNormalizedRequest(block, 'desc')),
-    ]);
-  }
-
-  /**
-   * Get normalized request.
-   * @param {Block} block - The block to get normalized request for.
-   * @param {string} direction - The direction for the request.
-   * @returns {any} - The normalized request.
-   */
-  private _getNormalizedRequest(block: Block, direction: string) {
-    return this._normalize({
-      ...(block.contract && { contract: block.contract }),
-      startTimestamp: parseTimestamp(block.startDate),
-      endTimestamp: parseTimestamp(block.endDate),
-      sortDirection: direction,
-    });
-  }
-
-  /**
-   * Merge records from ascending and descending responses.
-   * @param {any} ascRes - The response from ascending request.
-   * @param {any} descRes - The response from descending request.
-   * @param {Block} block - The block to get merged records for.
-   * @returns {Schemas[]} - The merged records.
-   */
-  private _getMergedRecords(
-    ascRes: SuccessResponse,
-    descRes: SuccessResponse,
-    block: Block
-  ): Schemas {
-    return [
-      ...ascRes.data[RecordRoots[block.datatype]],
-      ...descRes.data[RecordRoots[block.datatype]],
-    ] as Schemas;
-  }
-
-  /**
-   * Process high density records.
-   * @param {Schemas[]} records - The records to process.
-   * @param {Block} block - The block for the records.
-   * @returns {boolean} - Whether the records are high density.
-   */
-  private _processHighDensity(records: Schemas, block: Block) {
-    const isHighDensity = isHighDensityBlock(records, 10 * 60 * 1000);
-
-    if (isHighDensity) {
-      const middleDate = getMiddleDate(block.startDate, block.endDate);
-      if (isTodayUTC(middleDate)) return;
-      if (middleDate === block.endDate || middleDate === block.startDate)
-        return;
-      this._split({
-        ...block,
-        startDate: middleDate,
-        endDate: block.endDate,
-      });
-
-      block.endDate = middleDate;
-      return true;
-    }
-
-    return false;
-  }
-
-  /**
-   * Log block status.
-   * @param {Block} block - The block to log status for.
-   */
-  private _logBlockStatus(block: Block) {
     LoggerService.info(
-      `Grained block: ${block.id}\nstartDate: ${block.startDate}\nendDate: ${block.endDate}`
+      `GRAINED BLOCK [${block.id}] \nstartDate: ${block.startDate}\nendDate: ${block.endDate}`
     );
-  }
 
-  /**
-   * Process continuation for a block.
-   * @param {Block} block - The block to process continuation for.
-   * @param {string} continuation - The continuation string.
-   * @returns {Promise<void>}
-   */
-  private async _processContinuation(block: Block, continuation: string) {
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       const res = await this._request(
         this._normalize({
-          ...(continuation && { continuation }),
+          ...(this.continuation && { continuation: this.continuation }),
           sortDirection: 'asc',
           startTimestamp: parseTimestamp(block.startDate),
           endTimestamp: parseTimestamp(block.endDate),
         })
       );
 
-      if (!isSuccessResponse(res)) continue;
-
-      const records = res.data[RecordRoots[block.datatype]];
-
-      if (!records.length || !res.data.continuation) {
-        this.processing = false;
-        this._release(block);
-        break;
+      if (!isSuccessResponse(res)) {
+        /**
+         * Delay for 5 seconds if the request failed due to a 429
+         */
+        await delay(res.status === 429 ? 5000 : 0);
+        continue;
       }
 
-      await InsertionService.upsert(block.datatype, records);
+      const records = res.data[RecordRoots[this._config('dataset')]];
 
-      continuation = res.data.continuation;
-      
+      if (records.length) {
+        await this._insert(records);
+      }
+
+      if (!res.data.continuation) {
+        this.busy = false;
+        this._release(block);
+        break;
+      } else this.continuation = res.data.continuation;
     }
   }
-
   /**
    * Emit a split event for a block.
    * @param {Block} block - The block to emit a split event for.
    */
   private _split(block: Block) {
-    if (block.startDate === block.endDate) return;
     this.emit('worker.event', {
-      type: 'block.split',
+      type: 'worker.split',
       block,
     } as WorkerEvent);
   }
-
   /**
    * Emit a release event for a block.
    * @param {Block} block - The block to emit a release event for.

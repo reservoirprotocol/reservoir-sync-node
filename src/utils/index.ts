@@ -91,9 +91,17 @@ export function getMiddleDate(date1: string, date2: string): string {
 export function isHighDensityBlock(data: Schemas, threshold: number) {
   const dateOne = new Date(data[0].updatedAt).getTime();
   const dateTwo = new Date(data[data.length - 1].updatedAt).getTime();
+
   return Math.abs(dateOne - dateTwo) > threshold;
 }
 
+/**
+ * Delays
+ * @param ms Delay time
+ * @returns A void promise
+ */
+export const delay = async (ms: number): Promise<void> =>
+  new Promise((r) => setTimeout(r, ms));
 /**
  * # toBuffer
  * @param hexValue - Hex value to slice

@@ -1,11 +1,11 @@
-import { Controller } from './syncer/Controller';
 import { Server } from './server/Server';
 import {
   GraphQlService,
   InsertionService,
   LoggerService,
-  WebSocketService,
+  WebSocketService
 } from './services';
+import { Controller } from './syncer/Controller';
 import { SyncNodeConfig } from './types';
 
 export class SyncNode {
