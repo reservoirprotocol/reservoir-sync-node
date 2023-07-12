@@ -11,7 +11,6 @@ const config: SyncNodeConfig = {
     authorization: 'default',
   },
   backup: {
-    redisUrl: process.env.REDIS_URL as string,
     useBackup: true,
   },
   logger: {

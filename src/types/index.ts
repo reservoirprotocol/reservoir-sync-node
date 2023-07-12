@@ -154,10 +154,7 @@ export interface LoggerServiceConfig {
 }
 
 export interface QueueServiceConfig {
-  backup: {
     useBackup: boolean;
-    redisUrl: string;
-  };
 }
 
 export interface ServerConfig {
@@ -182,7 +179,6 @@ export interface SyncNodeConfig {
     chain: Chains;
   };
   backup: {
-    redisUrl: string;
     useBackup: boolean;
   };
   logger: {

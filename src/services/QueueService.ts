@@ -1,13 +1,20 @@
 import { createClient, type RedisClientType } from 'redis';
 import { LoggerService } from '.';
 import { Worker } from '../syncer/Worker';
-import { Backup, Block, DataTypes } from '../types';
+import { Backup, Block, DataTypes, QueueServiceConfig } from '../types';
 
 /**
  * Queue class for managing a Redis-based queue.
  * Allows insertion and retrieval of blocks in a FIFO manner.
  */
 class _Queue {
+  /**
+   * Config object for the queue service
+   * @private
+   */
+  private _config: QueueServiceConfig = {
+    useBackup: false,
+  };
   /**
    * SyncNode backup
    */
@@ -76,6 +83,7 @@ class _Queue {
    * @returns Backup of the controller or null if not found
    */
   public getBackup(datatype: string): Backup | null {
+    if (!this._config.useBackup) return null;
     return this._backups ? this._backups[`${datatype}-backup`] : null;
   }
   /**
@@ -128,7 +136,9 @@ class _Queue {
       return await this.getBlock(datatype);
     }
   }
-
+  public construct(config: QueueServiceConfig): void {
+    this._config = config;
+  }
   /**
    * Launches the queue by connecting the Redis client.
    *

@@ -4,7 +4,7 @@ import {
   InsertionService,
   LoggerService,
   QueueService,
-  WebSocketService
+  WebSocketService,
 } from './services';
 import { Controller } from './syncer/Controller';
 import { SyncNodeConfig } from './types';
@@ -56,6 +56,7 @@ export class SyncNode {
     this._config = config;
     this._server.construct(config.server);
     this._loggerService.construct(config.logger);
+    this._queueService.construct(config.backup);
     this._webSocketService.construct({
       contracts: [],
       ...this._config.syncer,
