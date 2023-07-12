@@ -68,7 +68,6 @@ class _Queue {
           workers: workers.map(({ block, continuation }) => {
             return { block, continuation };
           }),
-          blocks: await this.getAllBlocks(datatype),
         })
       );
     } catch (e: unknown) {
