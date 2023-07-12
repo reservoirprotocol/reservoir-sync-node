@@ -19,6 +19,10 @@ export class Controller {
    */
   private readonly _workers: Worker[] = [];
 
+  /**
+   * Queue service used to handle blocks
+   * @private
+   */
   private readonly _queue: typeof QueueService = QueueService;
 
   /**
@@ -53,19 +57,23 @@ export class Controller {
    * @private
    */
   private async _launch(): Promise<void> {
-    await this._queue.launch();
-
-    const backup = await this._queue.loadBackup();
-
-    console.log(backup);
-
     this._createWorkers();
 
-    const worker = this._workers.find(({ busy }) => !busy) as Worker;
+    const backup = this._queue.getBackup(this._config.dataset);
 
-    const block = await this._getInitialBlock();
+    if (backup) {
+      backup.workers.forEach(({ block, continuation }) => {
+        const worker = this._workers.find(({ busy }) => !busy) as Worker;
+        worker.continuation = continuation;
+        worker.process(block);
+      });
+    } else {
+      const worker = this._workers.find(({ busy }) => !busy) as Worker;
 
-    worker.process(block);
+      const block = await this._getInitialBlock();
+
+      worker.process(block);
+    }
 
     this._listen();
   }

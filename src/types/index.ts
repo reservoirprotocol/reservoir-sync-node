@@ -107,7 +107,7 @@ export interface Backup {
   workers: {
     block: Block;
     continuation: string;
-  };
+  }[];
   blocks: Block[];
 }
 export interface Timestamps {

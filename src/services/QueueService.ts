@@ -9,18 +9,37 @@ import { Backup, Block, DataTypes } from '../types';
  */
 class _Queue {
   /**
+   * SyncNode backup
+   */
+  private _backups: {
+    [key: string]: Backup;
+  } | null;
+  /**
    * Redis client instance
    * @private
    */
   private _client: RedisClientType;
 
+  /**
+   * Constructor initializes a new redis client and sets up an error listener.
+   */
   constructor() {
     this._client = createClient({
       url: process.env.REDIS_URL,
     });
 
     this._client.on('error', (err) => LoggerService.error(err));
+
+    this._backups = null;
   }
+
+  /**
+   * Retrieves all blocks of the given datatype from the queue.
+   *
+   * @param datatype - The type of the data to be retrieved
+   * @returns A promise that resolves to an array of blocks
+   * @public
+   */
   public async getAllBlocks(datatype: DataTypes): Promise<Block[]> {
     try {
       const blocks = await this._client.lRange(`${datatype}-queue`, 0, -1);
@@ -31,10 +50,14 @@ class _Queue {
       return [];
     }
   }
+
   /**
-   * Backups the currne state of the node
-   * @param datatype
-   * @param workers
+   * Backs up the current state of the node.
+   *
+   * @param datatype - The type of the data to be backed up
+   * @param workers - The array of worker instances
+   * @returns A promise that resolves when the backup is completed
+   * @public
    */
   public async backup(datatype: DataTypes, workers: Worker[]): Promise<void> {
     try {
@@ -52,34 +75,38 @@ class _Queue {
       return await this.backup(datatype, workers);
     }
   }
-
-  public async loadBackup(): Promise<
-    | {
-        [key: string]: Backup;
-      }[]
-    | null
-  > {
+  /**
+   * Gets the backup for a specific datatype
+   * @param datatype Datatype for backup
+   * @returns Backup of the controller or null if not found
+   */
+  public getBackup(datatype: string): Backup | null {
+    return this._backups ? this._backups[`${datatype}-backup`] : null;
+  }
+  /**
+   * Loads all the stored backups in the Redis database and stores them in `_backups`.
+   *
+   * @returns A promise that resolves when backups are loaded or rejects if any error occurred
+   * @public
+   */
+  public async loadBackup(): Promise<void> {
     try {
-      const backups = await this._client.hGetAll('backups');
-      return await Promise.all(
-        Object.keys(backups).map(async (key) => {
-          return {
-            [key]: JSON.parse(
-              (await this._client.hGet('backups', key)) as string
-            ) as Backup,
-          };
-        })
+      this._backups = Object.fromEntries(
+        Object.entries(await this._client.hGetAll('backups')).map(
+          ([key, value]) => [key, JSON.parse(value) as Backup]
+        )
       );
     } catch (e: unknown) {
-      return null;
+      return;
     }
   }
 
   /**
    * Inserts a block into the queue.
+   *
    * @param block - The block to be inserted
    * @param datatype - The datatype of the block
-   * @returns Promise<void>
+   * @returns A promise that resolves when the block is inserted
    * @public
    */
   public async insertBlock(block: Block, datatype: DataTypes): Promise<void> {
@@ -92,8 +119,9 @@ class _Queue {
 
   /**
    * Retrieves a block from the queue.
+   *
    * @param datatype - The datatype of the block to be retrieved
-   * @returns A Promise that resolves to the retrieved block or null
+   * @returns A promise that resolves to the retrieved block or null
    * @public
    */
   public async getBlock(datatype: DataTypes): Promise<Block | null> {
@@ -108,12 +136,18 @@ class _Queue {
 
   /**
    * Launches the queue by connecting the Redis client.
-   * @returns Promise<void>
+   *
+   * @returns A promise that resolves when the connection is established
    * @public
    */
   public async launch(): Promise<void> {
     await this._client.connect();
+    LoggerService.info(`Queue Service Launched`);
   }
 }
 
+/**
+ * Exported instance of the queue service.
+ * @public
+ */
 export const QueueService = new _Queue();

@@ -1,7 +1,7 @@
 import express, { Application, NextFunction, Request, Response } from 'express';
+import { createHandler } from 'graphql-http/lib/use/express';
 import { GraphQlService, LoggerService } from '../services';
 import { ServerConfig } from '../types';
-import { createHandler } from 'graphql-http/lib/use/express';
 import routes from './routes';
 
 /**
@@ -33,7 +33,7 @@ class _Server {
   public async launch(): Promise<void> {
     return new Promise((resolve) => {
       this._app.listen(this._config.port, () => {
-        LoggerService.info(`Launched Server on ${this._config.port}`);
+        LoggerService.info(`Server Service Launched`);
         resolve();
       });
     });
