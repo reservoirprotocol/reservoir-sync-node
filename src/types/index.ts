@@ -153,6 +153,13 @@ export interface LoggerServiceConfig {
   };
 }
 
+export interface QueueServiceConfig {
+  backup: {
+    useBackup: boolean;
+    redisUrl: string;
+  };
+}
+
 export interface ServerConfig {
   port: number;
   authorization: string;
@@ -173,6 +180,10 @@ export interface SyncNodeConfig {
   syncer: {
     apiKey: string;
     chain: Chains;
+  };
+  backup: {
+    redisUrl: string;
+    useBackup: boolean;
   };
   logger: {
     datadog: {

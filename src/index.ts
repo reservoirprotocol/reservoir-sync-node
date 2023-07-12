@@ -10,6 +10,10 @@ const config: SyncNodeConfig = {
     port: 1111,
     authorization: 'default',
   },
+  backup: {
+    redisUrl: process.env.REDIS_URL as string,
+    useBackup: true,
+  },
   logger: {
     datadog: {
       apiKey: 'xxxx-xxxx-xxxx',

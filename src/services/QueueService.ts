@@ -13,24 +13,20 @@ class _Queue {
    */
   private _backups: {
     [key: string]: Backup;
-  } | null;
+  } | null = null;
   /**
    * Redis client instance
    * @private
    */
-  private _client: RedisClientType;
+  private _client: RedisClientType = createClient({
+    url: process.env.REDIS_URL as string,
+  });
 
   /**
    * Constructor initializes a new redis client and sets up an error listener.
    */
   constructor() {
-    this._client = createClient({
-      url: process.env.REDIS_URL,
-    });
-
     this._client.on('error', (err) => LoggerService.error(err));
-
-    this._backups = null;
   }
 
   /**
