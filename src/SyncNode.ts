@@ -1,11 +1,12 @@
-import { Controller } from 'syncer/Controller';
 import { Server } from './server/Server';
 import {
   GraphQlService,
   InsertionService,
   LoggerService,
-  WebSocketService
+  QueueService,
+  WebSocketService,
 } from './services';
+import { Controller } from './syncer/Controller';
 import { SyncNodeConfig } from './types';
 
 export class SyncNode {
@@ -13,48 +14,52 @@ export class SyncNode {
    * # _graphqlService
    * @access private
    */
-  private _graphqlService: typeof GraphQlService = GraphQlService;
+  private readonly _graphqlService: typeof GraphQlService = GraphQlService;
   /**
    * # _webSocketService
    * @access private
    */
-  private _webSocketService: typeof WebSocketService = WebSocketService;
+  private readonly _webSocketService: typeof WebSocketService =
+    WebSocketService;
 
   /**
    * # _insertionService
    * @access private
    */
-  private _insertionService: typeof InsertionService = InsertionService;
+  private readonly _insertionService: typeof InsertionService =
+    InsertionService;
 
   /**
    * # _loggerService
    * @access private
    */
-  private _loggerService: typeof LoggerService = LoggerService;
+  private readonly _loggerService: typeof LoggerService = LoggerService;
+
+  /**
+   * # _queueServivice
+   */
+  private readonly _queueService: typeof QueueService = QueueService;
 
   /**
    * # _server
    * @access private
    */
-  private _server: typeof Server = Server;
+  private readonly _server: typeof Server = Server;
+
+  /**
+   * # _config
+   * @access private
+   */
+  private readonly _config: SyncNodeConfig;
 
   constructor(config: SyncNodeConfig) {
+    this._config = config;
+    this._server.construct(config.server);
+    this._loggerService.construct(config.logger);
+    this._queueService.construct(config.backup);
     this._webSocketService.construct({
       contracts: [],
-      ...config.syncer,
-    });
-
-    this._loggerService.construct(config.logger);
-    this._server.construct(config.server);
-
-    new Controller({
-      apiKey: config.syncer.apiKey,
-      dataset: 'sales',
-      type: 'backfill',
-      chain: 'mainnet',
-      contracts: [],
-      delay: 0,
-      mode: 'fast',
+      ...this._config.syncer,
     });
   }
   /**
@@ -63,9 +68,22 @@ export class SyncNode {
    * @returns void
    */
   public async launch(): Promise<void> {
+    await this._server.launch();
+    await this._queueService.launch();
     await this._insertionService.launch();
     await this._webSocketService.launch();
-    await this._server.launch();
-    LoggerService.info(`Launched all services.`);
+
+    await this._queueService.loadBackup();
+    LoggerService.info(`Launched All Services`);
+
+    new Controller({
+      apiKey: this._config.syncer.apiKey,
+      dataset: 'sales',
+      type: 'backfill',
+      chain: 'mainnet',
+      contracts: [],
+      delay: 0,
+      mode: 'fast',
+    });
   }
 }

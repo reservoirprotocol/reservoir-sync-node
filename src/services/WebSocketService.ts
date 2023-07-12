@@ -86,7 +86,7 @@ class _WebSocketService {
       const interval = setInterval(() => {
         if (this._isConnected) {
           clearInterval(interval);
-          LoggerService.info(`Launched WebSocket Service`);
+          LoggerService.info(`WebSocket Service Launched`);
           resolve();
         }
       }, 100);

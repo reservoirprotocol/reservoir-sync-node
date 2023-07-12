@@ -8,7 +8,7 @@ import {
   isSuccessResponse,
   isTodayUTC,
   parseTimestamp,
-  RecordRoots,
+  RecordRoots
 } from '../utils';
 
 import { Controller } from './Controller';
@@ -22,6 +22,11 @@ export class Worker extends EventEmitter {
    */
   public busy: boolean = false;
 
+  /**
+   * Block that the worker is currently processing
+   * @public
+   */
+  public block: Block | null = null;
   /**
    * Continuation cursor to paginate through results
    * @access public
@@ -75,6 +80,8 @@ export class Worker extends EventEmitter {
    * @returns {Promise<void>}
    */
   public async process(block: Block): Promise<void> {
+    this.block = null;
+    this.block = block;
     this.type === 'backfiller' ? this._backfill(block) : this._upkeep();
   }
 

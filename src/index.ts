@@ -10,6 +10,9 @@ const config: SyncNodeConfig = {
     port: 1111,
     authorization: 'default',
   },
+  backup: {
+    useBackup: true,
+  },
   logger: {
     datadog: {
       apiKey: 'xxxx-xxxx-xxxx',
