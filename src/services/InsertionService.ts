@@ -30,14 +30,14 @@ class _InsertionServivce {
       db: { url: `${process.env.DATABASE_URL}?pool_timeout=0` },
     },
   });
-  
+
   /**
    * Initiates the connection to the database through Prisma.
    * @returns {Promise<void>}
    */
   public async launch(): Promise<void> {
     await this._prisma.$connect();
-    LoggerService.info(`Launched Insertion Service`);
+    LoggerService.info(`Insertion Service Launched`);
   }
 
   /**

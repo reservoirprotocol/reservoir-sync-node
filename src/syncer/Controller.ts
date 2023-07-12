@@ -12,12 +12,6 @@ import { InsertionService, LoggerService, QueueService } from '../services';
 import { isSuccessResponse, RecordRoots, UrlBase, UrlPaths } from '../utils';
 import { Worker } from './Worker';
 
-const WorkerCounts = {
-  fast: 20,
-  normal: 10,
-  slow: 15,
-} as const;
-
 export class Controller {
   /**
    * Workers used to process & grain blocks.
@@ -25,6 +19,10 @@ export class Controller {
    */
   private readonly _workers: Worker[] = [];
 
+  /**
+   * Queue service used to handle blocks
+   * @private
+   */
   private readonly _queue: typeof QueueService = QueueService;
 
   /**
@@ -46,7 +44,8 @@ export class Controller {
    * @private
    */
   private _createWorkers(): void {
-    for (let i = 0; i < WorkerCounts[this._config.mode]; i++) {
+    // WorkerCounts[this._config.mode];
+    for (let i = 0; i < 1; i++) {
       this._workers.push(new Worker(this));
     }
   }
@@ -58,15 +57,23 @@ export class Controller {
    * @private
    */
   private async _launch(): Promise<void> {
-    await this._queue.launch();
-
     this._createWorkers();
 
-    const worker = this._workers.find(({ busy }) => !busy) as Worker;
+    const backup = this._queue.getBackup(this._config.dataset);
 
-    const block = await this._getInitialBlock();
+    if (backup) {
+      backup.workers.forEach(({ block, continuation }) => {
+        const worker = this._workers.find(({ busy }) => !busy) as Worker;
+        worker.continuation = continuation;
+        worker.process(block);
+      });
+    } else {
+      const worker = this._workers.find(({ busy }) => !busy) as Worker;
 
-    worker.process(block);
+      const block = await this._getInitialBlock();
+
+      worker.process(block);
+    }
 
     this._listen();
   }
@@ -99,16 +106,18 @@ export class Controller {
     block,
   }: WorkerEvent): Promise<void> {
     switch (type) {
-      case 'worker.split': // Means that a worker split its blocks
+      case 'worker.split':
         await this._handleBlockSplit(block);
         break;
-      case 'worker.release': // Means that SOME worker can take a new block
+      case 'worker.release':
         await this._delegate();
         break;
       default:
         throw new Error(`UNKOWN EVENT: ${type}`);
     }
+    await this._queue.backup(this._config.dataset, this._workers);
   }
+
   /**
    * Handles a block split by creating a new block and inserting it into the queue.
    * Delegates further actions after the block is inserted.

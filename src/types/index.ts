@@ -103,7 +103,13 @@ export interface ControllerEvent {
     block: Block;
   };
 }
-
+export interface Backup {
+  workers: {
+    block: Block;
+    continuation: string;
+  }[];
+  blocks: Block[];
+}
 export interface Timestamps {
   startTimestamp: number;
   endTimestamp: number;
@@ -147,6 +153,10 @@ export interface LoggerServiceConfig {
   };
 }
 
+export interface QueueServiceConfig {
+    useBackup: boolean;
+}
+
 export interface ServerConfig {
   port: number;
   authorization: string;
@@ -167,6 +177,9 @@ export interface SyncNodeConfig {
   syncer: {
     apiKey: string;
     chain: Chains;
+  };
+  backup: {
+    useBackup: boolean;
   };
   logger: {
     datadog: {
