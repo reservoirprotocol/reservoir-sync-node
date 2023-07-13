@@ -68,8 +68,8 @@ class _Queue {
         `backups`,
         `${datatype}-backup`,
         JSON.stringify({
-          workers: workers.map(({ block, continuation }) => {
-            return { block, continuation };
+          workers: workers.map(({ data }) => {
+            return { block: data?.block, continuation: data?.continuation };
           }),
         })
       );

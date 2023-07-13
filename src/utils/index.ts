@@ -3,7 +3,7 @@ import {
   addMilliseconds,
   differenceInMilliseconds,
   format,
-  parseISO,
+  parseISO
 } from 'date-fns';
 import { utcToZonedTime } from 'date-fns-tz';
 
@@ -55,9 +55,7 @@ export function parseTimestamp(date: string): number {
   const startDate = new Date(year, month - 1, day);
 
   const timezoneOffset = startDate.getTimezoneOffset() * 60 * 1000;
-  const startTimestamp = (startDate.getTime() - timezoneOffset) / 1000;
-
-  return startTimestamp;
+  return (startDate.getTime() - timezoneOffset) / 1000;
 }
 // api.reservoir.tools/sales/v5?orderBy=updated_at&sortDirection=asc&startTimestamp=1538352000&endTimestamp=1688083200
 // https: //api.reservoir.tools/sales/v5?limit=1000&includeCriteriaMetadata=true&orderBy=updated_at&startTimestamp=1538377174800&endTimestamp=1688108374800
@@ -139,6 +137,6 @@ export const RecordRoots = {
 
 export const WorkerCounts = {
   fast: 20,
-  normal: 10,
-  slow: 15,
+  normal: 15,
+  slow: 10,
 } as const;

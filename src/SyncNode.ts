@@ -71,7 +71,7 @@ export class SyncNode {
     await this._server.launch();
     await this._queueService.launch();
     await this._insertionService.launch();
-    await this._webSocketService.launch();
+    //  await this._webSocketService.launch();
 
     await this._queueService.loadBackup();
     LoggerService.info(`Launched All Services`);

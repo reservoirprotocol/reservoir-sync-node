@@ -1,32 +1,28 @@
 import EventEmitter from 'events';
-import { LoggerService } from '../services';
-import { Block, Schemas, WorkerEvent, WorkerType } from '../types';
+import { LoggerService as Logger } from '../services';
+import { Block, DataTypes, Schemas, WorkerEvent } from '../types';
 import {
   delay,
   getMiddleDate,
   isHighDensityBlock,
   isSuccessResponse,
-  isTodayUTC,
   parseTimestamp,
-  RecordRoots
+  RecordRoots,
 } from '../utils';
-
 import { Controller } from './Controller';
+
+interface WorkerData {
+  block?: Block;
+  continuation?: string;
+}
 
 type ControllerInstance = InstanceType<typeof Controller>;
 
 export class Worker extends EventEmitter {
-  /**
-   * Public flag to determine the busy status of a worker
-   * @public
-   */
   public busy: boolean = false;
 
-  /**
-   * Block that the worker is currently processing
-   * @public
-   */
-  public block: Block | null = null;
+  public data: WorkerData | null = null;
+
   /**
    * Continuation cursor to paginate through results
    * @access public
@@ -34,10 +30,10 @@ export class Worker extends EventEmitter {
   public continuation: string = '';
 
   /**
-   * Worker type
-   * @access public
+   * Datatype of the worker
+   * @private
    */
-  public type: WorkerType = 'backfiller';
+  private readonly _datatype: DataTypes;
 
   /**
    * Request method inherited from the controller
@@ -66,144 +62,131 @@ export class Worker extends EventEmitter {
   constructor(controller: Controller) {
     super();
 
-    const { request, normalize, getConfigProperty, insert } = controller;
+    this._insert = controller.insert.bind(controller);
+    this._request = controller.request.bind(controller);
+    this._normalize = controller.normalize.bind(controller);
+    this._config = controller.getConfigProperty.bind(controller);
 
-    this._insert = insert.bind(controller);
-    this._request = request.bind(controller);
-    this._normalize = normalize.bind(controller);
-    this._config = getConfigProperty.bind(controller);
+    this._datatype = this._config('dataset');
   }
 
-  /**
-   * Process a block.
-   * @param {Block} block - The block to be processed.
-   * @returns {Promise<void>}
-   */
-  public async process(block: Block): Promise<void> {
-    this.block = null;
-    this.block = block;
-    this.type === 'backfiller' ? this._backfill(block) : this._upkeep();
-  }
-
-  /**
-   * Backfills a block based on its block dates
-   * @param {Block} block - The block to be processed.
-   * @returns {Promise<void>}
-   */
-  private async _backfill(block: Block): Promise<void> {
+  public async process({
+    startDate,
+    id,
+    endDate,
+    contract,
+  }: Block): Promise<void> {
     this.busy = true;
-    this.continuation = '';
-
-    const ascReq = await this._request(
+    const ascRes = await this._request(
       this._normalize({
-        ...(block.contract && { contract: block.contract }),
-        startTimestamp: parseTimestamp(block.startDate),
-        endTimestamp: parseTimestamp(block.endDate),
+        ...(contract && { contract: contract }),
+        startTimestamp: parseTimestamp(startDate),
+        endTimestamp: parseTimestamp(endDate),
         sortDirection: 'asc',
       })
     );
 
-    if (!isSuccessResponse(ascReq)) {
-      /**
-       * Delay 5 seconds
-       */
-      await delay(ascReq.status === 429 ? 5000 : 0);
-
-      return await this.process(block);
+    if (!isSuccessResponse(ascRes)) {
+      await delay(5000);
+      return await this.process({ startDate, endDate, id, contract });
     }
 
-    LoggerService.warn(`GRAINING BLOCK [${block.id}]`);
+    /**
+     * If nothing is in this first request then we know the next request will
+     * be blank as well.
+     */
+    if (![...ascRes.data[RecordRoots[this._config('dataset')]]].length) {
+      this._release({ startDate, id, endDate, contract });
+      return;
+    }
+
+    Logger.warn(`Graining Block\nid:${id}`);
 
     // eslint-disable-next-line no-constant-condition
     while (true) {
-      const descReq = await this._request(
+      const descRes = await this._request(
         this._normalize({
-          ...(block.contract && { contract: block.contract }),
-          startTimestamp: parseTimestamp(block.startDate),
-          endTimestamp: parseTimestamp(block.endDate),
+          ...(contract && { contract: contract }),
+          startTimestamp: parseTimestamp(startDate),
+          endTimestamp: parseTimestamp(endDate),
           sortDirection: 'desc',
         })
       );
-      if (!isSuccessResponse(descReq)) {
-        /**
-         * Delay for 5 seconds if the request failed due to a 429
-         */
-        await delay(descReq.status === 429 ? 5000 : 0);
+
+      if (!isSuccessResponse(descRes)) {
+        await delay(5000);
         continue;
       }
 
       const records = [
-        ...ascReq.data[RecordRoots[this._config('dataset')]],
-        ...descReq.data[RecordRoots[this._config('dataset')]],
+        ...ascRes.data[RecordRoots[this._datatype]],
+        ...descRes.data[RecordRoots[this._datatype]],
       ] as Schemas;
 
-      if (!records.length) {
-        break;
+      await this._insert(records);
+
+      const isHighDensity = isHighDensityBlock(records, 300000);
+
+      if (isHighDensity) {
+        const middleDate = getMiddleDate(startDate, endDate);
+
+        /**
+         * The graining got to fine. Meaning it's been processing
+         * and it trying to become an upkeeper. We don't want that, so
+         * we release and return it ourselves.
+         *
+         */
+        if (middleDate === startDate || middleDate === endDate) {
+          this.busy = false;
+          return this._release({ startDate, endDate, id, contract });
+        }
+
+        this._split({ startDate: middleDate, endDate, id, contract });
+        endDate = middleDate;
+        continue;
       }
 
-      if (isTodayUTC(records[records.length - 1].updatedAt)) {
-        this.busy = false;
-        this._release(block);
-        return;
-      }
-
-      if (isHighDensityBlock(records, 365 * 24 * 60 * 60 * 1000)) {
-        const middleDate = getMiddleDate(block.startDate, block.endDate);
-        this._split({
-          ...block,
-          startDate: middleDate,
-          endDate: block.endDate,
-        });
-        block.endDate = middleDate;
-      } else {
-        break;
-      }
+      break;
     }
+    Logger.info(`Grained Block\nid:${id}`);
 
-    LoggerService.info(
-      `GRAINED BLOCK [${block.id}] \nstartDate: ${block.startDate}\nendDate: ${block.endDate}`
-    );
-
+    Logger.warn(`Processing Block \nid: ${id}`);
     // eslint-disable-next-line no-constant-condition
     while (true) {
       const res = await this._request(
         this._normalize({
           ...(this.continuation && { continuation: this.continuation }),
           sortDirection: 'asc',
-          startTimestamp: parseTimestamp(block.startDate),
-          endTimestamp: parseTimestamp(block.endDate),
+          startTimestamp: parseTimestamp(startDate),
+          endTimestamp: parseTimestamp(endDate),
         })
       );
 
       if (!isSuccessResponse(res)) {
-        /**
-         * Delay for 5 seconds if the request failed due to a 429
-         */
-        await delay(res.status === 429 ? 5000 : 0);
+        await delay(5000);
         continue;
       }
 
-      const records = res.data[RecordRoots[this._config('dataset')]];
+      const records = res.data[RecordRoots[this._datatype]];
 
-      if (records.length) {
-        await this._insert(records);
+      if (!records.length) {
+        this.busy = false; // Is this causing a race condition?
+        this._release({ startDate, endDate, id, contract });
+        break;
       }
+
+      await this._insert(records);
 
       if (!res.data.continuation) {
         this.busy = false;
-        this._release(block);
+        this._release({ startDate, endDate, id, contract });
         break;
       } else this.continuation = res.data.continuation;
     }
+    Logger.info(
+      `Processed Block ${id}\nstartDate: ${startDate} endDate: ${endDate}`
+    );
   }
-
-  private async _upkeep(): Promise<void> {
-    this.busy = true;
-    this.continuation = '';
-
-    // We upkeep by forward splitting esentially
-  }
-
   /**
    * Emit a split event for a block.
    * @param {Block} block - The block to emit a split event for.
@@ -218,7 +201,7 @@ export class Worker extends EventEmitter {
    * Emit a release event for a block.
    * @param {Block} block - The block to emit a release event for.
    */
-  private _release(block: Block) {
+  private _release(block: Block): void {
     this.emit('worker.event', {
       type: 'worker.release',
       block: block,

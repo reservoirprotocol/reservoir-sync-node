@@ -8,7 +8,7 @@ import {
   WorkerEvent,
 } from 'types';
 import { v4 } from 'uuid';
-import { InsertionService, LoggerService, QueueService } from '../services';
+import { InsertionService, QueueService } from '../services';
 import { isSuccessResponse, RecordRoots, UrlBase, UrlPaths } from '../utils';
 import { Worker } from './Worker';
 
@@ -44,7 +44,6 @@ export class Controller {
    * @private
    */
   private _createWorkers(): void {
-    // WorkerCounts[this._config.mode];
     for (let i = 0; i < 1; i++) {
       this._workers.push(new Worker(this));
     }
@@ -59,21 +58,13 @@ export class Controller {
   private async _launch(): Promise<void> {
     this._createWorkers();
 
-    const backup = this._queue.getBackup(this._config.dataset);
+    // const backup = this._queue.getBackup(this._config.dataset);
 
-    if (backup) {
-      backup.workers.forEach(({ block, continuation }) => {
-        const worker = this._workers.find(({ busy }) => !busy) as Worker;
-        worker.continuation = continuation;
-        worker.process(block);
-      });
-    } else {
-      const worker = this._workers.find(({ busy }) => !busy) as Worker;
+    const worker = this._workers.find(({ busy }) => !busy) as Worker;
 
-      const block = await this._getInitialBlock();
+    const block = await this._getInitialBlock();
 
-      worker.process(block);
-    }
+    worker.process(block);
 
     this._listen();
   }
@@ -176,14 +167,12 @@ export class Controller {
 
     if (!worker) {
       // Log event to emit that there isnt a worker
-      LoggerService.warn(`ALL WORKERS BUSY`);
       return;
     }
 
     const block = await this._queue.getBlock(this._config.dataset);
 
     if (!block) {
-      LoggerService.warn(`NO BLOCK FOUND AVAILABLE`);
       return;
     }
 
