@@ -66,6 +66,8 @@ export class Controller {
 
     worker.process(block);
 
+    this._queue.backup(this._config.dataset, this._workers);
+
     this._listen();
   }
   /**
@@ -166,7 +168,6 @@ export class Controller {
     const worker = this._workers.find(({ busy }) => !busy);
 
     if (!worker) {
-      // Log event to emit that there isnt a worker
       return;
     }
 

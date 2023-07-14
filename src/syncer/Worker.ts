@@ -96,8 +96,8 @@ export class Worker extends EventEmitter {
      * be blank as well.
      */
     if (![...ascRes.data[RecordRoots[this._config('dataset')]]].length) {
-      this._release({ startDate, id, endDate, contract });
-      return;
+      this.busy = false;
+      return this._release({ startDate, id, endDate, contract });
     }
 
     Logger.warn(`Graining Block\nid:${id}`);
@@ -170,22 +170,20 @@ export class Worker extends EventEmitter {
       const records = res.data[RecordRoots[this._datatype]];
 
       if (!records.length) {
-        this.busy = false; // Is this causing a race condition?
-        this._release({ startDate, endDate, id, contract });
         break;
       }
 
       await this._insert(records);
 
       if (!res.data.continuation) {
-        this.busy = false;
-        this._release({ startDate, endDate, id, contract });
         break;
       } else this.continuation = res.data.continuation;
     }
     Logger.info(
       `Processed Block ${id}\nstartDate: ${startDate} endDate: ${endDate}`
     );
+    this.busy = false;
+    this._release({ startDate, endDate, id, contract });
   }
   /**
    * Emit a split event for a block.
