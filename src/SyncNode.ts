@@ -7,9 +7,9 @@ import {
   WebSocketService,
 } from './services';
 import { Controller } from './syncer/Controller';
-import { SyncNodeConfig } from './types';
+import { Chains, SyncNodeConfig } from './types';
 
-export class SyncNode {
+class SyncNode {
   /**
    * # _graphqlService
    * @access private
@@ -87,3 +87,23 @@ export class SyncNode {
     });
   }
 }
+
+export default new SyncNode({
+  syncer: {
+    chain: process.env.CHAIN as Chains,
+    apiKey: process.env.API_KEY as string,
+  },
+  server: {
+    port: Number(process.env.PORT) as number,
+    authorization: process.env.AUTHORIZATION as string ,
+  },
+  backup: {
+    useBackup: true,
+  },
+  logger: {
+    datadog: {
+      apiKey: 'xxxx-xxxx-xxxx',
+      appName: 'sync-node',
+    },
+  },
+});

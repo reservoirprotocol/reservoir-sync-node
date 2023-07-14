@@ -46,7 +46,6 @@ class _Server {
    */
   public construct(config: ServerConfig) {
     this._config = config;
-
     this._app.use('*', (req: Request, res: Response, next: NextFunction) => {
       if (req.get('Authorization') !== this._config.authorization) {
         res.status(403).json({

@@ -91,10 +91,6 @@ export class Worker extends EventEmitter {
       return await this.process({ startDate, endDate, id, contract });
     }
 
-    /**
-     * If nothing is in this first request then we know the next request will
-     * be blank as well.
-     */
     if (![...ascRes.data[RecordRoots[this._config('dataset')]]].length) {
       this.busy = false;
       return this._release({ startDate, id, endDate, contract });

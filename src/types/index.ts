@@ -143,7 +143,7 @@ export interface WebSocketError {
 export interface WebSocketServiceConfig {
   contracts: string[];
   apiKey: string;
-  chain: Chains;
+  chain: Chains | null;
 }
 
 export interface LoggerServiceConfig {
@@ -154,7 +154,7 @@ export interface LoggerServiceConfig {
 }
 
 export interface QueueServiceConfig {
-    useBackup: boolean;
+  useBackup: boolean;
 }
 
 export interface ServerConfig {

@@ -46,7 +46,7 @@ class _WebSocketService {
   private _config: WebSocketServiceConfig = {
     contracts: [],
     apiKey: '',
-    chain: 'mainnet',
+    chain: null,
   };
 
   /**
@@ -65,11 +65,12 @@ class _WebSocketService {
   private _connect(): void {
     if (this._isConnected) return;
 
-    this._ws = this._config.apiKey
-      ? new WebSocket(
-          `${URLs[this._config.chain]}?api_key=${this._config.apiKey}`
-        )
-      : null;
+    this._ws =
+      this._config.apiKey && this._config.chain
+        ? new WebSocket(
+            `${URLs[this._config.chain]}?api_key=${this._config.apiKey}`
+          )
+        : null;
 
     this._ws?.on('close', this._onClose.bind(this));
     this._ws?.on('error', this._onError.bind(this));
