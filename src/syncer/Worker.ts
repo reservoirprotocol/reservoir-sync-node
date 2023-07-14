@@ -12,8 +12,8 @@ import {
 import { Controller } from './Controller';
 
 interface WorkerData {
-  block?: Block;
-  continuation?: string;
+  block: Block | null;
+  continuation: string | null;
 }
 
 type ControllerInstance = InstanceType<typeof Controller>;
@@ -21,7 +21,10 @@ type ControllerInstance = InstanceType<typeof Controller>;
 export class Worker extends EventEmitter {
   public busy: boolean = false;
 
-  public data: WorkerData | null = null;
+  public data: WorkerData = {
+    block: null,
+    continuation: null,
+  };
 
   /**
    * Continuation cursor to paginate through results
@@ -77,6 +80,7 @@ export class Worker extends EventEmitter {
     contract,
   }: Block): Promise<void> {
     this.busy = true;
+    this.data.block = { startDate, endDate, id, contract };
     const ascRes = await this._request(
       this._normalize({
         ...(contract && { contract: contract }),
