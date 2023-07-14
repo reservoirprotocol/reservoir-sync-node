@@ -44,7 +44,7 @@ export class Controller {
    * @private
    */
   private _createWorkers(): void {
-    for (let i = 0; i < 1; i++) {
+    for (let i = 0; i < 10; i++) {
       this._workers.push(new Worker(this));
     }
   }
@@ -174,15 +174,11 @@ export class Controller {
   private async _delegate(): Promise<void> {
     const worker = this._workers.find(({ busy }) => !busy);
 
-    if (!worker) {
-      return;
-    }
+    if (!worker) return;
 
     const block = await this._queue.getBlock(this._config.dataset);
 
-    if (!block) {
-      return;
-    }
+    if (!block) return;
 
     worker.process(block);
   }

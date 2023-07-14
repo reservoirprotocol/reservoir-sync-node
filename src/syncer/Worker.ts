@@ -81,6 +81,7 @@ export class Worker extends EventEmitter {
   }: Block): Promise<void> {
     this.busy = true;
     this.data.block = { startDate, endDate, id, contract };
+    this.continuation = '';
     const ascRes = await this._request(
       this._normalize({
         ...(contract && { contract: contract }),
@@ -96,7 +97,6 @@ export class Worker extends EventEmitter {
     }
 
     if (![...ascRes.data[RecordRoots[this._config('dataset')]]].length) {
-      this.busy = false;
       return this._release({ startDate, id, endDate, contract });
     }
 
@@ -137,7 +137,6 @@ export class Worker extends EventEmitter {
          *
          */
         if (middleDate === startDate || middleDate === endDate) {
-          this.busy = false;
           return this._release({ startDate, endDate, id, contract });
         }
 
@@ -182,7 +181,6 @@ export class Worker extends EventEmitter {
     Logger.info(
       `Processed Block ${id}\nstartDate: ${startDate} endDate: ${endDate}`
     );
-    this.busy = false;
     this._release({ startDate, endDate, id, contract });
   }
   /**
@@ -200,6 +198,8 @@ export class Worker extends EventEmitter {
    * @param {Block} block - The block to emit a release event for.
    */
   private _release(block: Block): void {
+    Logger.info(`Released block: ${block.id}`);
+    this.busy = false;
     this.emit('worker.event', {
       type: 'worker.release',
       block: block,
