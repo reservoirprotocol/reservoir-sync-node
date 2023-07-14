@@ -48,6 +48,13 @@ export class Controller {
       this._workers.push(new Worker(this));
     }
   }
+  /**
+   * Gets the workers from a controller
+   * @returns The workers of the controller
+   */
+  public getWorkers(): Worker[] {
+    return this._workers;
+  }
 
   /**
    * Launches the controller.

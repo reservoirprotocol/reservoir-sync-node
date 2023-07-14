@@ -7,7 +7,7 @@ import {
   WebSocketService,
 } from './services';
 import { Controller } from './syncer/Controller';
-import { Chains, SyncNodeConfig } from './types';
+import { Chains, DataTypes, SyncNodeConfig } from './types';
 
 class SyncNode {
   /**
@@ -52,6 +52,12 @@ class SyncNode {
    */
   private readonly _config: SyncNodeConfig;
 
+  /**
+   * Controllers used to sync the datasets
+   * @private
+   */
+  private readonly _controllers: Map<DataTypes, Controller> = new Map();
+
   constructor(config: SyncNodeConfig) {
     this._config = config;
     this._server.construct(config.server);
@@ -86,6 +92,14 @@ class SyncNode {
       mode: 'fast',
     });
   }
+  /**
+   * Gets a controller using a specific datatype
+   * @param controller The controller to get
+   * @returns An active controller or undefined if no controller was found
+   */
+  public getController(controller: DataTypes): Controller | undefined {
+    return this._controllers.get(controller);
+  }
 }
 
 export default new SyncNode({
@@ -95,7 +109,7 @@ export default new SyncNode({
   },
   server: {
     port: Number(process.env.PORT) as number,
-    authorization: process.env.AUTHORIZATION as string ,
+    authorization: process.env.AUTHORIZATION as string,
   },
   backup: {
     useBackup: true,

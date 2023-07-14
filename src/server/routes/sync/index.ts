@@ -1,60 +1,40 @@
-/**
- * import express, {
+import express, {
   type Application,
   type Request,
-  type Response,
+  type Response
 } from 'express';
-import { SyncNode } from '../../../SyncNode';
-import { InsertionService } from '../../../services/InsertionService';
-import { Tables } from '../../../types';
-import { isAddress } from '../../../utils';
+import { QueueService } from '../../../services';
+import { DataTypes } from '../../../types';
+
+import SyncNode from '../../../SyncNode';
 
 const handler: Application = express();
 
-handler.get('/status', async (_req: Request, _res: Response) => {
-  const { table } = _req.query as { table: Tables };
+handler.get('/status', (req: Request, res: Response) => {
+  const type = req.params?.type as DataTypes;
 
-  const count = await InsertionService.tableCount(table);
+  const controller = SyncNode.getController('asks');
+  if (!controller) {
+    return res.status(400).json({
+      error: {
+        status: 400,
+        message: `Controller ${type}`,
+      },
+      data: null,
+    });
+  }
 
-  return _res.status(200).json({
-    error: null,
+  const workers = controller.getWorkers();
+
+  return res.status(200).json({
     data: {
-      count,
+      workers: workers.map(({ continuation, data }) => {
+        return {
+          block: data?.block,
+          continuation,
+        };
+      }),
+      queue: QueueService.getQueueLength(type),
     },
   });
 });
-
-handler.post('/create', async (_req: Request, _res: Response) => {
-  const { type, contract } = _req.query as { type: Tables; contract: string };
-
-  if (!isAddress(contract)) {
-    return _res.status(400).json({
-      error: {
-        status: 400,
-        message: `${contract} is not a valid contract.`,
-      },
-      data: null,
-    });
-  }
-
-  if (type !== 'sales') {
-    return _res.status(400).json({
-      error: {
-        status: 400,
-        message: `${type} is not a valid syncer type.`,
-      },
-      data: null,
-    });
-  }
-
-  await SyncNode.createSyncer(type, contract);
-
-  return _res.status(200).json({
-    error: null,
-    data: null,
-  });
-});
-
-export default handler;
-
-*/

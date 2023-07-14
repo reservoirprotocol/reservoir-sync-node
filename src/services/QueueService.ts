@@ -77,6 +77,13 @@ class _Queue {
       return await this.backup(datatype, workers);
     }
   }
+  public async getQueueLength(datatype: DataTypes): Promise<number> {
+    try {
+      return await this._client.lLen(`${datatype}-queue`);
+    } catch (e: unknown) {
+      return 0;
+    }
+  }
   /**
    * Gets the backup for a specific datatype
    * @param datatype Datatype for backup
