@@ -4,7 +4,7 @@ import {
   InsertionService,
   LoggerService,
   QueueService,
-  WebSocketService,
+  WebSocketService
 } from './services';
 import { Controller } from './syncer/Controller';
 import { Chains, DataTypes, SyncNodeConfig } from './types';
@@ -77,20 +77,12 @@ class SyncNode {
     await this._server.launch();
     await this._queueService.launch();
     await this._insertionService.launch();
-    //  await this._webSocketService.launch();
+    await this._webSocketService.launch();
 
     await this._queueService.loadBackup();
     LoggerService.info(`Launched All Services`);
 
-    new Controller({
-      apiKey: this._config.syncer.apiKey,
-      dataset: 'sales',
-      type: 'backfill',
-      chain: 'mainnet',
-      contracts: [],
-      delay: 0,
-      mode: 'fast',
-    });
+    this._createControllers();
   }
   /**
    * Gets a controller using a specific datatype
@@ -99,6 +91,25 @@ class SyncNode {
    */
   public getController(controller: DataTypes): Controller | undefined {
     return this._controllers.get(controller);
+  }
+  /**
+   * Creates the controllers for each datatype
+   * @private
+   * @returns void
+   */
+  private _createControllers(): void {
+    this._controllers.set(
+      'sales',
+      new Controller({
+        apiKey: this._config.syncer.apiKey,
+        dataset: 'sales',
+        type: 'backfill',
+        chain: 'mainnet',
+        contracts: [],
+        delay: 0,
+        mode: 'fast',
+      })
+    );
   }
 }
 
