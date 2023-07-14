@@ -1,7 +1,7 @@
 import express, {
   type Application,
   type Request,
-  type Response,
+  type Response
 } from 'express';
 import { QueueService } from '../../../services';
 import { DataTypes } from '../../../types';
