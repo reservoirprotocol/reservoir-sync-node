@@ -7,7 +7,7 @@ import {
   URLs,
   WebSocketError,
   WebSocketMessage,
-  WebSocketServiceConfig
+  WebSocketServiceConfig,
 } from '../types';
 import { InsertionService } from './InsertionService';
 import { LoggerService } from './LoggerService';
@@ -101,16 +101,6 @@ class _WebSocketService {
    * @returns {void}
    */
   private _onConnect = (): void => {
-    if (this._config.contracts && this._config.contracts.length > 0) {
-      this._config.contracts.forEach((contract) => {
-        this._subscribe('ask.created', contract);
-        this._subscribe('ask.updated', contract);
-        this._subscribe('sale.created', contract);
-        this._subscribe('sale.updated', contract);
-      });
-      return;
-    }
-
     this._subscribe('ask.created');
     this._subscribe('ask.updated');
     this._subscribe('sale.created');
