@@ -128,7 +128,6 @@ class SyncNode {
           dataset: 'sales',
           type: 'backfill',
           chain: this._config.syncer.chain,
-          contracts: [],
           delay: 0,
           mode: this._config.syncer.mode,
         })
@@ -143,7 +142,6 @@ class SyncNode {
           dataset: 'asks',
           type: 'backfill',
           chain: this._config.syncer.chain,
-          contracts: [],
           delay: 0,
           mode: this._config.syncer.mode,
         })
@@ -158,7 +156,6 @@ class SyncNode {
           dataset: 'bids',
           type: 'backfill',
           chain: this._config.syncer.chain,
-          contracts: [],
           delay: 0,
           mode: this._config.syncer.mode,
         })

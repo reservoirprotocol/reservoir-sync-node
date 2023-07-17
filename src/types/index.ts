@@ -89,7 +89,6 @@ export interface ControllerConfig {
   type: ControllerType;
   dataset: DataTypes;
   chain: Chains;
-  contracts: string[];
   delay: number;
   mode: Mode;
 }
