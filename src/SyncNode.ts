@@ -168,7 +168,8 @@ export default new SyncNode({
   syncer: {
     chain: process.env.CHAIN as Chains,
     apiKey: process.env.API_KEY as string,
-    contracts: [],
+    contracts:
+      (process.env.CONTRACTS && process.env.CONTRACTS.split(',')) || [],
     toSync: {
       bids: true,
       asks: true,
