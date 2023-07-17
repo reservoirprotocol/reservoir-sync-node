@@ -8,7 +8,7 @@ import {
   WorkerEvent,
 } from 'types';
 import { v4 } from 'uuid';
-import { InsertionService, QueueService } from '../services';
+import { InsertionService, LoggerService, QueueService } from '../services';
 import {
   isSuccessResponse,
   RecordRoots,
@@ -53,6 +53,20 @@ export class Controller {
     for (let i = 0; i < WorkerCounts[this._config.mode]; i++) {
       this._workers.push(new Worker(this));
     }
+  }
+  /**
+   * Adds a contract to the node queue
+   * @param contract - Contract to add
+   * @returns void
+   */
+  public async addContract(contract: string): Promise<void> {
+    const block = await this._getInitialBlock(contract);
+
+    this._queue.insertBlock(block, this._config.dataset);
+
+    LoggerService.info(
+      `Added contract ${contract} to ${this._config.dataset} controller`
+    );
   }
   /**
    * Gets the workers from a controller
@@ -155,15 +169,17 @@ export class Controller {
    * @returns {Promise<Block>} - The initial block.
    * @private
    */
-  private async _getInitialBlock(): Promise<Block> {
+  private async _getInitialBlock(contract?: string): Promise<Block> {
     const reqs = await Promise.all([
       this.request(
         this.normalize({
+          ...(contract && { contract }),
           sortDirection: 'asc',
         })
       ),
       this.request(
         this.normalize({
+          ...(contract && { contract }),
           sortDirection: 'desc',
         })
       ),
@@ -180,7 +196,7 @@ export class Controller {
       id: v4(),
       startDate: reqs[0].data[root][reqs[0].data[root].length - 1].updatedAt,
       endDate: reqs[1].data[root][reqs[1].data[root].length - 1].updatedAt,
-      contract: '',
+      contract: contract || '',
     };
   }
   /**
