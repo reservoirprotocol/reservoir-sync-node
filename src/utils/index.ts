@@ -3,7 +3,7 @@ import {
   addMilliseconds,
   differenceInMilliseconds,
   format,
-  parseISO
+  parseISO,
 } from 'date-fns';
 import { utcToZonedTime } from 'date-fns-tz';
 
@@ -121,6 +121,9 @@ export const addressToBuffer = (hexValue: string = '') => {
 export const UrlBase = {
   mainnet: 'https://api.reservoir.tools',
   goerli: 'https://api-goerli.reservoir.tools',
+  polygon: 'https://api-polygon.reservoir.tools',
+  arbitrum: 'https://api-arbitrum.reservoir.tools',
+  optimism: 'https://api-optimism.reservoir.tools',
 } as const;
 
 export const UrlPaths = {
