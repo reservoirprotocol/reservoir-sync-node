@@ -41,7 +41,7 @@ export type WorkerType = 'backfiller' | 'upkeeper';
 
 export type ApiResponse<T = SuccessType> = SuccessResponse<T> | ErrorResponse;
 
-export type DataTypes = 'sales' | 'asks' | 'bids'
+export type DataTypes = 'sales' | 'asks' | 'bids';
 
 export type DataSets = AsksSchema[] | SalesSchema[] | BidsSchema[];
 
@@ -54,7 +54,9 @@ export type MessageEvent =
   | 'ask.created'
   | 'ask.updated'
   | 'sale.created'
-  | 'sale.updated';
+  | 'sale.updated'
+  | 'bid.created'
+  | 'bid.updated';
 
 export type Mode = 'slow' | 'normal' | 'fast';
 export type ControllerType = 'upkeep' | 'backfill';
@@ -87,7 +89,6 @@ export interface ControllerConfig {
   type: ControllerType;
   dataset: DataTypes;
   chain: Chains;
-  contracts: string[];
   delay: number;
   mode: Mode;
 }
@@ -131,7 +132,7 @@ export interface WebSocketMessage {
   type: MessageType;
   event: MessageEvent;
   status: string;
-  data: AsksSchema | SalesSchema | BidsSchema
+  data: AsksSchema | SalesSchema | BidsSchema;
 }
 
 export interface WebSocketError {
@@ -167,7 +168,7 @@ export type Schemas = SalesSchema[] | AsksSchema[] | BidsSchema[];
 export type SchemasObject = {
   sales: SalesSchema[];
   asks: AsksSchema[];
-  bids: BidsSchema[]
+  bids: BidsSchema[];
 };
 
 export interface SyncNodeConfig {
@@ -178,6 +179,7 @@ export interface SyncNodeConfig {
   syncer: {
     apiKey: string;
     chain: Chains;
+    contracts: string[];
     toSync: Record<DataTypes, boolean>;
     mode: Mode;
   };
@@ -262,7 +264,7 @@ export interface AsksSchema {
   updatedAt: string;
 }
 
-export interface  BidsSchema {
+export interface BidsSchema {
   id: string;
   kind: string;
   side: string;

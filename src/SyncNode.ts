@@ -58,13 +58,19 @@ class SyncNode {
    */
   private readonly _controllers: Map<DataTypes, Controller> = new Map();
 
+  /**
+   * Array of contracts
+   * @private
+   */
+  private _contracts: string[];
+
   constructor(config: SyncNodeConfig) {
     this._config = config;
+    this._contracts = config.syncer.contracts;
     this._server.construct(config.server);
     this._loggerService.construct(config.logger);
     this._queueService.construct(config.backup);
     this._webSocketService.construct({
-      contracts: [],
       ...this._config.syncer,
     });
   }
@@ -93,6 +99,20 @@ class SyncNode {
     return this._controllers.get(controller);
   }
   /**
+   * Gets the contracts to filter by
+   * @returns contracts array
+   */
+  public getContracts(): string[] {
+    return this._contracts;
+  }
+  /**
+   * Inserts a contract into the contract array
+   * @returns void
+   */
+  public insertContract(contract: string): void {
+    this._contracts?.push(contract);
+  }
+  /**
    * Creates the controllers for each datatype
    * @private
    * @returns void
@@ -108,7 +128,6 @@ class SyncNode {
           dataset: 'sales',
           type: 'backfill',
           chain: this._config.syncer.chain,
-          contracts: [],
           delay: 0,
           mode: this._config.syncer.mode,
         })
@@ -123,7 +142,6 @@ class SyncNode {
           dataset: 'asks',
           type: 'backfill',
           chain: this._config.syncer.chain,
-          contracts: [],
           delay: 0,
           mode: this._config.syncer.mode,
         })
@@ -138,7 +156,6 @@ class SyncNode {
           dataset: 'bids',
           type: 'backfill',
           chain: this._config.syncer.chain,
-          contracts: [],
           delay: 0,
           mode: this._config.syncer.mode,
         })
@@ -151,6 +168,8 @@ export default new SyncNode({
   syncer: {
     chain: process.env.CHAIN as Chains,
     apiKey: process.env.API_KEY as string,
+    contracts:
+      (process.env.CONTRACTS && process.env.CONTRACTS.split(',')) || [],
     toSync: {
       bids: true,
       asks: true,
