@@ -1,12 +1,13 @@
 import WebSocket from 'ws';
 import {
   AsksSchema,
+  BidsSchema,
   MessageEvent,
   SalesSchema,
   URLs,
   WebSocketError,
   WebSocketMessage,
-  WebSocketServiceConfig,
+  WebSocketServiceConfig
 } from '../types';
 import { InsertionService } from './InsertionService';
 import { LoggerService } from './LoggerService';
@@ -134,6 +135,10 @@ class _WebSocketService {
         this._isConnected = true;
         this._onConnect();
         return;
+      }
+
+      if (event?.includes('bid')) {
+        InsertionService.upsert('bids', [data as BidsSchema]);
       }
 
       if (event?.includes('ask')) {

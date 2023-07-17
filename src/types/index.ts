@@ -41,9 +41,9 @@ export type WorkerType = 'backfiller' | 'upkeeper';
 
 export type ApiResponse<T = SuccessType> = SuccessResponse<T> | ErrorResponse;
 
-export type DataTypes = 'sales' | 'asks';
+export type DataTypes = 'sales' | 'asks' | 'bids'
 
-export type DataSets = AsksSchema[] | SalesSchema[];
+export type DataSets = AsksSchema[] | SalesSchema[] | BidsSchema[];
 
 export type Chains = 'mainnet' | 'goerli';
 
@@ -131,7 +131,7 @@ export interface WebSocketMessage {
   type: MessageType;
   event: MessageEvent;
   status: string;
-  data: AsksSchema | SalesSchema;
+  data: AsksSchema | SalesSchema | BidsSchema
 }
 
 export interface WebSocketError {
@@ -162,11 +162,12 @@ export interface ServerConfig {
   authorization: string;
 }
 
-export type Schemas = SalesSchema[] | AsksSchema[];
+export type Schemas = SalesSchema[] | AsksSchema[] | BidsSchema[];
 
 export type SchemasObject = {
   sales: SalesSchema[];
   asks: AsksSchema[];
+  bids: BidsSchema[]
 };
 
 export interface SyncNodeConfig {
@@ -192,6 +193,76 @@ export interface SyncNodeConfig {
 }
 
 export interface AsksSchema {
+  id: string;
+  kind: string;
+  side: string;
+  status: string;
+  tokenSetId: string;
+  tokenSetSchemaHash: string;
+  contract: string;
+  maker: string;
+  taker: string;
+  price: {
+    currency: {
+      contract: string;
+      name: string;
+      symbol: string;
+      decimals: number;
+    };
+    amount: {
+      raw: string;
+      decimal: number;
+      usd: number;
+      native: number;
+    };
+    netAmount: {
+      raw: string;
+      decimal: number;
+      usd: number;
+      native: number;
+    };
+  };
+  validFrom: number;
+  validUntil: number;
+  quantityFilled: number;
+  quantityRemaining: number;
+  dynamicPricing: unknown;
+  criteria: {
+    kind: string;
+    data: {
+      token: {
+        tokenId: string;
+        name: string;
+        image: string;
+      };
+      collection: {
+        id: string;
+        name: string;
+        image: string;
+      };
+    };
+  };
+  source: {
+    id: string;
+    domain: string;
+    name: string;
+    icon: string;
+    url: string;
+  };
+  feeBps: number;
+  feeBreakdown: {
+    bps: number;
+    kind: string;
+    recipient: string;
+  }[];
+  expiration: number;
+  isReservoir: boolean;
+  isDynamic: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface  BidsSchema {
   id: string;
   kind: string;
   side: string;

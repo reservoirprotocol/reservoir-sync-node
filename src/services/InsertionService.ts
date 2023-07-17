@@ -1,17 +1,25 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { Prisma, PrismaClient } from '@prisma/client';
-import { AsksSchema, DataSets, DataTypes, SalesSchema } from '../types';
+import {
+  AsksSchema,
+  BidsSchema,
+  DataSets,
+  DataTypes,
+  SalesSchema,
+} from '../types';
 import { addressToBuffer, toBuffer } from '../utils';
 import { LoggerService } from './LoggerService';
 
 interface DataSchemas {
   sales: SalesSchema;
   asks: AsksSchema;
+  bids: BidsSchema;
 }
 
 interface DataReturns {
   sales: Prisma.salesCreateInput;
   asks: Prisma.asksCreateInput;
+  bids: Prisma.bidsCreateInput;
 }
 /**
  *
@@ -96,7 +104,7 @@ class _InsertionServivce {
    */
   public async upsert(
     type: DataTypes,
-    data: AsksSchema[] | SalesSchema[]
+    data: AsksSchema[] | SalesSchema[] | BidsSchema[]
   ): Promise<void> {
     return this._handlePrismaPromises(
       await Promise.allSettled(
@@ -164,6 +172,57 @@ class _InsertionServivce {
         is_dynamic: ask?.isDynamic,
         updated_at: ask?.updatedAt,
         created_at: ask?.createdAt,
+      };
+    }
+
+    if (type === 'bids') {
+      const bid = data as BidsSchema;
+      return {
+        id: Buffer.from(
+          `${bid?.id}-${bid?.contract}-${bid?.maker}-${bid?.tokenSetId}-${bid?.createdAt}`,
+          'utf16le'
+        ),
+        kind: bid?.kind,
+        side: bid?.side,
+        status: bid?.status,
+        token_set_id: bid?.tokenSetId,
+        token_set_schema_hash: bid?.tokenSetSchemaHash
+          ? addressToBuffer(bid.tokenSetSchemaHash)
+          : null,
+        contract: bid?.contract ? addressToBuffer(bid.contract) : null,
+        maker: bid?.maker ? addressToBuffer(bid.maker) : null,
+        taker: bid?.taker ? addressToBuffer(bid.taker) : null,
+        price_currency_contract: bid?.price?.currency?.contract
+          ? addressToBuffer(bid.price.currency.contract)
+          : null,
+        price_currency_name: bid?.price?.currency?.name,
+        price_currency_symbol: bid?.price?.currency?.symbol,
+        price_currency_decimals: bid?.price?.currency?.decimals,
+        price_amount_raw: bid?.price?.amount?.raw,
+        price_amount_decimal: bid?.price?.amount?.decimal,
+        price_amount_native: bid?.price?.amount?.native,
+        price_amount_usd: bid?.price?.amount?.usd,
+        price_net_amount_decimal: bid?.price?.netAmount?.decimal,
+        price_net_amount_native: bid?.price?.netAmount?.native,
+        price_net_amount_raw: bid?.price?.netAmount?.raw,
+        price_net_amount_usd: bid?.price?.netAmount?.usd,
+        valid_from: bid?.validFrom,
+        valid_until: bid?.validUntil,
+        quantity_filled: bid?.quantityFilled,
+        quantity_remaining: bid?.quantityRemaining,
+        criteria_kind: bid?.criteria?.kind,
+        criteria_data_token_token_id: bid?.criteria?.data?.token?.tokenId,
+        source_domain: bid?.source?.domain,
+        source_icon: bid?.source?.icon,
+        source_url: bid?.source?.url,
+        source_id: bid?.source?.id,
+        fee_bps: bid?.feeBps,
+        fee_breakdown: JSON.stringify(bid.feeBreakdown),
+        expiration: bid?.expiration,
+        is_reservoir: bid?.isReservoir,
+        is_dynamic: bid?.isDynamic,
+        updated_at: bid?.updatedAt,
+        created_at: bid?.createdAt,
       };
     }
 

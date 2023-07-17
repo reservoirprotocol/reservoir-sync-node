@@ -129,6 +129,21 @@ class SyncNode {
         })
       );
     }
+
+    if (syncer.toSync.bids) {
+      this._controllers.set(
+        'bids',
+        new Controller({
+          apiKey: this._config.syncer.apiKey,
+          dataset: 'bids',
+          type: 'backfill',
+          chain: this._config.syncer.chain,
+          contracts: [],
+          delay: 0,
+          mode: this._config.syncer.mode,
+        })
+      );
+    }
   }
 }
 
@@ -137,7 +152,8 @@ export default new SyncNode({
     chain: process.env.CHAIN as Chains,
     apiKey: process.env.API_KEY as string,
     toSync: {
-      asks: true,
+      bids: false,
+      asks: false,
       sales: true,
     },
     mode: process.env.MODE as Mode,
