@@ -73,10 +73,12 @@ export class Worker extends EventEmitter {
     this._datatype = this._config('dataset');
   }
 
-  public async process(
-    { startDate, id, endDate, contract }: Block,
-    continuation: string = ''
-  ): Promise<void> {
+  public async process({
+    startDate,
+    id,
+    endDate,
+    contract,
+  }: Block): Promise<void> {
     this.busy = true;
     this.data.block = { startDate, endDate, id, contract };
     const ascRes = await this._request(
