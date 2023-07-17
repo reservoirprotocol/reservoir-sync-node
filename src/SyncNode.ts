@@ -152,8 +152,8 @@ export default new SyncNode({
     chain: process.env.CHAIN as Chains,
     apiKey: process.env.API_KEY as string,
     toSync: {
-      bids: false,
-      asks: false,
+      bids: true,
+      asks: true,
       sales: true,
     },
     mode: process.env.MODE as Mode,
