@@ -177,6 +177,8 @@ export interface SyncNodeConfig {
   syncer: {
     apiKey: string;
     chain: Chains;
+    toSync: Record<DataTypes, boolean>;
+    mode: Mode;
   };
   backup: {
     useBackup: boolean;

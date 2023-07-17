@@ -4,10 +4,10 @@ import {
   InsertionService,
   LoggerService,
   QueueService,
-  WebSocketService
+  WebSocketService,
 } from './services';
 import { Controller } from './syncer/Controller';
-import { Chains, DataTypes, SyncNodeConfig } from './types';
+import { Chains, DataTypes, Mode, SyncNodeConfig } from './types';
 
 class SyncNode {
   /**
@@ -98,18 +98,37 @@ class SyncNode {
    * @returns void
    */
   private _createControllers(): void {
-    this._controllers.set(
-      'sales',
-      new Controller({
-        apiKey: this._config.syncer.apiKey,
-        dataset: 'sales',
-        type: 'backfill',
-        chain: 'mainnet',
-        contracts: [],
-        delay: 0,
-        mode: 'fast',
-      })
-    );
+    const { syncer } = this._config;
+
+    if (syncer.toSync.sales) {
+      this._controllers.set(
+        'sales',
+        new Controller({
+          apiKey: this._config.syncer.apiKey,
+          dataset: 'sales',
+          type: 'backfill',
+          chain: this._config.syncer.chain,
+          contracts: [],
+          delay: 0,
+          mode: this._config.syncer.mode,
+        })
+      );
+    }
+
+    if (syncer.toSync.asks) {
+      this._controllers.set(
+        'asks',
+        new Controller({
+          apiKey: this._config.syncer.apiKey,
+          dataset: 'asks',
+          type: 'backfill',
+          chain: this._config.syncer.chain,
+          contracts: [],
+          delay: 0,
+          mode: this._config.syncer.mode,
+        })
+      );
+    }
   }
 }
 
@@ -117,6 +136,11 @@ export default new SyncNode({
   syncer: {
     chain: process.env.CHAIN as Chains,
     apiKey: process.env.API_KEY as string,
+    toSync: {
+      asks: true,
+      sales: true,
+    },
+    mode: process.env.MODE as Mode,
   },
   server: {
     port: Number(process.env.PORT) as number,
