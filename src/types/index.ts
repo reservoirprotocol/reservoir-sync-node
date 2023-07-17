@@ -8,6 +8,9 @@ import { Application } from 'express';
 export enum URLs {
   'goerli' = 'wss://ws.dev.reservoir.tools',
   'mainnet' = 'wss://ws.reservoir.tools',
+  'polygon' = 'wss://ws-polygon.reservoir.tools',
+  'arbitrum' = 'wss://ws-arbitrum.reservoir.tools',
+  'optimism' = 'wss://ws-optimism.reservoir.tools',
 }
 
 export type KnownPropertiesType = {
@@ -45,7 +48,7 @@ export type DataTypes = 'sales' | 'asks' | 'bids';
 
 export type DataSets = AsksSchema[] | SalesSchema[] | BidsSchema[];
 
-export type Chains = 'mainnet' | 'goerli';
+export type Chains = 'mainnet' | 'goerli' | 'polygon' | 'arbitrum' | 'optimism';
 
 export type MessageType = 'connection';
 
