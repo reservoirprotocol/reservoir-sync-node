@@ -103,6 +103,10 @@ class _WebSocketService {
   private _onConnect = (): void => {
     this._subscribe('ask.created');
     this._subscribe('ask.updated');
+
+    this._subscribe('bid.created');
+    this._subscribe('bid.updated');
+
     this._subscribe('sale.created');
     this._subscribe('sale.updated');
   };
