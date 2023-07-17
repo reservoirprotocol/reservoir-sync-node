@@ -62,7 +62,7 @@ export class Controller {
   public async addContract(contract: string): Promise<void> {
     const block = await this._getInitialBlock(contract);
 
-    this._queue.insertBlock(block, this._config.dataset);
+    await this._queue.insertBlock(block, this._config.dataset);
 
     LoggerService.info(
       `Added contract ${contract} to ${this._config.dataset} controller`
