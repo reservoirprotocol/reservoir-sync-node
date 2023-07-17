@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { Prisma, PrismaClient } from '@prisma/client';
-import SyncNode from 'SyncNode';
+import SyncNode from '../SyncNode';
 import {
   AsksSchema,
   BidsSchema,
