@@ -44,7 +44,7 @@ export class Controller {
    * @private
    */
   private _createWorkers(): void {
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 30; i++) {
       this._workers.push(new Worker(this));
     }
   }
@@ -65,7 +65,18 @@ export class Controller {
   private async _launch(): Promise<void> {
     this._createWorkers();
 
-    // const backup = this._queue.getBackup(this._config.dataset);
+    const backup = this._queue.getBackup(this._config.dataset);
+
+    if (backup) {
+      backup.workers.forEach((worker) => {
+        this._workers.forEach((w) => {
+          w.process({
+            ...worker.block,
+            contract: '',
+          });
+        });
+      });
+    }
 
     const worker = this._workers.find(({ busy }) => !busy) as Worker;
 

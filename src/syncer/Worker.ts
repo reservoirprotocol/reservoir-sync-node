@@ -73,15 +73,12 @@ export class Worker extends EventEmitter {
     this._datatype = this._config('dataset');
   }
 
-  public async process({
-    startDate,
-    id,
-    endDate,
-    contract,
-  }: Block): Promise<void> {
+  public async process(
+    { startDate, id, endDate, contract }: Block,
+    continuation: string = ''
+  ): Promise<void> {
     this.busy = true;
     this.data.block = { startDate, endDate, id, contract };
-    this.continuation = '';
     const ascRes = await this._request(
       this._normalize({
         ...(contract && { contract: contract }),
@@ -200,6 +197,7 @@ export class Worker extends EventEmitter {
   private _release(block: Block): void {
     Logger.info(`Released block: ${block.id}`);
     this.busy = false;
+    this.continuation = '';
     this.emit('worker.event', {
       type: 'worker.release',
       block: block,
