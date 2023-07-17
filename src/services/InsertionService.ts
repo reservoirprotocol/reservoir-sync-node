@@ -135,7 +135,8 @@ class _InsertionServivce {
     data: AsksSchema[] | SalesSchema[] | BidsSchema[]
   ): AsksSchema[] | SalesSchema[] | BidsSchema[] {
     const contracts = SyncNode.getContracts();
-    if (!contracts || contracts.length === 0) return data;
+
+    if (contracts.length === 0) return data;
 
     switch (type) {
       case 'asks':
