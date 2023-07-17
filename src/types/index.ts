@@ -180,6 +180,7 @@ export interface SyncNodeConfig {
   syncer: {
     apiKey: string;
     chain: Chains;
+    contracts: string[];
     toSync: Record<DataTypes, boolean>;
     mode: Mode;
   };

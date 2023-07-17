@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { Prisma, PrismaClient } from '@prisma/client';
+import SyncNode from 'SyncNode';
 import {
   AsksSchema,
   BidsSchema,
@@ -106,6 +107,8 @@ class _InsertionServivce {
     type: DataTypes,
     data: AsksSchema[] | SalesSchema[] | BidsSchema[]
   ): Promise<void> {
+    data = this._filter(type, data);
+
     return this._handlePrismaPromises(
       await Promise.allSettled(
         data.map((set) => {
@@ -120,6 +123,38 @@ class _InsertionServivce {
       )
     );
   }
+  /**
+   * Filters the input data based on the available contracts.
+   * @param {DataTypes} type - The type of the data ('asks', 'bids', 'sales').
+   * @param {AsksSchema[] | SalesSchema[] | BidsSchema[]} data - The input data.
+   * @returns {AsksSchema[] | SalesSchema[] | BidsSchema[]} - The filtered data.
+   * @private
+   */
+  private _filter(
+    type: DataTypes,
+    data: AsksSchema[] | SalesSchema[] | BidsSchema[]
+  ): AsksSchema[] | SalesSchema[] | BidsSchema[] {
+    const contracts = SyncNode.getContracts();
+    if (!contracts || contracts.length === 0) return data;
+
+    switch (type) {
+      case 'asks':
+        return (data as AsksSchema[]).filter((set) =>
+          contracts.includes(set.contract)
+        );
+      case 'bids':
+        return (data as BidsSchema[]).filter((set) =>
+          contracts.includes(set.contract)
+        );
+      case 'sales':
+        return (data as SalesSchema[]).filter((set) =>
+          contracts.includes(set.token.contract)
+        );
+      default:
+        return data;
+    }
+  }
+
   private _format<T extends keyof DataSchemas>(
     type: T,
     data: DataSchemas[T]
