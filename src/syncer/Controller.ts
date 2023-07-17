@@ -9,7 +9,13 @@ import {
 } from 'types';
 import { v4 } from 'uuid';
 import { InsertionService, QueueService } from '../services';
-import { isSuccessResponse, RecordRoots, UrlBase, UrlPaths } from '../utils';
+import {
+  isSuccessResponse,
+  RecordRoots,
+  UrlBase,
+  UrlPaths,
+  WorkerCounts,
+} from '../utils';
 import { Worker } from './Worker';
 
 export class Controller {
@@ -44,7 +50,7 @@ export class Controller {
    * @private
    */
   private _createWorkers(): void {
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < WorkerCounts[this._config.mode]; i++) {
       this._workers.push(new Worker(this));
     }
   }
