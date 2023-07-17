@@ -98,6 +98,7 @@ class SyncNode {
   public getController(controller: DataTypes): Controller | undefined {
     return this._controllers.get(controller);
   }
+
   /**
    * Gets the contracts to filter by
    * @returns contracts array
@@ -110,7 +111,7 @@ class SyncNode {
    * @returns void
    */
   public insertContract(contract: string): void {
-    this._contracts?.push(contract);
+    this._contracts.push(contract);
   }
   /**
    * Creates the controllers for each datatype
