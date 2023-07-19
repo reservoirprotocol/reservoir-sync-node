@@ -1,5 +1,6 @@
 import EventEmitter from 'events';
-import { LoggerService as Logger } from '../services';
+import { v4 } from 'uuid';
+import { InsertionService, LoggerService as Logger } from '../services';
 import { Block, DataTypes, Schemas, WorkerEvent } from '../types';
 import {
   delay,
@@ -81,6 +82,9 @@ export class Worker extends EventEmitter {
   }: Block): Promise<void> {
     this.busy = true;
     this.data.block = { startDate, endDate, id, contract };
+
+    console.log(`GOT BLOCK: ${startDate}, ${endDate}`);
+
     const ascRes = await this._request(
       this._normalize({
         ...(contract && { contract: contract }),
@@ -181,6 +185,73 @@ export class Worker extends EventEmitter {
       `Processed Block ${id}\nstartDate: ${startDate} endDate: ${endDate}`
     );
     this._release({ startDate, endDate, id, contract });
+  }
+
+  public async upkeep(): Promise<void> {
+    /**
+     * Up keeping is simple, we poll on a one minute delay
+     * and then check if theres a cursor, if there is a cursor, we do the high density check
+     * If the high density check returns true then we request a split from that start timestamp to end timestamp (current date)
+     * We then continue upkeeping on the latest date (today Date.now()) pretty much
+     */
+
+    const date = new Date();
+    let startDate = date.toISOString();
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      await delay(5000);
+
+      const ascRes = await this._request(
+        this._normalize({
+          ...(this.continuation && { continuation: this.continuation }),
+          sortDirection: 'asc',
+          startTimestamp: parseTimestamp(startDate),
+          endTimestamp: parseTimestamp('9999-12-31T23:59:59Z'),
+        })
+      );
+
+      if (!isSuccessResponse(ascRes)) continue;
+
+      const records = ascRes.data[RecordRoots[this._datatype]];
+
+      if (!records.length) continue;
+
+      await InsertionService.upsert(this._datatype, records);
+
+      if (!ascRes.data.continuation) continue;
+
+      const descRes = await this._request(
+        this._normalize({
+          ...(this.continuation && { continuation: this.continuation }),
+          sortDirection: 'desc',
+          startTimestamp: parseTimestamp(date.toISOString()),
+          endTimestamp: 253402214400,
+        })
+      );
+
+      if (!isSuccessResponse(descRes)) continue;
+
+      const isHighDensity = isHighDensityBlock(
+        [
+          ...ascRes.data[RecordRoots[this._datatype]],
+          ...descRes.data[RecordRoots[this._datatype]],
+        ] as Schemas,
+        300000
+      );
+
+      if (isHighDensity) {
+        const endDate = records[records.length - 1].updatedAt;
+        this._split({
+          startDate: records[0].updatedAt,
+          endDate,
+          id: v4(),
+          contract: '',
+        });
+        startDate = records[records.length - 1].updatedAt;
+      }
+
+      // Since there is a continuation we need to fire off a second request to check the density
+    }
   }
   /**
    * Emit a split event for a block.
