@@ -84,31 +84,25 @@ export class Controller {
    */
   private async _launch(): Promise<void> {
     this._createWorkers();
-    this._workers[0].upkeep();
-    const run = false;
-    // eslint-disable-next-line no-constant-condition
-    if (run) {
-      const backup = this._queue.getBackup(this._config.dataset);
-
-      if (backup) {
+    
+    const backup = this._queue.getBackup(this._config.dataset);
+    
+    if (backup) {
         backup.workers.forEach((worker) => {
-          this._workers.forEach((w) => {
-            w.process({
-              ...worker.block,
-              contract: '',
-            });
+        this._workers.forEach((w) => {
+          w.process({
+            ...worker.block,
           });
         });
-      }
-
+      });
+    } else {
       const worker = this._workers.find(({ busy }) => !busy) as Worker;
-
       const block = await this._getInitialBlock();
-
       worker.process(block);
-
-      this._queue.backup(this._config.dataset, this._workers);
     }
+    
+      this._queue.backup(this._config.dataset, this._workers);
+   
 
     this._listen();
   }
