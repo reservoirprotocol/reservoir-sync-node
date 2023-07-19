@@ -45,7 +45,6 @@ class _Queue {
    */
   public async getAllBlocks(datatype: DataTypes): Promise<Block[]> {
     try {
-      await this._client.exe
       const blocks = await this._client.lRange(`${datatype}-queue`, 0, -1);
       return blocks
         ? (blocks.map((block) => JSON.parse(block)) as Block[])

@@ -83,8 +83,6 @@ export class Worker extends EventEmitter {
     this.busy = true;
     this.data.block = { startDate, endDate, id, contract };
 
-    console.log(`GOT BLOCK: ${startDate}, ${endDate}`);
-
     const ascRes = await this._request(
       this._normalize({
         ...(contract && { contract: contract }),
