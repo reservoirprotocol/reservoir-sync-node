@@ -84,11 +84,11 @@ export class Controller {
    */
   private async _launch(): Promise<void> {
     this._createWorkers();
-
+    
     const backup = this._queue.getBackup(this._config.dataset);
-
+    
     if (backup) {
-      backup.workers.forEach((worker) => {
+        backup.workers.forEach((worker) => {
         this._workers.forEach((w) => {
           w.process({
             ...worker.block,
@@ -97,13 +97,12 @@ export class Controller {
       });
     } else {
       const worker = this._workers.find(({ busy }) => !busy) as Worker;
-
       const block = await this._getInitialBlock();
-
       worker.process(block);
     }
-
-    this._queue.backup(this._config.dataset, this._workers);
+    
+      this._queue.backup(this._config.dataset, this._workers);
+   
 
     this._listen();
   }
