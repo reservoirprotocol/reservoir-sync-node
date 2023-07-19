@@ -92,17 +92,16 @@ export class Controller {
         this._workers.forEach((w) => {
           w.process({
             ...worker.block,
-            contract: '',
           });
         });
       });
+    } else {
+      const worker = this._workers.find(({ busy }) => !busy) as Worker;
+
+      const block = await this._getInitialBlock();
+
+      worker.process(block);
     }
-
-    const worker = this._workers.find(({ busy }) => !busy) as Worker;
-
-    const block = await this._getInitialBlock();
-
-    worker.process(block);
 
     this._queue.backup(this._config.dataset, this._workers);
 
