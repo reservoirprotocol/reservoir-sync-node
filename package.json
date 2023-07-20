@@ -1,8 +1,9 @@
 {
   "name": "reservoir-sync-node",
   "scripts": {
-    "start": "yarn build && yarn database:prepare && node dist/index.js",
+    "start": "yarn build && yarn build:viewer && yarn database:prepare && node dist/index.js",
     "build": "yarn run clean && tsc",
+    "build:viewer": "cd src/viewer && yarn build",
     "develop": "nodemon",
     "database:prepare": "yarn database:deploy && yarn database:generate",
     "database:generate": "npx prisma generate",

@@ -71,7 +71,7 @@ function App() {
           <h3
             style={{
               fontSize: 20,
-              fontWeight: 600,
+              fontWeight: 700,
               color: '#565656',
               marginTop: 10,
             }}

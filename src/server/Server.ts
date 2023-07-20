@@ -12,6 +12,7 @@ import {
 import routes from './routes';
 import cors from 'cors';
 import { RedisClientType, createClient } from 'redis';
+import path from 'path';
 
 /**
  * The _Server class encapsulates an Express application and provides methods for
@@ -92,9 +93,14 @@ class _Server {
   public construct(config: ServerConfig) {
     this._config = config;
     this._app.use(cors({ credentials: true, origin: 'http://localhost:3000' }));
+    this._app.use(express.static(path.join(__dirname, '../viewer')));
+    const allowedRouteRegex =
+      /^\/static\/(?:js|css)\/main\.\d+[a-zA-Z0-9]*\.(?:js|css)$|^\/viewer$/m;
+
     this._app.use('*', (req: Request, res: Response, next: NextFunction) => {
       if (
         req.method !== 'OPTIONS' &&
+        !allowedRouteRegex.test(req.baseUrl) &&
         req.get('Authorization') !== this._config.authorization
       ) {
         res.status(403).json({
