@@ -173,6 +173,28 @@ function App() {
               },
             },
           },
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: 'Time',
+                font: {
+                  size: 16,
+                  weight: 'bold',
+                },
+              },
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'Record Count',
+                font: {
+                  size: 16,
+                  weight: 'bold',
+                },
+              },
+            },
+          },
         }}
       />
     </div>
