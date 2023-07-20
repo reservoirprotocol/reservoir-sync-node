@@ -21,7 +21,7 @@ import {
   SalesSchema,
   Schemas,
   SyncerConfig,
-  Tables
+  Tables,
 } from '../types';
 import {
   addressToBuffer,
@@ -30,7 +30,7 @@ import {
   incrementDate,
   isSameMonth,
   isValidDate,
-  toBuffer
+  toBuffer,
 } from '../utils';
 import { BackupService } from './BackupService';
 import { InsertionService } from './InsertionService';
@@ -548,21 +548,20 @@ export class SyncService {
    * @returns boolean - whether the manager should continue working or not
    */
   private _continueWork(manager: SyncManager): boolean {
-
-
-    const nextMonth = incrementDate(`${this._date.substring(0, 7)}-01`, { months: 1 });
+    const nextMonth = incrementDate(`${this._date.substring(0, 7)}-01`, {
+      months: 1,
+    });
 
     if (!isValidDate(nextMonth)) {
       this._deleteManager(manager.id);
       return false;
     }
 
-  
     const isManagerWorkingInSameMonth = Array.from(this.managers.values())
-      .filter((m) => m.id === manager.id)
+      .filter((m) => m.id !== manager.id)
       .some((m) => isSameMonth(nextMonth, m.date));
 
-    if (isManagerWorkingInSameMonth || manager.isBackfilled) {
+    if (!isManagerWorkingInSameMonth || manager.isBackfilled) {
       this._date = nextMonth;
       manager.config.date = nextMonth;
       return true;
@@ -607,7 +606,10 @@ export class SyncService {
    * @param {Prisma.ordersCreateInput | Prisma.salesCreateInput} data - An array of objects
    * @returns {Promise<void>} Promise<void>
    */
-  private async _insert(data: KnownPropertiesType, isUpkeeping?: boolean): Promise<void> {
+  private async _insert(
+    data: KnownPropertiesType,
+    isUpkeeping?: boolean
+  ): Promise<void> {
     await InsertionService.upsert({
       data: this._parse(data[RECORD_ROOT[this.config.type]]).map((value) => {
         delete value.isDeleted;
