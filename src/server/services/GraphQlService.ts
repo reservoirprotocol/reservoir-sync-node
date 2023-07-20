@@ -1,5 +1,6 @@
 /* eslint-disable no-unexpected-multiline */
 /* eslint-disable @typescript-eslint/ban-ts-comment */
+import { PrismaClient } from '@prisma/client';
 import {
   GraphQLBoolean,
   GraphQLFloat,
@@ -9,7 +10,6 @@ import {
   GraphQLSchema,
   GraphQLString,
 } from 'graphql';
-import { InsertionService } from '../services';
 
 /**
  * The _GraphQlService class provides methods for constructing GraphQL schemas.
@@ -21,6 +21,12 @@ class _GraphQlService {
    * @type {Schemas}
    */
   private _schemas: Record<string | number, GraphQLSchema> = {};
+
+  private _prisma: PrismaClient = new PrismaClient({
+    datasources: {
+      db: { url: `${process.env.DATABASE_URL}?pool_timeout=0` },
+    },
+  });
 
   constructor() {
     this._schemas['asks'] = new GraphQLSchema({
@@ -187,8 +193,8 @@ class _GraphQlService {
             ),
             args: { offset: { type: GraphQLInt } },
             resolve: (parent, args) => {
-              return InsertionService.getClient()
-                .asks.findMany({
+              return this._prisma.asks
+                .findMany({
                   skip: args.offset || 0,
                   take: 1000,
                 })
@@ -362,8 +368,8 @@ class _GraphQlService {
             ),
             args: { offset: { type: GraphQLInt } },
             resolve: (parent, args) => {
-              return InsertionService.getClient()
-                .bids.findMany({
+              return this._prisma.bids
+                .findMany({
                   skip: args.offset || 0,
                   take: 1000,
                 })
@@ -441,8 +447,8 @@ class _GraphQlService {
             ),
             args: { offset: { type: GraphQLInt } },
             resolve: (parent, args) => {
-              return InsertionService.getClient()
-                .sales.findMany({
+              return this._prisma.sales
+                .findMany({
                   skip: args.offset || 0,
                   take: 1000,
                 })
