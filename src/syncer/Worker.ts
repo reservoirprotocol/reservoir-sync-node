@@ -126,7 +126,7 @@ export class Worker extends EventEmitter {
 
       await this._insert(records);
 
-      const isHighDensity = isHighDensityBlock(records, 300000);
+      const isHighDensity = isHighDensityBlock(records, 600000);
 
       if (isHighDensity) {
         const middleDate = getMiddleDate(startDate, endDate);
