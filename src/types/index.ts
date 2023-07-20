@@ -148,6 +148,11 @@ export interface WebSocketServiceConfig {
   contracts: string[];
   apiKey: string;
   chain: Chains | null;
+  toSync: {
+    bids: boolean;
+    asks: boolean;
+    sales: boolean;
+  };
 }
 
 export interface LoggerServiceConfig {
