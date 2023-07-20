@@ -5,7 +5,7 @@ import {
   DataSets,
   ErrorType,
   SuccessType,
-  WorkerEvent,
+  WorkerEvent
 } from 'types';
 import { v4 } from 'uuid';
 import { InsertionService, LoggerService, QueueService } from '../services';
@@ -14,7 +14,7 @@ import {
   RecordRoots,
   UrlBase,
   UrlPaths,
-  WorkerCounts,
+  WorkerCounts
 } from '../utils';
 import { Worker } from './Worker';
 
@@ -84,11 +84,12 @@ export class Controller {
    */
   private async _launch(): Promise<void> {
     this._createWorkers();
-    
+    const upkeeper = new Worker(this);
+
     const backup = this._queue.getBackup(this._config.dataset);
-    
+
     if (backup) {
-        backup.workers.forEach((worker) => {
+      backup.workers.forEach((worker) => {
         this._workers.forEach((w) => {
           w.process({
             ...worker.block,
@@ -100,11 +101,10 @@ export class Controller {
       const block = await this._getInitialBlock();
       worker.process(block);
     }
-    
-      this._queue.backup(this._config.dataset, this._workers);
-   
 
     this._listen();
+    this._queue.backup(this._config.dataset, this._workers);
+    upkeeper.on('worker.event', this._handleWorkerEvent.bind(this));
   }
   /**
    * Sets up listeners for worker events.
