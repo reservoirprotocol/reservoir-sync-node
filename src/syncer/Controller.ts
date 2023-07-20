@@ -68,6 +68,7 @@ export class Controller {
       `Added contract ${contract} to ${this._config.dataset} controller`
     );
   }
+
   /**
    * Gets the workers from a controller
    * @returns The workers of the controller
@@ -96,13 +97,13 @@ export class Controller {
           });
         });
       });
+    } else {
+      const worker = this._workers.find(({ busy }) => !busy) as Worker;
+
+      const block = await this._getInitialBlock();
+
+      worker.process(block);
     }
-
-    const worker = this._workers.find(({ busy }) => !busy) as Worker;
-
-    const block = await this._getInitialBlock();
-
-    worker.process(block);
 
     this._queue.backup(this._config.dataset, this._workers);
 

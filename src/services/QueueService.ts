@@ -37,24 +37,6 @@ class _Queue {
   }
 
   /**
-   * Retrieves all blocks of the given datatype from the queue.
-   *
-   * @param datatype - The type of the data to be retrieved
-   * @returns A promise that resolves to an array of blocks
-   * @public
-   */
-  public async getAllBlocks(datatype: DataTypes): Promise<Block[]> {
-    try {
-      const blocks = await this._client.lRange(`${datatype}-queue`, 0, -1);
-      return blocks
-        ? (blocks.map((block) => JSON.parse(block)) as Block[])
-        : [];
-    } catch (e: unknown) {
-      return [];
-    }
-  }
-
-  /**
    * Backs up the current state of the node.
    *
    * @param datatype - The type of the data to be backed up

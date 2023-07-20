@@ -28,7 +28,7 @@ interface DataReturns {
  * The _InsertionService class provides an interface to the Prisma ORM.
  * This service handles database connections, data upserts, and record counting.
  */
-class _InsertionServivce {
+class _InsertionService {
   /**
    * Prisma ORM instance
    * @access private
@@ -39,6 +39,8 @@ class _InsertionServivce {
       db: { url: `${process.env.DATABASE_URL}?pool_timeout=0` },
     },
   });
+
+  public insertionTally: Record<DataTypes | string, number> = {};
 
   /**
    * Initiates the connection to the database through Prisma.
@@ -108,6 +110,12 @@ class _InsertionServivce {
     data: AsksSchema[] | SalesSchema[] | BidsSchema[]
   ): Promise<void> {
     data = this._filter(type, data);
+
+    if (!this.insertionTally[type]) {
+      this.insertionTally[type] = 0;
+    }
+
+    this.insertionTally[type] += data.length;
 
     return this._handlePrismaPromises(
       await Promise.allSettled(
@@ -323,4 +331,4 @@ class _InsertionServivce {
  * The InsertionService is an instance of the _InsertionService class,
  * allowing for singleton-like usage throughout the application.
  */
-export const InsertionService = new _InsertionServivce();
+export const InsertionService = new _InsertionService();

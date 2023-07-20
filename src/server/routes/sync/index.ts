@@ -3,40 +3,32 @@ import express, {
   type Request,
   type Response,
 } from 'express';
-import { QueueService } from '../../../services';
 import { DataTypes } from '../../../types';
-
-import SyncNode from '../../../SyncNode';
+import { Server } from '../../Server';
 
 const handler: Application = express();
 
+handler.get('/queue', async (req: Request, res: Response): Promise<unknown> => {
+  const type = req.query?.type as DataTypes;
+
+  const responses = await Promise.allSettled([
+    Server.getAllBlocks(type),
+    Server.getBackups(),
+  ]);
+
+  return res.status(200).json({
+    data: {
+      blocks: responses[0].status === 'fulfilled' ? responses[0].value : [],
+      backups: responses[1].status === 'fulfilled' ? responses[1].value : {},
+    },
+  });
+});
+
 handler.get(
-  '/status',
+  '/insertions',
   async (req: Request, res: Response): Promise<unknown> => {
-    const type = req.query?.type as DataTypes;
-
-    const controller = SyncNode.getController(type);
-
-    if (!controller) {
-      return res.status(400).json({
-        error: {
-          status: 400,
-          message: `Controller ${type} not found.`,
-        },
-        data: null,
-      });
-    }
-
     return res.status(200).json({
-      data: {
-        workers: controller.getWorkers().map(({ continuation, data }) => {
-          return {
-            block: data?.block,
-            continuation,
-          };
-        }),
-        queue: await QueueService.getQueueLength(type),
-      },
+      data: Server.getInsertions(),
     });
   }
 );
@@ -57,25 +49,15 @@ handler.post(
       });
     }
 
-    const controller = SyncNode.getController(type);
-
-    if (!controller) {
-      return res.status(400).json({
-        error: {
-          status: 400,
-          message: `Controller ${type} not found.`,
-        },
-        data: null,
-      });
-    }
-
-    SyncNode.insertContract(contract);
-
-    await controller.addContract(contract);
+    process?.send?.({
+      command: 'contract_add',
+      dataType: type,
+      contract,
+    });
 
     return res.status(200).json({
       data: {
-        message: `Added contract ${contract}`,
+        message: `Request submitted to add contract: ${contract}`,
       },
       error: null,
     });
