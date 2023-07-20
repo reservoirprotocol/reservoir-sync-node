@@ -180,10 +180,6 @@ export type SchemasObject = {
 };
 
 export interface SyncNodeConfig {
-  server: {
-    port: number;
-    authorization: string;
-  };
   syncer: {
     apiKey: string;
     chain: Chains;
@@ -383,4 +379,16 @@ export interface SalesSchema {
   createdAt: string;
   updatedAt: string;
   isDeleted: boolean;
+}
+
+export interface InsertionDataPoint {
+  timestamp: string;
+  recordCount: number;
+}
+
+export interface ProcessCommand {
+  command: string;
+  contract?: string;
+  dataType?: DataTypes;
+  recordCount?: number;
 }

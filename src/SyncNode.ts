@@ -1,20 +1,25 @@
-import { Server } from './server/Server';
 import {
-  GraphQlService,
   InsertionService,
   LoggerService,
   QueueService,
   WebSocketService,
 } from './services';
 import { Controller } from './syncer/Controller';
-import { Chains, DataTypes, Mode, SyncNodeConfig } from './types';
+import {
+  Chains,
+  DataTypes,
+  Mode,
+  ProcessCommand,
+  SyncNodeConfig,
+} from './types';
+import { ChildProcess, spawn } from 'child_process';
 
 class SyncNode {
   /**
-   * # _graphqlService
+   * # _serverProcess
    * @access private
    */
-  private readonly _graphqlService: typeof GraphQlService = GraphQlService;
+  private _serverProcess: ChildProcess | undefined;
   /**
    * # _webSocketService
    * @access private
@@ -41,12 +46,6 @@ class SyncNode {
   private readonly _queueService: typeof QueueService = QueueService;
 
   /**
-   * # _server
-   * @access private
-   */
-  private readonly _server: typeof Server = Server;
-
-  /**
    * # _config
    * @access private
    */
@@ -67,7 +66,6 @@ class SyncNode {
   constructor(config: SyncNodeConfig) {
     this._config = config;
     this._contracts = config.syncer.contracts;
-    this._server.construct(config.server);
     this._loggerService.construct(config.logger);
     this._queueService.construct(config.backup);
     this._webSocketService.construct({
@@ -80,7 +78,7 @@ class SyncNode {
    * @returns void
    */
   public async launch(): Promise<void> {
-    await this._server.launch();
+    this._launchServerProcess();
     await this._queueService.launch();
     await this._insertionService.launch();
     await this._webSocketService.launch();
@@ -113,6 +111,45 @@ class SyncNode {
   public insertContract(contract: string): void {
     this._contracts.push(contract);
   }
+
+  private _launchServerProcess(): void {
+    this._serverProcess = spawn('node', ['dist/server/index.js'], {
+      shell: true,
+      stdio: ['inherit', 'inherit', 'inherit', 'ipc'],
+    });
+    this._serverProcess.on('message', (message: ProcessCommand) => {
+      LoggerService.info(`Server Message: ${message}`);
+      if (message.command) {
+        switch (message.command) {
+          case 'contract_add': {
+            if (message.dataType && message.contract) {
+              const controller = this.getController(message.dataType);
+              if (controller) {
+                this.insertContract(message.contract);
+                controller?.addContract(message.contract);
+              } else {
+                LoggerService.error(
+                  `Unable to add contract, ${message.dataType} controller missing`
+                );
+              }
+            }
+            break;
+          }
+        }
+      }
+    });
+    setInterval(() => {
+      Object.keys(this._insertionService.insertionTally).forEach((type) => {
+        this._serverProcess?.send?.({
+          command: 'record_insertions',
+          dataType: type,
+          recordCount: this._insertionService.insertionTally[type],
+        });
+        this._insertionService.insertionTally[type] = 0;
+      });
+    }, 1000 * 60 * 1);
+  }
+
   /**
    * Creates the controllers for each datatype
    * @private
@@ -177,10 +214,6 @@ export default new SyncNode({
       sales: true,
     },
     mode: process.env.MODE as Mode,
-  },
-  server: {
-    port: Number(process.env.PORT) as number,
-    authorization: process.env.AUTHORIZATION as string,
   },
   backup: {
     useBackup: true,
