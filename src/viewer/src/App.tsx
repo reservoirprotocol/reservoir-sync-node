@@ -1,20 +1,21 @@
 import './App.css';
 import { Line, Doughnut } from 'react-chartjs-2';
 import useSWR from 'swr';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 function App() {
   const [dataType, setDataType] = useState<'sales' | 'bids' | 'asks'>('sales');
-  const { data: blocksDataResponse } = useSWR(
-    `http://localhost:1111/sync/queue?type=${dataType}`,
+  const [authorization, setAuthorization] = useState<string>('');
+  const { data: blocksDataResponse, mutate: mutateBlocksData } = useSWR(
+    `${process.env.REACT_APP_SERVER_DOMAIN}/sync/queue?type=${dataType}`,
     null,
     {
       refreshInterval: 10000,
     }
   );
 
-  const { data: insertionsData } = useSWR(
-    'http://localhost:1111/sync/insertions',
+  const { data: insertionsData, mutate: mutateInsertions } = useSWR(
+    `${process.env.REACT_APP_SERVER_DOMAIN}/sync/insertions`,
     null,
     {
       refreshInterval: 10000,
@@ -55,22 +56,87 @@ function App() {
     };
   }, [insertionsData, dataType]);
 
+  useEffect(() => {
+    const storedAuth = localStorage.getItem('authorization');
+
+    if (storedAuth) {
+      setAuthorization(storedAuth);
+    }
+  }, []);
+
   return (
     <div className="App">
-      <div style={{ display: 'flex', padding: 20 }}>
-        <div style={{ marginTop: 20 }}>
-          <label>Data Type:</label>
-
-          <select
-            name="data_type"
-            id="data-type-selector"
-            value={dataType}
-            onChange={(e) => setDataType(e.target.value as any)}
+      <div style={{ display: 'flex', justifyContent: 'center', padding: 20 }}>
+        <div style={{ width: 300 }}>
+          <h3
+            style={{
+              fontSize: 20,
+              fontWeight: 600,
+              color: '#565656',
+              marginTop: 10,
+            }}
           >
-            <option value="bids">Bids</option>
-            <option value="asks">Asks</option>
-            <option value="sales">Sales</option>
-          </select>
+            Configuration:
+          </h3>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              flexDirection: 'column',
+              gap: 12,
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                gap: 8,
+                justifyContent: 'space-between',
+              }}
+            >
+              <label>
+                <b>Authorization:</b>
+              </label>
+              <input
+                value={authorization}
+                onChange={(e) => {
+                  setAuthorization(e.target.value);
+                  localStorage.setItem('authorization', e.target.value);
+                }}
+                onBlur={() => {
+                  if (authorization) {
+                    mutateBlocksData();
+                    mutateInsertions();
+                  }
+                }}
+              />
+            </div>
+            {!authorization && authorization.length === 0 ? (
+              <div style={{ textAlign: 'right', fontSize: 14, color: 'red' }}>
+                Missing Authorization!
+              </div>
+            ) : null}
+            <div
+              style={{
+                display: 'flex',
+                gap: 8,
+                justifyContent: 'space-between',
+              }}
+            >
+              <label>
+                <b>Data Type:</b>
+              </label>
+              <select
+                name="data_type"
+                id="data-type-selector"
+                value={dataType}
+                onChange={(e) => setDataType(e.target.value as any)}
+              >
+                <option value="bids">Bids</option>
+                <option value="asks">Asks</option>
+                <option value="sales">Sales</option>
+              </select>
+            </div>
+          </div>
         </div>
         <div style={{ width: '300px' }}>
           <Doughnut
@@ -80,6 +146,7 @@ function App() {
                   position: 'top',
                   display: true,
                   text: 'Block Allocation',
+                  color: '#565656',
                   font: {
                     size: 20,
                     weight: 'bold',
@@ -99,6 +166,7 @@ function App() {
               position: 'top',
               display: true,
               text: 'Insertions over Time',
+              color: '#565656',
               font: {
                 size: 20,
                 weight: 'bold',

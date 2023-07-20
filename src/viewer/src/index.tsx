@@ -14,13 +14,15 @@ root.render(
     <SWRConfig
       value={{
         fetcher: (resource, init) => {
+          const authorizationPassword =
+            window.localStorage.getItem('authorization');
           const options = init ?? {};
           if (!options.headers) {
             options.headers = {};
           }
           options.withCredentials = true;
           options.credentials = 'include';
-          options.headers['Authorization'] = 'testing';
+          options.headers['Authorization'] = authorizationPassword;
           options.referrerPolicy = 'origin';
           return fetch(resource, options).then((res) => res.json());
         },
