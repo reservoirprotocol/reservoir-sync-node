@@ -7,7 +7,7 @@ import {
   URLs,
   WebSocketError,
   WebSocketMessage,
-  WebSocketServiceConfig
+  WebSocketServiceConfig,
 } from '../types';
 import { InsertionService } from './InsertionService';
 import { LoggerService } from './LoggerService';
@@ -42,6 +42,11 @@ class _WebSocketService {
     contracts: [],
     apiKey: '',
     chain: null,
+    toSync: {
+      bids: false,
+      sales: false,
+      asks: false,
+    },
   };
 
   /**
@@ -94,14 +99,20 @@ class _WebSocketService {
    * @private
    */
   private _onConnect(): void {
-    this._subscribe('ask.created');
-    this._subscribe('ask.updated');
+    if (this._config.toSync.asks) {
+      this._subscribe('ask.created');
+      this._subscribe('ask.updated');
+    }
 
-    this._subscribe('bid.created');
-    this._subscribe('bid.updated');
+    if (this._config.toSync.bids) {
+      this._subscribe('bid.created');
+      this._subscribe('bid.updated');
+    }
 
-    this._subscribe('sale.created');
-    this._subscribe('sale.updated');
+    if (this._config.toSync.bids) {
+      this._subscribe('sale.created');
+      this._subscribe('sale.updated');
+    }
   }
 
   /**
@@ -146,7 +157,7 @@ class _WebSocketService {
       InsertionService.upsert('bids', [data as BidsSchema]);
     }
     if (event?.includes('sales')) {
-        InsertionService.upsert('sales', [data as SalesSchema]);
+      InsertionService.upsert('sales', [data as SalesSchema]);
     }
   }
 
