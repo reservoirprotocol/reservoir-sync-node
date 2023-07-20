@@ -49,10 +49,13 @@ export const isErrorResponse = (
 };
 
 export function parseTimestamp(date: string): number {
-  const datePieces = date.split('T')[0].split('-').map(Number);
-  const [year, month, day] = datePieces;
+  const datePieces = date.split('T');
+  const [year, month, day] = datePieces[0].split('-').map(Number);
 
-  const startDate = new Date(year, month - 1, day);
+  const timePieces = datePieces[1].substring(0, 8).split(':').map(Number);
+  const [hour, minute, second] = timePieces;
+
+  const startDate = new Date(year, month - 1, day, hour, minute, second);
 
   const timezoneOffset = startDate.getTimezoneOffset() * 60 * 1000;
   return (startDate.getTime() - timezoneOffset) / 1000;

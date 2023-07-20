@@ -209,8 +209,8 @@ export default new SyncNode({
     contracts:
       (process.env.CONTRACTS && process.env.CONTRACTS.split(',')) || [],
     toSync: {
-      bids: true,
-      asks: true,
+      bids: false,
+      asks: false,
       sales: true,
     },
     mode: process.env.MODE as Mode,
