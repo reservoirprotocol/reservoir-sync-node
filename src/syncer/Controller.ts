@@ -91,7 +91,7 @@ export class Controller {
     if (backup) {
       backup.workers.map(async ({ block }) => {
         this._workers.map(async (worker) => {
-          worker.process(block, false);
+          worker.process(block, true);
         });
       });
     } else {
