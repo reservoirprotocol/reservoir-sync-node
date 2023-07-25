@@ -126,6 +126,7 @@ export interface Path {
 
 export interface Block {
   id: string;
+  priority: 1 | 2 | 3;
   startDate: string;
   endDate: string;
   contract: string;
