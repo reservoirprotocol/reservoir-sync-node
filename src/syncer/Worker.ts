@@ -193,7 +193,7 @@ export class Worker extends EventEmitter {
 
     // eslint-disable-next-line no-constant-condition
     while (true) {
-      await delay(5000);
+      await delay(60000);
 
       const ascRes = await this._request(
         this._normalize({
