@@ -14,27 +14,32 @@ import { LoggerService } from './LoggerService';
 
 /**
  * Class _WebSocketService provides an interface for working with WebSocket connections.
+ * @class
  */
 class _WebSocketService {
   /**
+   * WebSocket client instance
    * @private
-   * @type {WebSocket}
+   * @type {WebSocket | null}
    */
   private _ws: WebSocket | null = null;
 
   /**
+   * Current connection URL
    * @private
    * @type {URLs}
    */
   private _url: URLs = URLs['mainnet'];
 
   /**
+   * Current connection status
    * @private
    * @type {boolean}
    */
   private _isConnected: boolean = false;
 
   /**
+   * Service configuration object
    * @private
    * @type {WebSocketServiceConfig}
    */
@@ -51,7 +56,9 @@ class _WebSocketService {
 
   /**
    * Configures the WebSocket service with provided configuration.
+   * @public
    * @param {WebSocketServiceConfig} config - WebSocket service configuration object. Defaults to this._config
+   * @returns {void}
    */
   public construct(config: WebSocketServiceConfig): void {
     this._config = config;
@@ -60,6 +67,7 @@ class _WebSocketService {
   /**
    * Establishes a connection with the WebSocket.
    * @private
+   * @returns {void}
    */
   private _connect(): void {
     if (this._isConnected) return;
@@ -80,6 +88,7 @@ class _WebSocketService {
    * Attempts to launch the WebSocket service.
    * @public
    * @async
+   * @returns {Promise<void>} A promise that resolves when the WebSocket service is launched
    */
   public async launch(): Promise<void> {
     return new Promise((resolve) => {
@@ -97,6 +106,7 @@ class _WebSocketService {
   /**
    * Subscribes to events based on provided contracts.
    * @private
+   * @returns {void}
    */
   private _onConnect(): void {
     if (this._config.toSync.asks) {
@@ -119,6 +129,7 @@ class _WebSocketService {
    * Parses the message and upserts data into the InsertionService as per the event type.
    * @param {Buffer} message - WebSocket message
    * @private
+   * @returns {void}
    */
   private _onMessage(message: Buffer): void {
     try {
@@ -145,6 +156,7 @@ class _WebSocketService {
    * @param {string} event - Event type
    * @param {AsksSchema | BidsSchema | SalesSchema} data - Data to be upserted
    * @private
+   * @returns {void}
    */
   private _insert(
     event: string,
@@ -164,6 +176,7 @@ class _WebSocketService {
   /**
    * Attempts reconnection every minute until successful.
    * @private
+   * @returns {void}
    */
   private _onClose(): void {
     this._isConnected = false;
@@ -183,6 +196,7 @@ class _WebSocketService {
    * Logs the error using LoggerService.
    * @param {WebSocketError} e - WebSocket error object
    * @private
+   * @returns {void}
    */
   private _onError(e: WebSocketError): void {
     LoggerService.error(e);
@@ -191,8 +205,8 @@ class _WebSocketService {
   /**
    * Subscribes to websocket events.
    * @param {MessageEvent} event - The event to subscribe to
-   * @param {string} contract - Contract to filter by
    * @private
+   * @returns {void}
    */
   private _subscribe(event: MessageEvent): void {
     this._ws?.send(

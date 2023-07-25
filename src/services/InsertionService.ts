@@ -163,7 +163,15 @@ class _InsertionService {
         return data;
     }
   }
-
+  /**
+   * Formats the provided data as per the specified type.
+   * @private
+   * @template T
+   * @param {T} type - Type of data to be formatted. It extends keyof DataSchemas.
+   * @param {DataSchemas[T]} data - Data to be formatted
+   * @throws Will throw an error if an unknown data type is provided
+   * @returns {DataReturns[T]} - Formatted data as per the specified type.
+   */
   private _format<T extends keyof DataSchemas>(
     type: T,
     data: DataSchemas[T]
