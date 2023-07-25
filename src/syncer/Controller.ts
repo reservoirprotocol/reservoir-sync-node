@@ -5,7 +5,7 @@ import {
   DataSets,
   ErrorType,
   SuccessType,
-  WorkerEvent
+  WorkerEvent,
 } from 'types';
 import { v4 } from 'uuid';
 import { InsertionService, LoggerService, QueueService } from '../services';
@@ -14,7 +14,7 @@ import {
   RecordRoots,
   UrlBase,
   UrlPaths,
-  WorkerCounts
+  WorkerCounts,
 } from '../utils';
 import { Worker } from './Worker';
 
@@ -100,7 +100,7 @@ export class Controller {
     } else {
       const worker = this._workers.find(({ busy }) => !busy) as Worker;
       const block = await this._getInitialBlock();
-       worker.process(block);
+      worker.process(block);
     }
     this._listen();
     this._queue.backup(this._config.dataset, this._workers);
@@ -136,15 +136,15 @@ export class Controller {
   }: WorkerEvent): Promise<void> {
     switch (type) {
       case 'worker.split':
-        await this._handleBlockSplit(block);
+        this._handleBlockSplit(block);
         break;
       case 'worker.release':
-        await this._delegate();
+        this._delegate();
         break;
       default:
         throw new Error(`UNKOWN EVENT: ${type}`);
     }
-    await this._queue.backup(this._config.dataset, this._workers);
+    this._queue.backup(this._config.dataset, this._workers);
   }
 
   /**
@@ -160,7 +160,7 @@ export class Controller {
       id: v4(),
     };
     await this._queue.insertBlock(newBlock, this._config.dataset);
-    this._delegate();
+   this._delegate();
   }
   /**
    * Requests the initial block from the API.
@@ -207,11 +207,16 @@ export class Controller {
 
     if (!worker) return;
 
+    worker.busy = true;
+
     const block = await this._queue.getBlock(this._config.dataset);
 
-    if (!block) return;
+    if (!block) {
+      worker.busy = false;
+      return;
+    }
 
-    worker.process(block);
+     worker.process(block);
   }
   /**
    * Inserts or updates a data set using the InsertionService.
