@@ -10,6 +10,7 @@ import {
 import { v4 } from 'uuid';
 import { InsertionService, LoggerService, QueueService } from '../services';
 import {
+  delay,
   isSuccessResponse,
   RecordRoots,
   UrlBase,
@@ -37,7 +38,11 @@ export class Controller {
    */
   private readonly _config: ControllerConfig;
 
-  private readonly _upkeeper: Worker = new Worker(this);
+  /**
+   * UpKeep worker
+   * @private
+   */
+  private _upkeeper: Worker | null = null;
 
   constructor(config: ControllerConfig) {
     this._config = config;
@@ -55,6 +60,7 @@ export class Controller {
     for (let i = 0; i < WorkerCounts[this._config.mode]; i++) {
       this._workers.push(new Worker(this));
     }
+    this._upkeeper = new Worker(this);
   }
   /**
    * Adds a contract to the node queue
@@ -87,26 +93,28 @@ export class Controller {
    */
   private async _launch(): Promise<void> {
     this._createWorkers();
+    this._listen();
 
     const backup = this._queue.getBackup(this._config.dataset);
 
     if (backup) {
-      backup.workers.forEach(({ block, continuation }) => {
-        this._workers.forEach((w) => {
-          w.process(
+      for (const { block, continuation } of backup.workers) {
+        for (const worker of this._workers) {
+          await worker.process(
             {
               ...block,
             },
             continuation ? false : true
           );
-        });
-      });
+          await delay(30000);
+        }
+      }
     } else {
       const worker = this._workers.find(({ busy }) => !busy) as Worker;
       const block = await this._getInitialBlock();
       worker.process(block);
     }
-    this._listen();
+    this._upkeeper?.upkeep();
     this._queue.backup(this._config.dataset, this._workers);
   }
   /**
@@ -120,7 +128,7 @@ export class Controller {
     this._workers.forEach((worker) => {
       worker.on('worker.event', this._handleWorkerEvent.bind(this));
     });
-    this._upkeeper.on('worker.event', this._handleWorkerEvent.bind(this));
+    this._upkeeper?.on('worker.event', this._handleWorkerEvent.bind(this));
   }
   /**
    * Handles a worker event.
