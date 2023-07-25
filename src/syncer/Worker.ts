@@ -74,81 +74,81 @@ export class Worker extends EventEmitter {
     this._datatype = this._config('dataset');
   }
 
-  public async process({
-    startDate,
-    id,
-    endDate,
-    contract,
-  }: Block): Promise<void> {
+  public async process(
+    { startDate, id, endDate, contract }: Block,
+    grain: boolean = true
+  ): Promise<void> {
     this.busy = true;
     this.data.block = { startDate, endDate, id, contract };
 
-    const ascRes = await this._request(
-      this._normalize({
-        ...(contract && { contract: contract }),
-        startTimestamp: parseTimestamp(startDate),
-        endTimestamp: parseTimestamp(endDate),
-        sortDirection: 'asc',
-      })
-    );
-
-    if (!isSuccessResponse(ascRes)) {
-      await delay(5000);
-      return await this.process({ startDate, endDate, id, contract });
-    }
-
-    if (![...ascRes.data[RecordRoots[this._config('dataset')]]].length) {
-      return this._release({ startDate, id, endDate, contract });
-    }
-
-    Logger.warn(`Graining Block\nid:${id}`);
-
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-      const descRes = await this._request(
+    if (grain) {
+      const ascRes = await this._request(
         this._normalize({
           ...(contract && { contract: contract }),
           startTimestamp: parseTimestamp(startDate),
           endTimestamp: parseTimestamp(endDate),
-          sortDirection: 'desc',
+          sortDirection: 'asc',
         })
       );
 
-      if (!isSuccessResponse(descRes)) {
+      if (!isSuccessResponse(ascRes)) {
         await delay(5000);
-        continue;
+        return await this.process({ startDate, endDate, id, contract });
       }
 
-      const records = [
-        ...ascRes.data[RecordRoots[this._datatype]],
-        ...descRes.data[RecordRoots[this._datatype]],
-      ] as Schemas;
+      if (![...ascRes.data[RecordRoots[this._config('dataset')]]].length) {
+        return this._release({ startDate, id, endDate, contract });
+      }
 
-      await this._insert(records);
+      Logger.warn(`Graining Block\nid:${id}`);
 
-      const isHighDensity = isHighDensityBlock(records, 600000);
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        const descRes = await this._request(
+          this._normalize({
+            ...(contract && { contract: contract }),
+            startTimestamp: parseTimestamp(startDate),
+            endTimestamp: parseTimestamp(endDate),
+            sortDirection: 'desc',
+          })
+        );
 
-      if (isHighDensity) {
-        const middleDate = getMiddleDate(startDate, endDate);
-
-        /**
-         * The graining got to fine. Meaning it's been processing
-         * and it trying to become an upkeeper. We don't want that, so
-         * we release and return it ourselves.
-         *
-         */
-        if (middleDate === startDate || middleDate === endDate) {
-          return this._release({ startDate, endDate, id, contract });
+        if (!isSuccessResponse(descRes)) {
+          await delay(5000);
+          continue;
         }
 
-        this._split({ startDate: middleDate, endDate, id, contract });
-        endDate = middleDate;
-        continue;
-      }
+        const records = [
+          ...ascRes.data[RecordRoots[this._datatype]],
+          ...descRes.data[RecordRoots[this._datatype]],
+        ] as Schemas;
 
-      break;
+        await this._insert(records);
+
+        const isHighDensity = isHighDensityBlock(records, 600000);
+
+        if (isHighDensity) {
+          const middleDate = getMiddleDate(startDate, endDate);
+
+          /**
+           * The graining got to fine. Meaning it's been processing
+           * and it trying to become an upkeeper. We don't want that, so
+           * we release and return it ourselves.
+           *
+           */
+          if (middleDate === startDate || middleDate === endDate) {
+            return this._release({ startDate, endDate, id, contract });
+          }
+
+          this._split({ startDate: middleDate, endDate, id, contract });
+          endDate = middleDate;
+          continue;
+        }
+
+        break;
+      }
+      Logger.info(`Grained Block\nid:${id}`);
     }
-    Logger.info(`Grained Block\nid:${id}`);
 
     Logger.warn(`Processing Block \nid: ${id}`);
     // eslint-disable-next-line no-constant-condition

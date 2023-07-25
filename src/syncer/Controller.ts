@@ -10,6 +10,7 @@ import {
 import { v4 } from 'uuid';
 import { InsertionService, LoggerService, QueueService } from '../services';
 import {
+  delay,
   isSuccessResponse,
   RecordRoots,
   UrlBase,
@@ -37,6 +38,12 @@ export class Controller {
    */
   private readonly _config: ControllerConfig;
 
+  /**
+   * UpKeep worker
+   * @private
+   */
+  private _upkeeper: Worker | null = null;
+
   constructor(config: ControllerConfig) {
     this._config = config;
     this._launch();
@@ -53,6 +60,7 @@ export class Controller {
     for (let i = 0; i < WorkerCounts[this._config.mode]; i++) {
       this._workers.push(new Worker(this));
     }
+    this._upkeeper = new Worker(this);
   }
   /**
    * Adds a contract to the node queue
@@ -85,26 +93,29 @@ export class Controller {
    */
   private async _launch(): Promise<void> {
     this._createWorkers();
-    const upkeeper = new Worker(this);
+    this._listen();
 
     const backup = this._queue.getBackup(this._config.dataset);
 
     if (backup) {
-      backup.workers.forEach((worker) => {
-        this._workers.forEach((w) => {
-          w.process({
-            ...worker.block,
-          });
-        });
-      });
+      for (const { block, continuation } of backup.workers) {
+        for (const worker of this._workers) {
+          await worker.process(
+            {
+              ...block,
+            },
+            continuation ? false : true
+          );
+          await delay(30000);
+        }
+      }
     } else {
       const worker = this._workers.find(({ busy }) => !busy) as Worker;
       const block = await this._getInitialBlock();
       worker.process(block);
     }
-    this._listen();
+    this._upkeeper?.upkeep();
     this._queue.backup(this._config.dataset, this._workers);
-    upkeeper.on('worker.event', this._handleWorkerEvent.bind(this));
   }
   /**
    * Sets up listeners for worker events.
@@ -117,6 +128,7 @@ export class Controller {
     this._workers.forEach((worker) => {
       worker.on('worker.event', this._handleWorkerEvent.bind(this));
     });
+    this._upkeeper?.on('worker.event', this._handleWorkerEvent.bind(this));
   }
   /**
    * Handles a worker event.
@@ -160,7 +172,7 @@ export class Controller {
       id: v4(),
     };
     await this._queue.insertBlock(newBlock, this._config.dataset);
-   this._delegate();
+    this._delegate();
   }
   /**
    * Requests the initial block from the API.
@@ -216,7 +228,7 @@ export class Controller {
       return;
     }
 
-     worker.process(block);
+    worker.process(block);
   }
   /**
    * Inserts or updates a data set using the InsertionService.

@@ -83,7 +83,10 @@ class SyncNode {
     await this._insertionService.launch();
     await this._webSocketService.launch();
 
-    await this._queueService.loadBackup();
+    this._config.backup.useBackup
+      ? await this._queueService.loadBackup()
+      : await this._queueService.clearBackup();
+
     LoggerService.info(`Launched All Services`);
 
     this._createControllers();
