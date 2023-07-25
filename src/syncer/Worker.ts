@@ -75,11 +75,11 @@ export class Worker extends EventEmitter {
   }
 
   public async process(
-    { startDate, id, endDate, contract }: Block,
+    { startDate, id, endDate, contract, priority }: Block,
     grain: boolean = true
   ): Promise<void> {
     this.busy = true;
-    this.data.block = { startDate, endDate, id, contract };
+    this.data.block = { startDate, endDate, id, priority, contract };
 
     if (grain) {
       const ascRes = await this._request(
@@ -93,11 +93,17 @@ export class Worker extends EventEmitter {
 
       if (!isSuccessResponse(ascRes)) {
         await delay(5000);
-        return await this.process({ startDate, endDate, id, contract });
+        return await this.process({
+          startDate,
+          endDate,
+          id,
+          contract,
+          priority,
+        });
       }
 
       if (![...ascRes.data[RecordRoots[this._config('dataset')]]].length) {
-        return this._release({ startDate, id, endDate, contract });
+        return this._release({ startDate, id, endDate, contract, priority });
       }
 
       Logger.warn(`Graining Block\nid:${id}`);
@@ -137,10 +143,22 @@ export class Worker extends EventEmitter {
            *
            */
           if (middleDate === startDate || middleDate === endDate) {
-            return this._release({ startDate, endDate, id, contract });
+            return this._release({
+              startDate,
+              endDate,
+              id,
+              contract,
+              priority,
+            });
           }
 
-          this._split({ startDate: middleDate, endDate, id, contract });
+          this._split({
+            startDate: middleDate,
+            endDate,
+            id,
+            contract,
+            priority: 3,
+          });
           endDate = middleDate;
           continue;
         }
@@ -182,7 +200,7 @@ export class Worker extends EventEmitter {
     Logger.info(
       `Processed Block ${id}\nstartDate: ${startDate} endDate: ${endDate}`
     );
-    this._release({ startDate, endDate, id, contract });
+    this._release({ startDate, endDate, id, contract, priority });
   }
 
   public async upkeep(): Promise<void> {
@@ -236,6 +254,7 @@ export class Worker extends EventEmitter {
       if (isHighDensity) {
         const endDate = records[records.length - 1].updatedAt;
         this._split({
+          priority: 1,
           startDate: records[0].updatedAt,
           endDate,
           id: v4(),
