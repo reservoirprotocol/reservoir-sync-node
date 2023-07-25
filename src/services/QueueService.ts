@@ -129,7 +129,9 @@ class _Queue {
    */
   public async insertBlock(block: Block, datatype: DataTypes): Promise<void> {
     try {
-      await this._client.lPush(`${datatype}-queue`, JSON.stringify(block));
+      const { priority } = block;
+      const queueName = `${datatype}-queue-priority:${priority}`;
+      await this._client.lPush(queueName, JSON.stringify(block));
     } catch (e: unknown) {
       LoggerService.error(e);
       return await this.insertBlock(block, datatype);
@@ -143,9 +145,12 @@ class _Queue {
    */
   public async getBlock(datatype: DataTypes): Promise<Block | null> {
     try {
-      const block = await this._client.rPop(`${datatype}-queue`);
-
-      return block ? (JSON.parse(block) as Block) : null;
+      for (const priority of [1, 2, 3]) {
+        const queueName = `${datatype}-queue-priority:${priority}`;
+        const block = await this._client.rPop(queueName);
+        if (block) return JSON.parse(block) as Block;
+      }
+      return null;
     } catch (e: unknown) {
       return await this.getBlock(datatype);
     }

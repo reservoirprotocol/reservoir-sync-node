@@ -157,7 +157,7 @@ export class Worker extends EventEmitter {
             endDate,
             id,
             contract,
-            priority: 3,
+            priority: 2,
           });
           endDate = middleDate;
           continue;
