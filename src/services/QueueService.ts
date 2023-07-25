@@ -100,7 +100,10 @@ class _Queue {
    * @returns {Backup | null} - The backup, or null if no backup was found.
    */
   public getBackup(datatype: string): Backup | null {
-    if (!this._config.useBackup) return null;
+    if (!this._config.useBackup) {
+      this.clearBackup();
+      return null;
+    }
     return this._backups ? this._backups[`${datatype}-backup`] : null;
   }
 
