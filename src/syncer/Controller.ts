@@ -90,11 +90,14 @@ export class Controller {
     const backup = this._queue.getBackup(this._config.dataset);
 
     if (backup) {
-      backup.workers.forEach((worker) => {
+      backup.workers.forEach(({ block, continuation }) => {
         this._workers.forEach((w) => {
-          w.process({
-            ...worker.block,
-          });
+          w.process(
+            {
+              ...block,
+            },
+            continuation ? false : true
+          );
         });
       });
     } else {
@@ -160,7 +163,7 @@ export class Controller {
       id: v4(),
     };
     await this._queue.insertBlock(newBlock, this._config.dataset);
-   this._delegate();
+    this._delegate();
   }
   /**
    * Requests the initial block from the API.
@@ -216,7 +219,7 @@ export class Controller {
       return;
     }
 
-     worker.process(block);
+    worker.process(block);
   }
   /**
    * Inserts or updates a data set using the InsertionService.
