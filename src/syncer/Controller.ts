@@ -85,16 +85,13 @@ export class Controller {
    */
   private async _launch(): Promise<void> {
     this._createWorkers();
-    const upkeeper = new Worker(this);
 
     const backup = this._queue.getBackup(this._config.dataset);
 
     if (backup) {
-      backup.workers.forEach((worker) => {
-        this._workers.forEach((w) => {
-          w.process({
-            ...worker.block,
-          });
+      backup.workers.map(async ({ block }) => {
+        this._workers.map(async (worker) => {
+          worker.process(block, false);
         });
       });
     } else {
@@ -104,7 +101,6 @@ export class Controller {
     }
     this._listen();
     this._queue.backup(this._config.dataset, this._workers);
-    upkeeper.on('worker.event', this._handleWorkerEvent.bind(this));
   }
   /**
    * Sets up listeners for worker events.
@@ -114,7 +110,13 @@ export class Controller {
    * @private
    */
   private _listen(): void {
-    this._workers.forEach((worker) => {
+    const worker = new Worker(this);
+
+    worker.upkeep();
+
+    worker.on('worker.event', this._handleWorkerEvent.bind(this));
+
+    this._workers.map(async (worker) => {
       worker.on('worker.event', this._handleWorkerEvent.bind(this));
     });
   }
@@ -160,7 +162,7 @@ export class Controller {
       id: v4(),
     };
     await this._queue.insertBlock(newBlock, this._config.dataset);
-   this._delegate();
+    this._delegate();
   }
   /**
    * Requests the initial block from the API.
@@ -216,7 +218,7 @@ export class Controller {
       return;
     }
 
-     worker.process(block);
+    worker.process(block);
   }
   /**
    * Inserts or updates a data set using the InsertionService.
