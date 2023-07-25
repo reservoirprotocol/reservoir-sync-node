@@ -37,6 +37,8 @@ export class Controller {
    */
   private readonly _config: ControllerConfig;
 
+  private readonly _upkeeper: Worker = new Worker(this);
+
   constructor(config: ControllerConfig) {
     this._config = config;
     this._launch();
@@ -85,7 +87,6 @@ export class Controller {
    */
   private async _launch(): Promise<void> {
     this._createWorkers();
-    const upkeeper = new Worker(this);
 
     const backup = this._queue.getBackup(this._config.dataset);
 
@@ -107,7 +108,6 @@ export class Controller {
     }
     this._listen();
     this._queue.backup(this._config.dataset, this._workers);
-    upkeeper.on('worker.event', this._handleWorkerEvent.bind(this));
   }
   /**
    * Sets up listeners for worker events.
@@ -120,6 +120,7 @@ export class Controller {
     this._workers.forEach((worker) => {
       worker.on('worker.event', this._handleWorkerEvent.bind(this));
     });
+    this._upkeeper.on('worker.event', this._handleWorkerEvent.bind(this));
   }
   /**
    * Handles a worker event.
