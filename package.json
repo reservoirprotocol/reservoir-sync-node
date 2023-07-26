@@ -5,6 +5,7 @@
     "build": "yarn run clean && tsc",
     "build:viewer": "cd src/viewer && yarn build",
     "develop": "nodemon",
+    "contracts:format": "node ./scripts/contract-split.js",
     "database:introspect": "yarn database:apply && yarn database:resolve",
     "database:apply": "node ./scripts/database-apply.js",
     "database:resolve": "prisma migrate resolve --applied sync_node",
