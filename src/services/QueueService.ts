@@ -72,9 +72,12 @@ class _Queue {
    * @param {DataTypes} datatype - The datatype of the queue.
    * @returns {Promise<number>} - A promise that resolves with the length of the queue.
    */
-  public async getQueueLength(datatype: DataTypes): Promise<number> {
+  public async getQueueLength(
+    datatype: DataTypes,
+    priority: 1 | 2 | 3
+  ): Promise<number> {
     try {
-      return await this._client.lLen(`${datatype}-queue`);
+      return await this._client.lLen(`${datatype}-queue-priority:${priority}`);
     } catch (e: unknown) {
       LoggerService.error(e);
       return 0;

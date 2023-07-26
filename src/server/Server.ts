@@ -144,9 +144,16 @@ class _Server {
    * @returns A promise that resolves to an array of blocks
    * @public
    */
-  public async getAllBlocks(datatype: DataTypes): Promise<Block[]> {
+  public async getAllBlocks(
+    datatype: DataTypes,
+    priority: 1 | 2 | 3
+  ): Promise<Block[]> {
     try {
-      const blocks = await this._client.lRange(`${datatype}-queue`, 0, -1);
+      const blocks = await this._client.lRange(
+        `${datatype}-queue-priority:${priority}`,
+        0,
+        -1
+      );
       return blocks
         ? (blocks.map((block) => JSON.parse(block)) as Block[])
         : [];

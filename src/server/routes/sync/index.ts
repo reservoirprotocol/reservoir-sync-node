@@ -12,7 +12,9 @@ handler.get('/queue', async (req: Request, res: Response): Promise<unknown> => {
   const type = req.query?.type as DataTypes;
 
   const responses = await Promise.allSettled([
-    Server.getAllBlocks(type),
+    Server.getAllBlocks(type, 1),
+    Server.getAllBlocks(type, 2),
+    Server.getAllBlocks(type, 3),
     Server.getBackups(),
   ]);
 
