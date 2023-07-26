@@ -137,6 +137,7 @@ model bids {
 model orders {
   id                      Bytes   @id @db.ByteA
   kind                    String? @db.Text
+  type                    String? @db.Text
   side                    String? @db.Text
   status                  String? @db.Text
   token_set_id            String? @db.Text
