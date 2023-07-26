@@ -100,7 +100,7 @@ export class Controller {
     if (backup) {
       for (const { block, continuation } of backup.workers) {
         for (const worker of this._workers) {
-          await worker.process(
+          worker.process(
             {
               ...block,
             },
