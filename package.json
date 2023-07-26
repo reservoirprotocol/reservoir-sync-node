@@ -13,7 +13,6 @@
     "database:deploy": "npx prisma migrate deploy",
     "purge:asks": "node ./scripts/database-flush-ask.js",
     "purge:sales": "node ./scripts/database-flush-sales.js",
-    "purge:orders": "node ./scripts/database-flush-orders.js",
     "purge:bids": "node ./scripts/database-flush-bids.js",
     "purge:backup": "node ./scripts/backup-flush.js",
     "lint": "yarn run lint:fix && yarn run lint:format",

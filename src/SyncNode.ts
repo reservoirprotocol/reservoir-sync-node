@@ -212,19 +212,19 @@ export default new SyncNode({
     contracts:
       (process.env.CONTRACTS && process.env.CONTRACTS.split(',')) || [],
     toSync: {
-      bids: false,
-      asks: false,
-      sales: true,
+      bids: process.env.SYNC_BIDS === '1',
+      asks: process.env.SYNC_ASKS === '1',
+      sales: process.env.SYNC_SALES === '1',
     },
     mode: process.env.MODE as Mode,
   },
   backup: {
-    useBackup: true,
+    useBackup: process.env.USE_BACKUP === '1',
   },
   logger: {
     datadog: {
-      apiKey: 'xxxx-xxxx-xxxx',
-      appName: 'sync-node',
+      apiKey: process.env.DATADOG_API_KEY || '',
+      appName: process.env.DATADOG_APP_NAME || '',
     },
   },
 });
