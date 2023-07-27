@@ -1,4 +1,5 @@
 import { AxiosResponse } from 'axios';
+import { isAddress } from 'web3-validator';
 import {
   addMilliseconds,
   differenceInMilliseconds,
@@ -63,8 +64,6 @@ export function parseTimestamp(date: string): number {
   const timezoneOffset = startDate.getTimezoneOffset() * 60 * 1000;
   return (startDate.getTime() - timezoneOffset) / 1000;
 }
-// api.reservoir.tools/sales/v5?orderBy=updated_at&sortDirection=asc&startTimestamp=1538352000&endTimestamp=1688083200
-// https: //api.reservoir.tools/sales/v5?limit=1000&includeCriteriaMetadata=true&orderBy=updated_at&startTimestamp=1538377174800&endTimestamp=1688108374800
 
 /**
  * Calculates the middle point between two dates.
@@ -156,6 +155,7 @@ export const readContracts = (): string[] => {
     fs.readFileSync(path.join(__dirname, '../../contracts.txt'), 'utf-8')
       .trim()
       .split('\n')
+      .filter((contract) => isAddress(contract))
       .map((contract) => contracts.push(contract));
 
     return contracts;
