@@ -1,5 +1,6 @@
 import axios, { AxiosResponse } from 'axios';
 import {
+  Backup,
   Block,
   ControllerConfig,
   DataSets,
@@ -13,6 +14,7 @@ import {
   delay,
   isSuccessResponse,
   RecordRoots,
+  splitArray,
   UrlBase,
   UrlPaths,
   WorkerCounts,
@@ -98,24 +100,61 @@ export class Controller {
     const backup = this._queue.getBackup(this._config.dataset);
 
     if (backup) {
-      for (const { block, continuation } of backup.workers) {
-        for (const worker of this._workers) {
-          await worker.process(
-            {
-              ...block,
-            },
-            continuation ? false : true
-          );
-          await delay(30000);
-        }
-      }
+      this._launchBackup(backup);
     } else {
-      const worker = this._workers.find(({ busy }) => !busy) as Worker;
-      const block = await this._getInitialBlock();
-      worker.process(block);
+      if (this._config.contracts.length > 0) {
+        this._handleContracts();
+      } else {
+        const worker = this._workers.find(({ busy }) => !busy) as Worker;
+        const block = await this._getInitialBlock();
+        worker.process(block);
+      }
     }
+
     this._upkeeper?.upkeep();
     this._queue.backup(this._config.dataset, this._workers);
+  }
+  private async _launchBackup(backup: Backup): Promise<void> {
+    for (const { block, continuation } of backup.workers) {
+      for await (const worker of this._workers) {
+        worker.process(
+          {
+            ...block,
+          },
+          continuation ? false : true
+        );
+        await delay(30000);
+      }
+    }
+  }
+
+  private async _handleContracts(): Promise<void> {
+    const blocks: Block[] = [];
+    const chunks: string[][] = splitArray(this._config.contracts, 4);
+
+    let i: number = 0;
+    for await (const chunk of chunks) {
+      const promises = await Promise.all(
+        chunk.map(async (contract) => {
+          return this._getInitialBlock(contract);
+        })
+      );
+      i += promises.length;
+      LoggerService.info(
+        `${i}/${this._config.contracts.length} Blocks created`
+      );
+      blocks.push(...promises);
+    }
+
+    for (const block of blocks) {
+      const worker = this._workers.find(({ busy }) => !busy) as Worker;
+      if (!worker) {
+        this._queue.insertBlock(block, this._config.dataset);
+        continue;
+      } else {
+        worker.process(block);
+      }
+    }
   }
   /**
    * Sets up listeners for worker events.
@@ -197,7 +236,9 @@ export class Controller {
 
     if (!isSuccessResponse(reqs[0]) || !isSuccessResponse(reqs[1]))
       throw new Error(
-        `Intiailizing blocks failed: ${reqs.map((r, i) => `${r.status}:${i}`)}`
+        `Intiailizing blocks failed: ${reqs.map(
+          (r, i) => `${r.status}:${i} ${contract ?? contract}`
+        )}`
       );
 
     const root = RecordRoots[this._config.dataset];
