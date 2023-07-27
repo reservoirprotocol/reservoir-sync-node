@@ -134,17 +134,16 @@ export class Controller {
 
     let i: number = 0;
     for await (const chunk of chunks) {
-      for (const contract of chunk) {
-        await delay(1000);
-        const block = await this._getInitialBlock(contract);
-        blocks.push(block);
-        i++;
-        LoggerService.info(
-          `${i}/${this._config.contracts.length} Blocks created`
-        );
-      }
-
-      await delay(5000);
+      const promises = await Promise.all(
+        chunk.map(async (contract) => {
+          return this._getInitialBlock(contract);
+        })
+      );
+      i += promises.length;
+      LoggerService.info(
+        `${i}/${this._config.contracts.length} Blocks created`
+      );
+      blocks.push(...promises);
     }
 
     for (const block of blocks) {
