@@ -253,6 +253,19 @@ export class Worker extends EventEmitter {
 
       if (isHighDensity) {
         const endDate = records[records.length - 1].updatedAt;
+
+        /**
+         * The graining got to fine. Meaning it's been processing
+         * and it trying to become an upkeeper. We don't want that, so
+         * we release and return it ourselves.
+         *
+         */
+        if (
+          records[0].updatedAt === startDate ||
+          records[0].updatedAt === endDate
+        )
+          return;
+
         this._split({
           priority: 1,
           startDate: records[0].updatedAt,
