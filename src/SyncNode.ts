@@ -162,6 +162,22 @@ class SyncNode {
   private _createControllers(): void {
     const { syncer } = this._config;
 
+    if (syncer.toSync.transfers) {
+      this._controllers.set(
+        'transfers',
+        new Controller({
+          contracts: this._contracts,
+          apiKey: this._config.syncer.apiKey,
+          dataset: 'transfers',
+          type: 'backfill',
+          chain: this._config.syncer.chain,
+          delay: 0,
+          mode: this._config.syncer.mode,
+        })
+      );
+    }
+
+
     if (syncer.toSync.sales) {
       this._controllers.set(
         'sales',
