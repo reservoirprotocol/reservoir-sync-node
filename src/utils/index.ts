@@ -6,6 +6,9 @@ import {
   parseISO,
 } from 'date-fns';
 import { utcToZonedTime } from 'date-fns-tz';
+import fs from 'fs';
+import path from 'path';
+import { LoggerService } from '../services';
 
 import { ControllerEvent, ErrorType, Schemas, SuccessType } from '../types';
 /**
@@ -146,3 +149,34 @@ export const WorkerCounts = {
   normal: 15,
   slow: 10,
 } as const;
+
+export const readContracts = (): string[] => {
+  try {
+    const contracts: string[] = [];
+    fs.readFileSync(path.join(__dirname, '../../contracts.txt'), 'utf-8')
+      .trim()
+      .split('\n')
+      .map((contract) => contracts.push(contract));
+
+    return contracts;
+  } catch (e: unknown) {
+    LoggerService.error(e);
+    return [];
+  }
+};
+
+export const splitArray = <T>(arr: T[], parts: number): T[][] => {
+  const len = arr.length;
+  const out: T[][] = Array(parts).fill([]);
+  const quotient = Math.floor(len / parts);
+  const remainder = len % parts;
+
+  let start = 0;
+  for (let i = 0; i < parts; i++) {
+    const partSize = quotient + (i < remainder ? 1 : 0);
+    out[i] = arr.slice(start, start + partSize);
+    start += partSize;
+  }
+
+  return out;
+};

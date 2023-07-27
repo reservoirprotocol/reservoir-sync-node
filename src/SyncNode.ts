@@ -1,3 +1,5 @@
+import { ChildProcess, spawn } from 'child_process';
+import { readContracts } from './utils';
 import {
   InsertionService,
   LoggerService,
@@ -12,7 +14,6 @@ import {
   ProcessCommand,
   SyncNodeConfig,
 } from './types';
-import { ChildProcess, spawn } from 'child_process';
 
 class SyncNode {
   /**
@@ -165,6 +166,7 @@ class SyncNode {
       this._controllers.set(
         'sales',
         new Controller({
+          contracts: this._contracts,
           apiKey: this._config.syncer.apiKey,
           dataset: 'sales',
           type: 'backfill',
@@ -179,6 +181,7 @@ class SyncNode {
       this._controllers.set(
         'asks',
         new Controller({
+          contracts: this._contracts,
           apiKey: this._config.syncer.apiKey,
           dataset: 'asks',
           type: 'backfill',
@@ -193,6 +196,7 @@ class SyncNode {
       this._controllers.set(
         'bids',
         new Controller({
+          contracts: this._contracts,
           apiKey: this._config.syncer.apiKey,
           dataset: 'bids',
           type: 'backfill',
@@ -209,8 +213,7 @@ export default new SyncNode({
   syncer: {
     chain: process.env.CHAIN as Chains,
     apiKey: process.env.API_KEY as string,
-    contracts:
-      (process.env.CONTRACTS && process.env.CONTRACTS.split(',')) || [],
+    contracts: readContracts(),
     toSync: {
       bids: process.env.SYNC_BIDS === '1',
       asks: process.env.SYNC_ASKS === '1',
