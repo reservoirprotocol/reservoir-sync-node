@@ -1,11 +1,10 @@
 {
   "name": "reservoir-sync-node",
   "scripts": {
-    "start": "yarn build && yarn build:viewer && yarn database:prepare && yarn contracts:format && node dist/index.js",
+    "start": "yarn build && yarn build:viewer && yarn database:prepare && node dist/index.js",
     "build": "yarn run clean && tsc",
     "build:viewer": "cd src/viewer && yarn build",
     "develop": "nodemon",
-    "contracts:format": "node ./scripts/contract-split.js",
     "database:introspect": "yarn database:apply && yarn database:resolve",
     "database:apply": "node ./scripts/database-apply.js",
     "database:resolve": "prisma migrate resolve --applied sync_node",

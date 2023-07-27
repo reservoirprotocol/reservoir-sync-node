@@ -129,8 +129,13 @@ export class Controller {
 
   private async _handleContracts(): Promise<void> {
     const blocks: Block[] = [];
+    let i = 0;
     for await (const contract of this._config.contracts) {
       blocks.push(await this._getInitialBlock(contract));
+      i++;
+      LoggerService.info(
+        `${i}/${this._config.contracts.length} Blocks created`
+      );
       await delay(2500);
     }
 

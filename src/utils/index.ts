@@ -152,11 +152,13 @@ export const WorkerCounts = {
 
 export const readContracts = (): string[] => {
   try {
-    const file = fs.readFileSync(
-      path.join(__dirname, '../../contracts.json'),
-      'utf-8'
-    );
-    return JSON.parse(file);
+    const contracts: string[] = [];
+    fs.readFileSync(path.join(__dirname, '../contracts.txt'), 'utf-8')
+      .trim()
+      .split('\n')
+      .map((contract) => contracts.push(contract));
+
+    return contracts;
   } catch (e: unknown) {
     LoggerService.error(e);
     return [];
