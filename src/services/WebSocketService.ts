@@ -48,6 +48,7 @@ class _WebSocketService {
     apiKey: '',
     chain: null,
     toSync: {
+      transfers: false,
       bids: false,
       sales: false,
       asks: false,

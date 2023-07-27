@@ -135,12 +135,14 @@ export const UrlPaths = {
   sales: '/sales/v4',
   asks: '/orders/asks/v4',
   bids: '/orders/bids/v5',
+  transfers: '/transfers/bulk/v2',
 } as const;
 
 export const RecordRoots = {
   asks: 'orders',
   sales: 'sales',
   bids: 'orders',
+  transfers: 'transfers',
 } as const;
 
 export const WorkerCounts = {

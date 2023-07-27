@@ -215,6 +215,7 @@ export default new SyncNode({
     apiKey: process.env.API_KEY as string,
     contracts: readContracts(),
     toSync: {
+      transfers: process.env.SYNC_TRANSFERS === '1',
       bids: process.env.SYNC_BIDS === '1',
       asks: process.env.SYNC_ASKS === '1',
       sales: process.env.SYNC_SALES === '1',
