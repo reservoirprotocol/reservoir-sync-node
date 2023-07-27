@@ -14,6 +14,7 @@ import {
   delay,
   isSuccessResponse,
   RecordRoots,
+  splitArray,
   UrlBase,
   UrlPaths,
   WorkerCounts,
@@ -129,14 +130,21 @@ export class Controller {
 
   private async _handleContracts(): Promise<void> {
     const blocks: Block[] = [];
-    let i = 0;
-    for await (const contract of this._config.contracts) {
-      blocks.push(await this._getInitialBlock(contract));
-      i++;
+    const chunks: string[][] = splitArray(this._config.contracts, 4);
+
+    let i: number = 0;
+    for await (const chunk of chunks) {
+      const promises = await Promise.all(
+        chunk.map(async (contract) => {
+          await delay(1000);
+          return this._getInitialBlock(contract);
+        })
+      );
+      i += promises.length;
       LoggerService.info(
         `${i}/${this._config.contracts.length} Blocks created`
       );
-      await delay(2500);
+      blocks.push(...promises);
     }
 
     for (const block of blocks) {
@@ -212,7 +220,6 @@ export class Controller {
    * @private
    */
   private async _getInitialBlock(contract?: string): Promise<Block> {
-    LoggerService.warn('Constructing Block');
     const reqs = await Promise.all([
       this.request(
         this.normalize({
@@ -230,12 +237,12 @@ export class Controller {
 
     if (!isSuccessResponse(reqs[0]) || !isSuccessResponse(reqs[1]))
       throw new Error(
-        `Intiailizing blocks failed: ${reqs.map((r, i) => `${r.status}:${i}`)}`
+        `Intiailizing blocks failed: ${reqs.map(
+          (r, i) => `${r.status}:${i} ${contract ?? contract}`
+        )}`
       );
 
     const root = RecordRoots[this._config.dataset];
-
-    LoggerService.info('Constructed Block');
 
     return {
       id: v4(),
