@@ -145,7 +145,6 @@ class _InsertionService {
     const contracts = SyncNode.getContracts();
     const sources = SyncNode.getConfigProperty('syncer')['sources'];
 
-    // Return the original data if both arrays are empty
     if (contracts.length === 0 && sources.length === 0) return data;
 
     switch (type) {
