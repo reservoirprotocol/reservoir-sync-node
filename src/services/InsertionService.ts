@@ -332,7 +332,6 @@ class _InsertionService {
         log_index: transfer.logIndex,
         batch_index: transfer.batchIndex,
         timestamp: transfer.timestamp,
-        created_at: '',
         updated_at: transfer?.updatedAt,
       };
     }
