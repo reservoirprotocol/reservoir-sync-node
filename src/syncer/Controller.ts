@@ -1,5 +1,6 @@
 import axios, { AxiosResponse } from 'axios';
 import {
+  Backup,
   Block,
   ControllerConfig,
   DataSets,
@@ -98,24 +99,48 @@ export class Controller {
     const backup = this._queue.getBackup(this._config.dataset);
 
     if (backup) {
-      for (const { block, continuation } of backup.workers) {
-        for (const worker of this._workers) {
-          worker.process(
-            {
-              ...block,
-            },
-            continuation ? false : true
-          );
-          await delay(30000);
-        }
-      }
+      this._launchBackup(backup);
     } else {
-      const worker = this._workers.find(({ busy }) => !busy) as Worker;
-      const block = await this._getInitialBlock();
-      worker.process(block);
+      if (this._config.contracts.length > 0) {
+        this._handleContracts();
+      } else {
+        const worker = this._workers.find(({ busy }) => !busy) as Worker;
+        const block = await this._getInitialBlock();
+        worker.process(block);
+      }
     }
+
     this._upkeeper?.upkeep();
     this._queue.backup(this._config.dataset, this._workers);
+  }
+  private async _launchBackup(backup: Backup): Promise<void> {
+    for (const { block, continuation } of backup.workers) {
+      for await (const worker of this._workers) {
+        worker.process(
+          {
+            ...block,
+          },
+          continuation ? false : true
+        );
+        await delay(30000);
+      }
+    }
+  }
+
+  private async _handleContracts(): Promise<void> {
+    const blocks = await Promise.all(
+      this._config.contracts.map((contract) => this._getInitialBlock(contract))
+    );
+
+    for (const block of blocks) {
+      const worker = this._workers.find(({ busy }) => !busy) as Worker;
+      if (!worker) {
+        this._queue.insertBlock(block, this._config.dataset);
+        continue;
+      } else {
+        worker.process(block);
+      }
+    }
   }
   /**
    * Sets up listeners for worker events.
@@ -180,6 +205,7 @@ export class Controller {
    * @private
    */
   private async _getInitialBlock(contract?: string): Promise<Block> {
+    LoggerService.warn(`Constructing Block ${contract && `for ${contract}`}`);
     const reqs = await Promise.all([
       this.request(
         this.normalize({
@@ -202,6 +228,8 @@ export class Controller {
 
     const root = RecordRoots[this._config.dataset];
 
+    LoggerService.info(`Constructued Block ${contract && `for ${contract}`}`);
+    
     return {
       id: v4(),
       priority: 1,

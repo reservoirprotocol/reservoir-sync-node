@@ -165,6 +165,7 @@ class SyncNode {
       this._controllers.set(
         'sales',
         new Controller({
+          contracts: this._contracts,
           apiKey: this._config.syncer.apiKey,
           dataset: 'sales',
           type: 'backfill',
@@ -179,6 +180,7 @@ class SyncNode {
       this._controllers.set(
         'asks',
         new Controller({
+          contracts: this._contracts,
           apiKey: this._config.syncer.apiKey,
           dataset: 'asks',
           type: 'backfill',
@@ -193,6 +195,7 @@ class SyncNode {
       this._controllers.set(
         'bids',
         new Controller({
+          contracts: this._contracts,
           apiKey: this._config.syncer.apiKey,
           dataset: 'bids',
           type: 'backfill',
