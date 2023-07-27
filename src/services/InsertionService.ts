@@ -143,26 +143,35 @@ class _InsertionService {
     data: AsksSchema[] | SalesSchema[] | BidsSchema[]
   ): AsksSchema[] | SalesSchema[] | BidsSchema[] {
     const contracts = SyncNode.getContracts();
+    const sources = SyncNode.getConfigProperty('syncer')['sources'];
 
-    if (contracts.length === 0) return data;
+    if (contracts.length === 0 && sources.length === 0) return data;
 
     switch (type) {
       case 'asks':
-        return (data as AsksSchema[]).filter((set) =>
-          contracts.includes(set.contract)
+        return (data as AsksSchema[]).filter(
+          (set) =>
+            (contracts.length === 0 || contracts.includes(set.contract)) &&
+            (sources.length === 0 || sources.includes(set.source.domain))
         );
       case 'bids':
-        return (data as BidsSchema[]).filter((set) =>
-          contracts.includes(set.contract)
+        return (data as BidsSchema[]).filter(
+          (set) =>
+            (contracts.length === 0 || contracts.includes(set.contract)) &&
+            (sources.length === 0 || sources.includes(set.source.domain))
         );
       case 'sales':
-        return (data as SalesSchema[]).filter((set) =>
-          contracts.includes(set.token.contract)
+        return (data as SalesSchema[]).filter(
+          (set) =>
+            (contracts.length === 0 ||
+              contracts.includes(set.token.contract)) &&
+            (sources.length === 0 || sources.includes(set.orderSource))
         );
       default:
         return data;
     }
   }
+
   /**
    * Formats the provided data as per the specified type.
    * @private
