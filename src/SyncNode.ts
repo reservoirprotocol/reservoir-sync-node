@@ -1,3 +1,5 @@
+import { ChildProcess, spawn } from 'child_process';
+import { readContracts } from './utils';
 import {
   InsertionService,
   LoggerService,
@@ -12,7 +14,6 @@ import {
   ProcessCommand,
   SyncNodeConfig,
 } from './types';
-import { ChildProcess, spawn } from 'child_process';
 
 class SyncNode {
   /**
@@ -212,8 +213,7 @@ export default new SyncNode({
   syncer: {
     chain: process.env.CHAIN as Chains,
     apiKey: process.env.API_KEY as string,
-    contracts:
-      (process.env.CONTRACTS && process.env.CONTRACTS.split(',')) || [],
+    contracts: readContracts(),
     toSync: {
       bids: process.env.SYNC_BIDS === '1',
       asks: process.env.SYNC_ASKS === '1',

@@ -3,17 +3,15 @@
 const fs = require('fs');
 const path = require('path');
 
-const contracts = fs.readFileSync(
-  path.join(__dirname, '../contracts.txt'),
-  'utf-8'
-);
+const contracts = [];
 
-let line = '';
-
-line = contracts
+fs.readFileSync(path.join(__dirname, '../contracts.txt'), 'utf-8')
   .trim()
   .split('\n')
-  .map((contract) => contract.trim())
-  .join(',');
+  .map((contract) => contracts.push(contract));
 
-fs.writeFileSync(path.join(__dirname, '../output.txt'), line, 'utf-8');
+fs.writeFileSync(
+  path.join(__dirname, '../contracts.json'),
+  JSON.stringify(contracts),
+  'utf-8'
+);

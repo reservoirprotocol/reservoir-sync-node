@@ -128,9 +128,11 @@ export class Controller {
   }
 
   private async _handleContracts(): Promise<void> {
-    const blocks = await Promise.all(
-      this._config.contracts.map((contract) => this._getInitialBlock(contract))
-    );
+    const blocks: Block[] = [];
+    for await (const contract of this._config.contracts) {
+      blocks.push(await this._getInitialBlock(contract));
+      await delay(2500);
+    }
 
     for (const block of blocks) {
       const worker = this._workers.find(({ busy }) => !busy) as Worker;
@@ -205,7 +207,7 @@ export class Controller {
    * @private
    */
   private async _getInitialBlock(contract?: string): Promise<Block> {
-    LoggerService.warn(`Constructing Block ${contract && `for ${contract}`}`);
+    LoggerService.warn('Constructing Block');
     const reqs = await Promise.all([
       this.request(
         this.normalize({
@@ -228,8 +230,8 @@ export class Controller {
 
     const root = RecordRoots[this._config.dataset];
 
-    LoggerService.info(`Constructued Block ${contract && `for ${contract}`}`);
-    
+    LoggerService.info('Constructed Block');
+
     return {
       id: v4(),
       priority: 1,

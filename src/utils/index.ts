@@ -6,6 +6,9 @@ import {
   parseISO,
 } from 'date-fns';
 import { utcToZonedTime } from 'date-fns-tz';
+import fs from 'fs';
+import path from 'path';
+import { LoggerService } from '../services';
 
 import { ControllerEvent, ErrorType, Schemas, SuccessType } from '../types';
 /**
@@ -146,3 +149,16 @@ export const WorkerCounts = {
   normal: 15,
   slow: 10,
 } as const;
+
+export const readContracts = (): string[] => {
+  try {
+    const file = fs.readFileSync(
+      path.join(__dirname, '../../contracts.json'),
+      'utf-8'
+    );
+    return JSON.parse(file);
+  } catch (e: unknown) {
+    LoggerService.error(e);
+    return [];
+  }
+};
