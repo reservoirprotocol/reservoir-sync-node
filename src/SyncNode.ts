@@ -153,7 +153,17 @@ class SyncNode {
       });
     }, 1000 * 60 * 1);
   }
-
+  /**
+   * Returns a property from the controller's configuration.
+   * @param {T} property - The property to return.
+   * @returns {ControllerConfig[T]} - The value of the property.
+   * @public
+   */
+  public getConfigProperty<T extends keyof SyncNodeConfig>(
+    property: T
+  ): SyncNodeConfig[T] {
+    return this._config[property];
+  }
   /**
    * Creates the controllers for each datatype
    * @private
@@ -214,6 +224,7 @@ export default new SyncNode({
     chain: process.env.CHAIN as Chains,
     apiKey: process.env.API_KEY as string,
     contracts: readContracts(),
+    sources: process.env.SOURCES ? process.env.SOURCES.split(',') : [],
     toSync: {
       bids: process.env.SYNC_BIDS === '1',
       asks: process.env.SYNC_ASKS === '1',

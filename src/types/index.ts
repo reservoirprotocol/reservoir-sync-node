@@ -186,6 +186,7 @@ export interface SyncNodeConfig {
     apiKey: string;
     chain: Chains;
     contracts: string[];
+    sources: string[];
     toSync: Record<DataTypes, boolean>;
     mode: Mode;
   };
