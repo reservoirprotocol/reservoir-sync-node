@@ -17,7 +17,7 @@ export type KnownPropertiesType = {
   continuation: string;
   records: Schemas;
 } & {
-  [key in 'sales' | 'orders']: Schemas;
+  [key in 'sales' | 'orders' | 'transfers']: Schemas;
 };
 
 export type GenericResponse = KnownPropertiesType;
@@ -44,9 +44,13 @@ export type WorkerType = 'backfiller' | 'upkeeper';
 
 export type ApiResponse<T = SuccessType> = SuccessResponse<T> | ErrorResponse;
 
-export type DataTypes = 'sales' | 'asks' | 'bids';
+export type DataTypes = 'sales' | 'asks' | 'bids' | 'transfers';
 
-export type DataSets = AsksSchema[] | SalesSchema[] | BidsSchema[];
+export type DataSets =
+  | AsksSchema[]
+  | SalesSchema[]
+  | BidsSchema[]
+  | TransfersSchema[];
 
 export type Chains = 'mainnet' | 'goerli' | 'polygon' | 'arbitrum' | 'optimism';
 
@@ -59,7 +63,9 @@ export type MessageEvent =
   | 'sale.created'
   | 'sale.updated'
   | 'bid.created'
-  | 'bid.updated';
+  | 'bid.updated'
+  | 'transfer.created'
+  | 'transfer.updated';
 
 export type Mode = 'slow' | 'normal' | 'fast';
 export type ControllerType = 'upkeep' | 'backfill';
@@ -151,6 +157,7 @@ export interface WebSocketServiceConfig {
   apiKey: string;
   chain: Chains | null;
   toSync: {
+    transfers: boolean;
     bids: boolean;
     asks: boolean;
     sales: boolean;
@@ -173,7 +180,11 @@ export interface ServerConfig {
   authorization: string;
 }
 
-export type Schemas = SalesSchema[] | AsksSchema[] | BidsSchema[];
+export type Schemas =
+  | SalesSchema[]
+  | AsksSchema[]
+  | BidsSchema[]
+  | TransfersSchema[];
 
 export type SchemasObject = {
   sales: SalesSchema[];
@@ -337,6 +348,25 @@ export interface BidsSchema {
   expiration: number;
   isReservoir: boolean;
   isDynamic: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TransfersSchema {
+  id: string;
+  token: {
+    contract: string;
+    tokenId: string;
+  };
+  from: string;
+  to: string;
+  amount: string;
+  block: number;
+  txHash: string;
+  logIndex: number;
+  batchIndex: number;
+  timestamp: number;
+  isDeleted: boolean;
   createdAt: string;
   updatedAt: string;
 }

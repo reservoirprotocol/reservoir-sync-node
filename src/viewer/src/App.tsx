@@ -4,7 +4,9 @@ import useSWR from 'swr';
 import { useEffect, useMemo, useState } from 'react';
 
 function App() {
-  const [dataType, setDataType] = useState<'sales' | 'bids' | 'asks'>('sales');
+  const [dataType, setDataType] = useState<
+    'sales' | 'bids' | 'asks' | 'transfers'
+  >('sales');
   const [authorization, setAuthorization] = useState<string>('');
   const { data: blocksDataResponse, mutate: mutateBlocksData } = useSWR(
     `${process.env.REACT_APP_SERVER_DOMAIN}/sync/queue?type=${dataType}`,
@@ -133,6 +135,7 @@ function App() {
               >
                 <option value="bids">Bids</option>
                 <option value="asks">Asks</option>
+                <option value="transfers">Transfers</option>
                 <option value="sales">Sales</option>
               </select>
             </div>

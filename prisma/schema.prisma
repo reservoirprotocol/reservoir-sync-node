@@ -133,3 +133,20 @@ model bids {
   created_at    DateTime? @db.Timestamp
   updated_at    DateTime? @db.Timestamp
 }
+
+model transfers {
+  id             Bytes   @id @db.ByteA
+  token_contract Bytes?   @db.ByteA
+  token_id       String? @db.Text
+  from           Bytes?  @db.ByteA
+  to             Bytes?  @db.ByteA
+  amount         String? @db.Text
+  block          Int?    @db.Integer
+  tx_hash        Bytes?  @db.ByteA
+  log_index      Int?    @db.Integer
+  batch_index    Int?    @db.Integer
+  timestamp      Int?    @db.Integer
+
+  created_at DateTime? @db.Timestamp
+  updated_at DateTime? @db.Timestamp
+}

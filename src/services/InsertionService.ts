@@ -7,6 +7,7 @@ import {
   DataSets,
   DataTypes,
   SalesSchema,
+  TransfersSchema,
 } from '../types';
 import { addressToBuffer, toBuffer } from '../utils';
 import { LoggerService } from './LoggerService';
@@ -15,12 +16,14 @@ interface DataSchemas {
   sales: SalesSchema;
   asks: AsksSchema;
   bids: BidsSchema;
+  transfers: TransfersSchema;
 }
 
 interface DataReturns {
   sales: Prisma.salesCreateInput;
   asks: Prisma.asksCreateInput;
   bids: Prisma.bidsCreateInput;
+  transfers: Prisma.transfersCreateInput;
 }
 /**
  *
@@ -105,10 +108,7 @@ class _InsertionService {
    * @param {DataSets} data - The actual data to be upserted.
    * @returns {Promise<void>}
    */
-  public async upsert(
-    type: DataTypes,
-    data: AsksSchema[] | SalesSchema[] | BidsSchema[]
-  ): Promise<void> {
+  public async upsert(type: DataTypes, data: DataSets): Promise<void> {
     data = this._filter(type, data);
 
     if (!this.insertionTally[type]) {
@@ -138,16 +138,17 @@ class _InsertionService {
    * @returns {AsksSchema[] | SalesSchema[] | BidsSchema[]} - The filtered data.
    * @private
    */
-  private _filter(
-    type: DataTypes,
-    data: AsksSchema[] | SalesSchema[] | BidsSchema[]
-  ): AsksSchema[] | SalesSchema[] | BidsSchema[] {
+  private _filter(type: DataTypes, data: DataSets): DataSets {
     const contracts = SyncNode.getContracts();
     const sources = SyncNode.getConfigProperty('syncer')['sources'];
 
     if (contracts.length === 0 && sources.length === 0) return data;
 
     switch (type) {
+      case 'transfers':
+        return (data as TransfersSchema[]).filter((set) =>
+          contracts.includes(set.token?.contract)
+        );
       case 'asks':
         return (data as AsksSchema[]).filter(
           (set) =>
@@ -320,6 +321,27 @@ class _InsertionService {
         price_amount_decimal: sale.price?.amount?.decimal,
         price_amount_usd: sale.price?.amount?.usd,
         price_amount_native: sale.price?.amount?.native,
+      };
+    }
+
+    if (type === 'transfers') {
+      const transfer = data as TransfersSchema;
+      return {
+        id: Buffer.from(
+          `${transfer.txHash}-${transfer.logIndex}-${transfer.batchIndex}`,
+          'utf16le'
+        ),
+        token_contract: addressToBuffer(transfer.token.contract),
+        token_id: transfer.token.tokenId,
+        from: addressToBuffer(transfer.from),
+        to: addressToBuffer(transfer.to),
+        amount: transfer.amount,
+        block: transfer.block,
+        tx_hash: addressToBuffer(transfer.txHash),
+        log_index: transfer.logIndex,
+        batch_index: transfer.batchIndex,
+        timestamp: transfer.timestamp,
+        updated_at: transfer?.updatedAt,
       };
     }
 

@@ -4,6 +4,7 @@ import {
   BidsSchema,
   MessageEvent,
   SalesSchema,
+  TransfersSchema,
   URLs,
   WebSocketError,
   WebSocketMessage,
@@ -48,6 +49,7 @@ class _WebSocketService {
     apiKey: '',
     chain: null,
     toSync: {
+      transfers: false,
       bids: false,
       sales: false,
       asks: false,
@@ -123,6 +125,11 @@ class _WebSocketService {
       this._subscribe('sale.created');
       this._subscribe('sale.updated');
     }
+
+    if (this._config.toSync.transfers) {
+      this._subscribe('transfer.created');
+      this._subscribe('transfer.updated');
+    }
   }
 
   /**
@@ -170,6 +177,9 @@ class _WebSocketService {
     }
     if (event?.includes('sales')) {
       InsertionService.upsert('sales', [data as SalesSchema]);
+    }
+    if (event?.includes('transfer')) {
+      InsertionService.upsert('transfers', [data as TransfersSchema]);
     }
   }
 
