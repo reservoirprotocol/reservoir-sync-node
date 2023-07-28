@@ -154,7 +154,7 @@ export const WorkerCounts = {
 export const readContracts = (): string[] => {
   try {
     const contracts: string[] = [];
-    fs.readFileSync(path.join(__dirname, '../../contracts.txt'), 'utf-8')
+    fs.readFileSync(path.join(__dirname, '../contracts.txt'), 'utf-8')
       .trim()
       .split('\n')
       .filter((contract) => isAddress(contract))
