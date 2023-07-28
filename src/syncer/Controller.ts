@@ -71,7 +71,7 @@ export class Controller {
    */
   public async addContract(contract: string): Promise<void> {
     const block = await this._getInitialBlock(contract);
-
+    if (!block) return;
     await this._queue.insertBlock(block, this._config.dataset);
 
     LoggerService.info(
@@ -107,6 +107,7 @@ export class Controller {
       } else {
         const worker = this._workers.find(({ busy }) => !busy) as Worker;
         const block = await this._getInitialBlock();
+        if (!block) return;
         worker.process(block);
       }
     }
@@ -143,7 +144,7 @@ export class Controller {
       LoggerService.info(
         `${i}/${this._config.contracts.length} Blocks created`
       );
-      blocks.push(...promises);
+      blocks.push(...(promises.filter((block) => block !== null) as Block[]));
     }
 
     for (const block of blocks) {
@@ -218,7 +219,7 @@ export class Controller {
    * @returns {Promise<Block>} - The initial block.
    * @private
    */
-  private async _getInitialBlock(contract?: string): Promise<Block> {
+  private async _getInitialBlock(contract?: string): Promise<Block | null> {
     const reqs = await Promise.all([
       this.request(
         this.normalize({
@@ -242,6 +243,13 @@ export class Controller {
       );
 
     const root = RecordRoots[this._config.dataset];
+
+    if (reqs[1].data[root].length === 0 || reqs[0].data[root]) {
+      LoggerService.warn(
+        `Unable to create block for: ${contract}. No records found.`
+      );
+      return null;
+    }
 
     return {
       id: v4(),
