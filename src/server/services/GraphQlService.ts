@@ -208,7 +208,7 @@ class _GraphQlService {
       query: new GraphQLObjectType({
         name: 'Query',
         fields: {
-          ask: {
+          transfer: {
             type: new GraphQLList(
               new GraphQLObjectType({
                 name: 'Transfer',
