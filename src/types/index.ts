@@ -63,7 +63,9 @@ export type MessageEvent =
   | 'sale.created'
   | 'sale.updated'
   | 'bid.created'
-  | 'bid.updated';
+  | 'bid.updated'
+  | 'transfer.created'
+  | 'transfer.updated';
 
 export type Mode = 'slow' | 'normal' | 'fast';
 export type ControllerType = 'upkeep' | 'backfill';
