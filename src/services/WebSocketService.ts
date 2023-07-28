@@ -170,7 +170,7 @@ class _WebSocketService {
     data: AsksSchema | BidsSchema | SalesSchema
   ): void {
     if (event?.includes('ask')) {
-      InsertionService.upsert('bids', [data as AsksSchema]);
+      InsertionService.upsert('asks', [data as AsksSchema]);
     }
     if (event?.includes('bid')) {
       InsertionService.upsert('bids', [data as BidsSchema]);
