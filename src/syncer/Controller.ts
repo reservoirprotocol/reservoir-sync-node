@@ -235,12 +235,14 @@ export class Controller {
       ),
     ]);
 
-    if (!isSuccessResponse(reqs[0]) || !isSuccessResponse(reqs[1]))
-      throw new Error(
+    if (!isSuccessResponse(reqs[0]) || !isSuccessResponse(reqs[1])) {
+      LoggerService.warn(
         `Intiailizing blocks failed: ${reqs.map(
           (r, i) => `${r.status}:${i} ${contract ?? contract}`
         )}`
       );
+      return null;
+    }
 
     const root = RecordRoots[this._config.dataset];
 
