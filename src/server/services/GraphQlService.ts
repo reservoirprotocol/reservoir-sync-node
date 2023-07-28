@@ -204,6 +204,72 @@ class _GraphQlService {
         },
       }),
     });
+    this._schemas['transfers'] = new GraphQLSchema({
+      query: new GraphQLObjectType({
+        name: 'Query',
+        fields: {
+          ask: {
+            type: new GraphQLList(
+              new GraphQLObjectType({
+                name: 'Transfer',
+                fields: {
+                  id: {
+                    type: GraphQLString,
+                    resolve: (parents): string => {
+                      return '0x' + parents.id.toString('hex');
+                    },
+                  },
+                  token_contract: {
+                    type: GraphQLString,
+                    resolve: (parents): string => {
+                      return parents.token_contract
+                        ? '0x' + parents.token_contract.toString('hex')
+                        : '';
+                    },
+                  },
+                  from: {
+                    type: GraphQLString,
+                    resolve: (parents): string => {
+                      return parents.from
+                        ? '0x' + parents.from.toString('hex')
+                        : '';
+                    },
+                  },
+                  to: {
+                    type: GraphQLString,
+                    resolve: (parents): string => {
+                      return parents.to
+                        ? '0x' + parents.to.toString('hex')
+                        : '';
+                    },
+                  },
+                  amount: {
+                    type: GraphQLString,
+                    resolve: (parents): number => {
+                      return parents.amount;
+                    },
+                  },
+                  updated_at: {
+                    type: GraphQLString,
+                    resolve: (parents): string =>
+                      new Date(parents.updated_at).toISOString(),
+                  },
+                },
+              })
+            ),
+            args: { offset: { type: GraphQLInt } },
+            resolve: (parent, args) => {
+              return this._prisma.asks
+                .findMany({
+                  skip: args.offset || 0,
+                  take: 1000,
+                })
+                .then((asks: unknown) => asks);
+            },
+          },
+        },
+      }),
+    });
     this._schemas['bids'] = new GraphQLSchema({
       query: new GraphQLObjectType({
         name: 'Query',
