@@ -4,7 +4,7 @@ const prisma = new PrismaClient();
 
 (async () => {
   try {
-    await prisma.$queryRaw`DELETE FROM sales;`;
+    await prisma.$queryRaw`DELETE FROM transfers`;
   } catch (error) {
     console.log(error);
   } finally {
