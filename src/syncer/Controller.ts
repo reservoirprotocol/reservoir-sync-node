@@ -1,4 +1,4 @@
-import axios, { AxiosResponse } from 'axios';
+import axios, { AxiosResponse } from "axios";
 import {
   Backup,
   Block,
@@ -7,9 +7,9 @@ import {
   ErrorType,
   SuccessType,
   WorkerEvent,
-} from 'types';
-import { v4 } from 'uuid';
-import { InsertionService, LoggerService, QueueService } from '../services';
+} from "types";
+import { v4 } from "uuid";
+import { InsertionService, LoggerService, QueueService } from "../services";
 import {
   delay,
   isSuccessResponse,
@@ -18,8 +18,8 @@ import {
   UrlBase,
   UrlPaths,
   WorkerCounts,
-} from '../utils';
-import { Worker } from './Worker';
+} from "../utils";
+import { Worker } from "./Worker";
 
 export class Controller {
   /**
@@ -166,9 +166,9 @@ export class Controller {
    */
   private _listen(): void {
     this._workers.forEach((worker) => {
-      worker.on('worker.event', this._handleWorkerEvent.bind(this));
+      worker.on("worker.event", this._handleWorkerEvent.bind(this));
     });
-    this._upkeeper?.on('worker.event', this._handleWorkerEvent.bind(this));
+    this._upkeeper?.on("worker.event", this._handleWorkerEvent.bind(this));
   }
   /**
    * Handles a worker event.
@@ -187,10 +187,10 @@ export class Controller {
     block,
   }: WorkerEvent): Promise<void> {
     switch (type) {
-      case 'worker.split':
+      case "worker.split":
         this._handleBlockSplit(block);
         break;
-      case 'worker.release':
+      case "worker.release":
         this._delegate();
         break;
       default:
@@ -224,13 +224,13 @@ export class Controller {
       this.request(
         this.normalize({
           ...(contract && { contract }),
-          sortDirection: 'asc',
+          sortDirection: "asc",
         })
       ),
       this.request(
         this.normalize({
           ...(contract && { contract }),
-          sortDirection: 'desc',
+          sortDirection: "desc",
         })
       ),
     ]);
@@ -258,7 +258,7 @@ export class Controller {
       priority: 1,
       startDate: reqs[0].data[root][reqs[0].data[root].length - 1].updatedAt,
       endDate: reqs[1].data[root][reqs[1].data[root].length - 1].updatedAt,
-      contract: contract || '',
+      contract: contract || "",
     };
   }
   /**
@@ -297,16 +297,21 @@ export class Controller {
    * @returns {string} - The normalized parameters.
    * @private
    */
-  public normalize(params: Record<string | number, unknown>): string {
-    const queries: string[] = ['limit=1000', 'includeCriteriaMetadata=true'];
+  public normalize(
+    params: Record<string | number, unknown>,
+    isBackfill = true
+  ): string {
+    const queries: string[] = ["limit=1000", "includeCriteriaMetadata=true"];
 
     const root = RecordRoots[this._config.dataset];
 
-    queries.push(root === 'sales' ? 'orderBy=updated_at' : 'sortBy=updatedAt');
+    queries.push(root === "sales" ? "orderBy=updated_at" : "sortBy=updatedAt");
+
+    isBackfill && queries.push(`status=active`);
 
     Object.keys(params).map((key) => queries.push(`${key}=${params[key]}`));
 
-    return queries.join('&');
+    return queries.join("&");
   }
   /**
    * Makes a request to the API.
@@ -325,9 +330,9 @@ export class Controller {
         }?${parameters}`,
         validateStatus: () => true,
         headers: {
-          'X-API-KEY': this._config.apiKey,
-          'X-SYNC-NODE': 'V2',
-          'Content-Type': 'application/json',
+          "X-API-KEY": this._config.apiKey,
+          "X-SYNC-NODE": "V2",
+          "Content-Type": "application/json",
         },
       });
       return {

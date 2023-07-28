@@ -1,7 +1,7 @@
-import EventEmitter from 'events';
-import { v4 } from 'uuid';
-import { LoggerService as Logger } from '../services';
-import { Block, DataTypes, Schemas, WorkerEvent } from '../types';
+import EventEmitter from "events";
+import { v4 } from "uuid";
+import { LoggerService as Logger } from "../services";
+import { Block, DataTypes, Schemas, WorkerEvent } from "../types";
 import {
   delay,
   getMiddleDate,
@@ -9,8 +9,8 @@ import {
   isSuccessResponse,
   parseTimestamp,
   RecordRoots,
-} from '../utils';
-import { Controller } from './Controller';
+} from "../utils";
+import { Controller } from "./Controller";
 
 interface WorkerData {
   block: Block | null;
@@ -31,7 +31,7 @@ export class Worker extends EventEmitter {
    * Continuation cursor to paginate through results
    * @access public
    */
-  public continuation: string = '';
+  public continuation: string = "";
 
   /**
    * Datatype of the worker
@@ -43,25 +43,25 @@ export class Worker extends EventEmitter {
    * Request method inherited from the controller
    * @private
    */
-  private readonly _request: ControllerInstance['request'];
+  private readonly _request: ControllerInstance["request"];
 
   /**
    * Normalize parameters method inherited from the controller
    * @private
    */
-  private readonly _normalize: ControllerInstance['normalize'];
+  private readonly _normalize: ControllerInstance["normalize"];
 
   /**
    * Get config property method inhertied from the controller
    * @private
    */
-  private readonly _config: ControllerInstance['getConfigProperty'];
+  private readonly _config: ControllerInstance["getConfigProperty"];
 
   /**
    * Insert method inherited from the controller
    * @private
    */
-  private readonly _insert: ControllerInstance['insert'];
+  private readonly _insert: ControllerInstance["insert"];
 
   constructor(controller: Controller) {
     super();
@@ -71,7 +71,7 @@ export class Worker extends EventEmitter {
     this._normalize = controller.normalize.bind(controller);
     this._config = controller.getConfigProperty.bind(controller);
 
-    this._datatype = this._config('dataset');
+    this._datatype = this._config("dataset");
   }
 
   public async process(
@@ -87,7 +87,7 @@ export class Worker extends EventEmitter {
           ...(contract && { contract: contract }),
           startTimestamp: parseTimestamp(startDate),
           endTimestamp: parseTimestamp(endDate),
-          sortDirection: 'asc',
+          sortDirection: "asc",
         })
       );
 
@@ -102,7 +102,7 @@ export class Worker extends EventEmitter {
         });
       }
 
-      if (![...ascRes.data[RecordRoots[this._config('dataset')]]].length) {
+      if (![...ascRes.data[RecordRoots[this._config("dataset")]]].length) {
         return this._release({ startDate, id, endDate, contract, priority });
       }
 
@@ -115,7 +115,7 @@ export class Worker extends EventEmitter {
             ...(contract && { contract: contract }),
             startTimestamp: parseTimestamp(startDate),
             endTimestamp: parseTimestamp(endDate),
-            sortDirection: 'desc',
+            sortDirection: "desc",
           })
         );
 
@@ -174,7 +174,7 @@ export class Worker extends EventEmitter {
       const res = await this._request(
         this._normalize({
           ...(this.continuation && { continuation: this.continuation }),
-          sortDirection: 'asc',
+          sortDirection: "asc",
           startTimestamp: parseTimestamp(startDate),
           endTimestamp: parseTimestamp(endDate),
         })
@@ -214,12 +214,15 @@ export class Worker extends EventEmitter {
       await delay(60000);
 
       const ascRes = await this._request(
-        this._normalize({
-          ...(this.continuation && { continuation: this.continuation }),
-          sortDirection: 'asc',
-          startTimestamp: parseTimestamp(startDate),
-          endTimestamp: 253402300799,
-        })
+        this._normalize(
+          {
+            ...(this.continuation && { continuation: this.continuation }),
+            sortDirection: "asc",
+            startTimestamp: parseTimestamp(startDate),
+            endTimestamp: 253402300799,
+          },
+          false
+        )
       );
 
       if (!isSuccessResponse(ascRes)) continue;
@@ -233,12 +236,15 @@ export class Worker extends EventEmitter {
       if (!ascRes.data.continuation) continue;
 
       const descRes = await this._request(
-        this._normalize({
-          ...(this.continuation && { continuation: this.continuation }),
-          sortDirection: 'desc',
-          startTimestamp: parseTimestamp(startDate),
-          endTimestamp: 253402300799,
-        })
+        this._normalize(
+          {
+            ...(this.continuation && { continuation: this.continuation }),
+            sortDirection: "desc",
+            startTimestamp: parseTimestamp(startDate),
+            endTimestamp: 253402300799,
+          },
+          false
+        )
       );
 
       if (!isSuccessResponse(descRes)) continue;
@@ -271,7 +277,7 @@ export class Worker extends EventEmitter {
           startDate: records[0].updatedAt,
           endDate,
           id: v4(),
-          contract: '',
+          contract: "",
         });
         startDate = records[records.length - 1].updatedAt;
       }
@@ -282,8 +288,8 @@ export class Worker extends EventEmitter {
    * @param {Block} block - The block to emit a split event for.
    */
   private _split(block: Block) {
-    this.emit('worker.event', {
-      type: 'worker.split',
+    this.emit("worker.event", {
+      type: "worker.split",
       block,
     } as WorkerEvent);
   }
@@ -294,9 +300,9 @@ export class Worker extends EventEmitter {
   private _release(block: Block): void {
     Logger.info(`Released block: ${block.id}`);
     this.busy = false;
-    this.continuation = '';
-    this.emit('worker.event', {
-      type: 'worker.release',
+    this.continuation = "";
+    this.emit("worker.event", {
+      type: "worker.release",
       block: block,
     } as WorkerEvent);
   }
