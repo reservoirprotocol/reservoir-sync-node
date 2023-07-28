@@ -246,7 +246,7 @@ export class Controller {
 
     const root = RecordRoots[this._config.dataset];
 
-    if (reqs[1].data[root].length === 0 || reqs[0].data[root]) {
+    if (reqs[1].data[root].length === 0 || reqs[0].data[root].length === 0) {
       LoggerService.warn(
         `Unable to create block for: ${contract}. No records found.`
       );
