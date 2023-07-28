@@ -175,7 +175,7 @@ class _WebSocketService {
     if (event?.includes('bid')) {
       InsertionService.upsert('bids', [data as BidsSchema]);
     }
-    if (event?.includes('sales')) {
+    if (event?.includes('sale')) {
       InsertionService.upsert('sales', [data as SalesSchema]);
     }
     if (event?.includes('transfer')) {
