@@ -292,27 +292,29 @@ class _InsertionService {
       const sale = data as SalesSchema;
       return {
         id: Buffer.from(`${sale.txHash}-${sale.logIndex}-${sale.batchIndex}`),
-        sale_id: toBuffer(sale.saleId),
+        sale_id: sale.saleId ? toBuffer(sale.saleId) : null,
         token_id: sale.token?.tokenId,
-        contract_id: addressToBuffer(sale.token?.contract),
-        order_id: addressToBuffer(sale.orderId),
+        contract_id: sale.token?.contract
+          ? addressToBuffer(sale.token.contract)
+          : null,
+        order_id: sale.orderId ? addressToBuffer(sale.orderId) : null,
         order_source: sale.orderSource,
         order_side: sale.orderSide,
         order_kind: sale.orderKind,
         amount: sale.amount,
-        from: addressToBuffer(sale.from),
-        to: addressToBuffer(sale.to),
+        from: sale.from ? addressToBuffer(sale.from) : null,
+        to: sale.to ? addressToBuffer(sale.to) : null,
         fill_source: sale.fillSource,
         block: sale.block,
-        tx_hash: addressToBuffer(sale.txHash),
+        tx_hash: sale.txHash ? addressToBuffer(sale.txHash) : null,
         log_index: sale.logIndex,
         batch_index: sale.batchIndex,
         timestamp: sale.timestamp,
         wash_trading_score: sale.washTradingScore,
         created_at: sale.createdAt,
-        price_currency_contract: addressToBuffer(
-          sale.price?.currency?.contract
-        ),
+        price_currency_contract: sale.price?.currency?.contract
+          ? addressToBuffer(sale.price.currency.contract)
+          : null,
         updated_at: sale.updatedAt,
         price_currency_name: sale.price?.currency?.name,
         price_currency_symbol: sale.price?.currency?.symbol,
@@ -331,17 +333,19 @@ class _InsertionService {
           `${transfer.txHash}-${transfer.logIndex}-${transfer.batchIndex}`,
           'utf16le'
         ),
-        token_contract: addressToBuffer(transfer.token.contract),
-        token_id: transfer.token.tokenId,
-        from: addressToBuffer(transfer.from),
-        to: addressToBuffer(transfer.to),
+        token_contract: transfer?.token?.contract
+          ? addressToBuffer(transfer.token.contract)
+          : null,
+        token_id: transfer?.token?.tokenId,
+        from: transfer.from ? addressToBuffer(transfer?.from) : null,
+        to: transfer.to ? addressToBuffer(transfer?.to) : null,
         amount: transfer.amount,
         block: transfer.block,
-        tx_hash: addressToBuffer(transfer.txHash),
+        tx_hash: transfer.txHash ? addressToBuffer(transfer.txHash) : null,
         log_index: transfer.logIndex,
         batch_index: transfer.batchIndex,
         timestamp: transfer.timestamp,
-        updated_at: transfer?.updatedAt,
+        updated_at: transfer.updatedAt,
       };
     }
 
