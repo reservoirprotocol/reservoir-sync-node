@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { Prisma, PrismaClient } from "@prisma/client";
-import SyncNode from "../SyncNode";
+import { Prisma, PrismaClient } from '@prisma/client';
+import SyncNode from '../SyncNode';
 import {
   AsksSchema,
   BidsSchema,
@@ -8,9 +8,9 @@ import {
   DataTypes,
   SalesSchema,
   TransfersSchema,
-} from "../types";
-import { addressToBuffer, toBuffer } from "../utils";
-import { LoggerService } from "./LoggerService";
+} from '../types';
+import { addressToBuffer, toBuffer } from '../utils';
+import { LoggerService } from './LoggerService';
 
 interface DataSchemas {
   sales: SalesSchema;
@@ -71,22 +71,22 @@ class _InsertionService {
 
       switch (promise.code) {
         // Timeout
-        case "P1008":
+        case 'P1008':
           break;
         // Invalid data format
-        case "P2000":
+        case 'P2000':
           break;
         // Unique constraint failed
-        case "P2002":
+        case 'P2002':
           break;
         // Invalid data
-        case "P2005":
+        case 'P2005':
           break;
         // Invalid data
-        case "P2006":
+        case 'P2006':
           break;
         // Integer Overflow
-        case "P2020":
+        case 'P2020':
           break;
         default:
           break;
@@ -140,28 +140,28 @@ class _InsertionService {
    */
   private _filter(type: DataTypes, data: DataSets): DataSets {
     const contracts = SyncNode.getContracts();
-    const sources = SyncNode.getConfigProperty("syncer")["sources"];
+    const sources = SyncNode.getConfigProperty('syncer')['sources'];
 
     if (contracts.length === 0 && sources.length === 0) return data;
 
     switch (type) {
-      case "transfers":
+      case 'transfers':
         return (data as TransfersSchema[]).filter((set) =>
           contracts.includes(set.token?.contract)
         );
-      case "asks":
+      case 'asks':
         return (data as AsksSchema[]).filter(
           (set) =>
             (contracts.length === 0 || contracts.includes(set.contract)) &&
             (sources.length === 0 || sources.includes(set.source.domain))
         );
-      case "bids":
+      case 'bids':
         return (data as BidsSchema[]).filter(
           (set) =>
             (contracts.length === 0 || contracts.includes(set.contract)) &&
             (sources.length === 0 || sources.includes(set.source.domain))
         );
-      case "sales":
+      case 'sales':
         return (data as SalesSchema[]).filter(
           (set) =>
             (contracts.length === 0 ||
@@ -186,12 +186,12 @@ class _InsertionService {
     type: T,
     data: DataSchemas[T]
   ): DataReturns[T] {
-    if (type === "asks") {
+    if (type === 'asks') {
       const ask = data as AsksSchema;
       return {
         id: Buffer.from(
           `${ask?.id}-${ask?.contract}-${ask?.maker}-${ask?.tokenSetId}-${ask?.createdAt}`,
-          "utf16le"
+          'utf16le'
         ),
         kind: ask?.kind,
         side: ask?.side,
@@ -235,12 +235,12 @@ class _InsertionService {
       };
     }
 
-    if (type === "bids") {
+    if (type === 'bids') {
       const bid = data as BidsSchema;
       return {
         id: Buffer.from(
           `${bid?.id}-${bid?.contract}-${bid?.maker}-${bid?.tokenSetId}-${bid?.createdAt}`,
-          "utf16le"
+          'utf16le'
         ),
         kind: bid?.kind,
         side: bid?.side,
@@ -282,7 +282,7 @@ class _InsertionService {
       };
     }
 
-    if (type === "sales") {
+    if (type === 'sales') {
       const sale = data as SalesSchema;
       return {
         id: Buffer.from(`${sale.txHash}-${sale.logIndex}-${sale.batchIndex}`),
@@ -318,12 +318,12 @@ class _InsertionService {
       };
     }
 
-    if (type === "transfers") {
+    if (type === 'transfers') {
       const transfer = data as TransfersSchema;
       return {
         id: Buffer.from(
           `${transfer.txHash}-${transfer.logIndex}-${transfer.batchIndex}`,
-          "utf16le"
+          'utf16le'
         ),
         token_contract: addressToBuffer(transfer?.token?.contract),
         token_id: transfer?.token?.tokenId,
