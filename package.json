@@ -43,6 +43,7 @@
     "chart.js": "^4.3.0",
     "colors": "^1.4.0",
     "cors": "^2.8.5",
+    "cross-env": "^7.0.3",
     "date-fns": "^2.29.3",
     "date-fns-tz": "^2.0.0",
     "dotenv": "^16.0.3",
