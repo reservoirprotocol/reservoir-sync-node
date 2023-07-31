@@ -110,8 +110,9 @@ export const delay = async (ms: number): Promise<void> =>
  * @param hexValue - Hex value to slice
  * @returns Formatted buffer of a Hex
  */
-export const toBuffer = (hexValue: string) => {
-  return Buffer.from(hexValue, 'hex');
+export const toBuffer = (hexValue: string = '') => {
+  if (!hexValue) return null;
+  return Buffer.from(hexValue || ' ', 'hex');
 };
 
 /**
@@ -121,7 +122,7 @@ export const toBuffer = (hexValue: string) => {
  */
 export const addressToBuffer = (hexValue: string = '') => {
   if (!hexValue) return null;
-  return Buffer.from((hexValue || '').slice(2), 'hex');
+  return Buffer.from((hexValue || ' ').slice(2), 'hex');
 };
 
 export const UrlBase = {
