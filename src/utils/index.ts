@@ -120,6 +120,7 @@ export const toBuffer = (hexValue: string) => {
  * @returns Formatted buffer of a Hex
  */
 export const addressToBuffer = (hexValue: string = '') => {
+  if (!hexValue) return null;
   return Buffer.from((hexValue || '').slice(2), 'hex');
 };
 

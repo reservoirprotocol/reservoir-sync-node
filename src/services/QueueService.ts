@@ -1,7 +1,7 @@
-import { createClient, RedisClientType } from 'redis';
-import { Backup, Block, DataTypes, QueueServiceConfig } from '../types';
-import { LoggerService } from './LoggerService';
-import { Worker } from '../syncer/Worker';
+import { createClient, RedisClientType } from "redis";
+import { Backup, Block, DataTypes, QueueServiceConfig } from "../types";
+import { LoggerService } from "./LoggerService";
+import { Worker } from "../syncer/Worker";
 
 /**
  * Queue class for managing a Redis-based queue.
@@ -42,7 +42,7 @@ class _Queue {
    * @constructor
    */
   constructor() {
-    this._client.on('error', (err) => LoggerService.error(err));
+    this._client.on("error", (err) => LoggerService.error(err));
   }
 
   /**
@@ -89,6 +89,7 @@ class _Queue {
    * @returns {Promise<void>} - A promise that resolves when the backups are cleared.
    */
   public async clearBackup(): Promise<void> {
+    LoggerService.info(`Clearing Backup`);
     try {
       this._client.flushAll();
     } catch (e: unknown) {
@@ -113,8 +114,9 @@ class _Queue {
    */
   public async loadBackup(): Promise<void> {
     try {
+      LoggerService.info(`Loading Backup`);
       this._backups = Object.fromEntries(
-        Object.entries(await this._client.hGetAll('backups')).map(
+        Object.entries(await this._client.hGetAll("backups")).map(
           ([key, value]) => [key, JSON.parse(value) as Backup]
         )
       );

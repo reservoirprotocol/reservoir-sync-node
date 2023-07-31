@@ -100,7 +100,7 @@ export class Controller {
     const backup = this._queue.getBackup(this._config.dataset);
 
     if (backup) {
-      this._launchBackup(backup);
+      await this._launchBackup(backup);
     } else {
       if (this._config.contracts.length > 0) {
         this._handleContracts();
@@ -115,15 +115,21 @@ export class Controller {
     this._upkeeper?.upkeep();
     this._queue.backup(this._config.dataset, this._workers);
   }
-  private async _launchBackup(backup: Backup): Promise<void> {
-    for (const { block, continuation } of backup.workers) {
-      for await (const worker of this._workers) {
+  private async _launchBackup(_backup: Backup): Promise<void> {
+    LoggerService.info(`Launching from backup`);
+    const backup = _backup;
+    await this._queue.clearBackup();
+    for (let i = 0; i < backup.workers.length; i++) {
+      const { block, continuation } = backup.workers[i];
+      if (block) {
+        const worker = this._workers[i];
         worker.process(
           {
             ...block,
           },
           continuation ? false : true
         );
+        LoggerService.info(`Launched block: ${block.id}`);
         await delay(30000);
       }
     }

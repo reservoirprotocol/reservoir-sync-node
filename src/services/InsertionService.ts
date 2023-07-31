@@ -200,12 +200,10 @@ class _InsertionService {
         token_set_schema_hash: ask?.tokenSetSchemaHash
           ? addressToBuffer(ask.tokenSetSchemaHash)
           : null,
-        contract: ask?.contract ? addressToBuffer(ask.contract) : null,
-        maker: ask?.maker ? addressToBuffer(ask.maker) : null,
-        taker: ask?.taker ? addressToBuffer(ask.taker) : null,
-        price_currency_contract: ask?.price?.currency?.contract
-          ? addressToBuffer(ask.price.currency.contract)
-          : null,
+        contract:  addressToBuffer(ask?.contract),
+        maker: addressToBuffer(ask?.maker),
+        taker: addressToBuffer(ask?.taker),
+        price_currency_contract:  addressToBuffer(ask?.price?.currency?.contract),
         price_currency_name: ask?.price?.currency?.name,
         price_currency_symbol: ask?.price?.currency?.symbol,
         price_currency_decimals: ask?.price?.currency?.decimals,
@@ -248,15 +246,11 @@ class _InsertionService {
         side: bid?.side,
         status: bid?.status,
         token_set_id: bid?.tokenSetId,
-        token_set_schema_hash: bid?.tokenSetSchemaHash
-          ? addressToBuffer(bid.tokenSetSchemaHash)
-          : null,
-        contract: bid?.contract ? addressToBuffer(bid.contract) : null,
-        maker: bid?.maker ? addressToBuffer(bid.maker) : null,
-        taker: bid?.taker ? addressToBuffer(bid.taker) : null,
-        price_currency_contract: bid?.price?.currency?.contract
-          ? addressToBuffer(bid.price.currency.contract)
-          : null,
+        token_set_schema_hash: addressToBuffer(bid?.tokenSetSchemaHash),
+        contract: addressToBuffer(bid?.contract),
+        maker: addressToBuffer(bid?.maker),
+        taker: addressToBuffer(bid?.taker),
+        price_currency_contract: addressToBuffer(bid?.price?.currency?.contract),
         price_currency_name: bid?.price?.currency?.name,
         price_currency_symbol: bid?.price?.currency?.symbol,
         price_currency_decimals: bid?.price?.currency?.decimals,
@@ -292,9 +286,9 @@ class _InsertionService {
       const sale = data as SalesSchema;
       return {
         id: Buffer.from(`${sale.txHash}-${sale.logIndex}-${sale.batchIndex}`),
-        sale_id: toBuffer(sale.saleId),
+        sale_id: toBuffer(sale?.saleId) ,
         token_id: sale.token?.tokenId,
-        contract_id: addressToBuffer(sale.token?.contract),
+        contract_id: addressToBuffer(sale?.token?.contract),
         order_id: addressToBuffer(sale.orderId),
         order_source: sale.orderSource,
         order_side: sale.orderSide,
@@ -311,7 +305,7 @@ class _InsertionService {
         wash_trading_score: sale.washTradingScore,
         created_at: sale.createdAt,
         price_currency_contract: addressToBuffer(
-          sale.price?.currency?.contract
+          sale?.price?.currency?.contract
         ),
         updated_at: sale.updatedAt,
         price_currency_name: sale.price?.currency?.name,
@@ -331,17 +325,17 @@ class _InsertionService {
           `${transfer.txHash}-${transfer.logIndex}-${transfer.batchIndex}`,
           'utf16le'
         ),
-        token_contract: addressToBuffer(transfer.token.contract),
-        token_id: transfer.token.tokenId,
-        from: addressToBuffer(transfer.from),
-        to: addressToBuffer(transfer.to),
+        token_contract: addressToBuffer(transfer?.token?.contract),
+        token_id: transfer?.token?.tokenId,
+        from: addressToBuffer(transfer?.from),
+        to:  addressToBuffer(transfer?.to),
         amount: transfer.amount,
         block: transfer.block,
-        tx_hash: addressToBuffer(transfer.txHash),
+        tx_hash: addressToBuffer(transfer?.txHash),
         log_index: transfer.logIndex,
         batch_index: transfer.batchIndex,
         timestamp: transfer.timestamp,
-        updated_at: transfer?.updatedAt,
+        updated_at: transfer.updatedAt,
       };
     }
 

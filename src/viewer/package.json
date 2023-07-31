@@ -17,7 +17,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "BUILD_PATH='../../dist/viewer' react-scripts build",
+    "build": "cross-env BUILD_PATH='../../dist/viewer' react-scripts build",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
