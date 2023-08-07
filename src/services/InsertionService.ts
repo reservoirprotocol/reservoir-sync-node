@@ -101,7 +101,6 @@ class _InsertionService {
   public getClient(): PrismaClient {
     return this._prisma;
   }
-
   /**
    * Inserts new data or updates existing data in the database.
    * @param {DataTypes} type - Type of the data to be upserted.
@@ -117,19 +116,18 @@ class _InsertionService {
 
     this.insertionTally[type] += data.length;
 
-    return this._handlePrismaPromises(
-      await Promise.allSettled(
-        data.map((set) => {
-          // @ts-ignore Prisma doesn't support model reference by variable name.
-          // See https://github.com/prisma/prisma/discussions/16058#discussioncomment-54936
-          return this._prisma[type].upsert({
-            where: { id: this._format(type, set).id },
-            create: this._format(type, set),
-            update: this._format(type, set),
-          });
-        })
-      )
-    );
+    for await (const record of data) {
+      const formatted = this._format(type, record);
+      // @ts-ignore Prisma doesn't support model reference by variable name.
+      // See https://github.com/prisma/prisma/discussions/16058#discussioncomment-5493
+      return await this._prisma[type].upsert({
+        where: { id: formatted.id },
+        create: formatted,
+        update: formatted,
+      });
+    }
+
+    return;
   }
   /**
    * Filters the input data based on the available contracts.
@@ -200,10 +198,12 @@ class _InsertionService {
         token_set_schema_hash: ask?.tokenSetSchemaHash
           ? addressToBuffer(ask.tokenSetSchemaHash)
           : null,
-        contract:  addressToBuffer(ask?.contract),
+        contract: addressToBuffer(ask?.contract),
         maker: addressToBuffer(ask?.maker),
         taker: addressToBuffer(ask?.taker),
-        price_currency_contract:  addressToBuffer(ask?.price?.currency?.contract),
+        price_currency_contract: addressToBuffer(
+          ask?.price?.currency?.contract
+        ),
         price_currency_name: ask?.price?.currency?.name,
         price_currency_symbol: ask?.price?.currency?.symbol,
         price_currency_decimals: ask?.price?.currency?.decimals,
@@ -250,7 +250,9 @@ class _InsertionService {
         contract: addressToBuffer(bid?.contract),
         maker: addressToBuffer(bid?.maker),
         taker: addressToBuffer(bid?.taker),
-        price_currency_contract: addressToBuffer(bid?.price?.currency?.contract),
+        price_currency_contract: addressToBuffer(
+          bid?.price?.currency?.contract
+        ),
         price_currency_name: bid?.price?.currency?.name,
         price_currency_symbol: bid?.price?.currency?.symbol,
         price_currency_decimals: bid?.price?.currency?.decimals,
@@ -286,7 +288,7 @@ class _InsertionService {
       const sale = data as SalesSchema;
       return {
         id: Buffer.from(`${sale.txHash}-${sale.logIndex}-${sale.batchIndex}`),
-        sale_id: toBuffer(sale?.saleId) ,
+        sale_id: toBuffer(sale?.saleId),
         token_id: sale.token?.tokenId,
         contract_id: addressToBuffer(sale?.token?.contract),
         order_id: addressToBuffer(sale.orderId),
@@ -328,7 +330,7 @@ class _InsertionService {
         token_contract: addressToBuffer(transfer?.token?.contract),
         token_id: transfer?.token?.tokenId,
         from: addressToBuffer(transfer?.from),
-        to:  addressToBuffer(transfer?.to),
+        to: addressToBuffer(transfer?.to),
         amount: transfer.amount,
         block: transfer.block,
         tx_hash: addressToBuffer(transfer?.txHash),
