@@ -180,7 +180,7 @@ class _InsertionService {
         });
       }
       else {
-        return await caller.delete({
+        return await caller.deleteMany({
           where: { id: formatted.id }
         });
       }
