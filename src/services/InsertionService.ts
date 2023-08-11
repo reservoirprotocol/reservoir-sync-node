@@ -153,7 +153,7 @@ class _InsertionService {
     }
 
     // If not enabled return
-    if (process.env[`${type.toUpperCase()}_SYNC`] !== '1') {
+    if (process.env[`SYNC_ACTIVE_${type.toUpperCase()}`] !== '1') {
       return;
     }
 
