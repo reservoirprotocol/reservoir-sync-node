@@ -172,6 +172,8 @@ class _InsertionService {
         });
       }
       else {
+        // using regular .delete crashed prisma if record is not there
+        // see https://github.com/prisma/prisma/issues/9460
         return await caller.deleteMany({
           where: { id: formatted.id }
         });
