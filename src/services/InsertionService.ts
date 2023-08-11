@@ -241,6 +241,7 @@ class _InsertionService {
   ): DataReturns[T] {
     if (type === "asks") {
       const ask = data as AsksSchema;
+      // @ts-ignore latest main fails without this
       return {
         id: Buffer.from(
           `${ask?.id}-${ask?.contract}-${ask?.maker}-${ask?.tokenSetId}-${ask?.createdAt}`,
@@ -292,6 +293,7 @@ class _InsertionService {
 
     if (type === "bids") {
       const bid = data as BidsSchema;
+      // @ts-ignore latest main fails without this
       return {
         id: Buffer.from(
           `${bid?.id}-${bid?.contract}-${bid?.maker}-${bid?.tokenSetId}-${bid?.createdAt}`,
@@ -341,6 +343,7 @@ class _InsertionService {
 
     if (type === "sales") {
       const sale = data as SalesSchema;
+      // @ts-ignore latest main fails without this
       return {
         id: Buffer.from(`${sale.txHash}-${sale.logIndex}-${sale.batchIndex}`),
         sale_id: toBuffer(sale?.saleId),
@@ -377,6 +380,7 @@ class _InsertionService {
 
     if (type === "transfers") {
       const transfer = data as TransfersSchema;
+      // @ts-ignore latest main fails without this
       return {
         id: Buffer.from(
           `${transfer.txHash}-${transfer.logIndex}-${transfer.batchIndex}`,
