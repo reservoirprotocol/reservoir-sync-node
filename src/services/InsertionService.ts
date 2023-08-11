@@ -108,6 +108,15 @@ class _InsertionService {
    * @returns {Promise<void>}
    */
   public async upsert(type: DataTypes, data: DataSets): Promise<void> {
+
+    // Call active upsert
+    this.upsertActive(type, data);
+
+    // If not enabled return
+    if (process.env[`${type.toUpperCase()}_SYNC`] !== '1') {
+      return;
+    }
+
     data = this._filter(type, data);
 
     if (!this.insertionTally[type]) {
@@ -129,6 +138,59 @@ class _InsertionService {
 
     return;
   }
+
+  /**
+   * Inserts new data or updates existing data in the database.
+   * @param {DataTypes} type - Type of the data to be upserted.
+   * @param {DataSets} data - The actual data to be upserted.
+   * @returns {Promise<void>}
+   */
+  public async upsertActive(type: DataTypes, data: DataSets): Promise<void> {
+
+    // Only these two types support active status
+    if (!['asks', 'bids'].includes(type)) {
+      return;
+    }
+
+    // If not enabled return
+    if (process.env[`${type.toUpperCase()}_SYNC`] !== '1') {
+      return;
+    }
+
+    data = this._filter(type, data);
+
+    if (!this.insertionTally[type]) {
+      this.insertionTally[type] = 0;
+    }
+
+    this.insertionTally[type] += data.length;
+
+    for await (const record of data) {
+      const formatted = this._format(type, record);
+
+      // @ts-ignore Prisma doesn't support model reference by variable name.
+      // See https://github.com/prisma/prisma/discussions/16058#discussioncomment-5493
+      const caller = this._prisma[type+`_active`];
+      // @ts-ignore Interface includes all types and not all have status
+      if (formatted?.status === 'active') {
+        return await caller.upsert({
+          where: { id: formatted.id },
+          create: formatted,
+          update: formatted,
+        });
+      }
+      else {
+        return await caller.delete({
+          where: { id: formatted.id },
+          update: formatted,
+        });
+      }
+
+    }
+
+    return;
+  }
+
   /**
    * Filters the input data based on the available contracts.
    * @param {DataTypes} type - The type of the data ('asks', 'bids', 'sales').
@@ -215,8 +277,8 @@ class _InsertionService {
         price_net_amount_native: ask?.price?.netAmount?.native,
         price_net_amount_raw: ask?.price?.netAmount?.raw,
         price_net_amount_usd: ask?.price?.netAmount?.usd,
-        valid_from: ask?.validFrom,
-        valid_until: ask?.validUntil,
+        valid_from: ask?.validFrom ? parseInt(ask?.validFrom.toString().split('.')[0]) : null,
+        valid_until: ask?.validUntil ? parseInt(ask?.validUntil.toString().split('.')[0]) : null,
         quantity_filled: ask?.quantityFilled,
         quantity_remaining: ask?.quantityRemaining,
         criteria_kind: ask?.criteria?.kind,
@@ -227,7 +289,7 @@ class _InsertionService {
         source_id: ask?.source?.id,
         fee_bps: ask?.feeBps,
         fee_breakdown: JSON.stringify(ask.feeBreakdown),
-        expiration: ask?.expiration,
+        expiration: ask?.expiration ? parseInt(ask?.expiration.toString().split('.')[0]) : null,
         is_reservoir: ask?.isReservoir,
         is_dynamic: ask?.isDynamic,
         updated_at: ask?.updatedAt,
@@ -264,8 +326,8 @@ class _InsertionService {
         price_net_amount_native: bid?.price?.netAmount?.native,
         price_net_amount_raw: bid?.price?.netAmount?.raw,
         price_net_amount_usd: bid?.price?.netAmount?.usd,
-        valid_from: bid?.validFrom,
-        valid_until: bid?.validUntil,
+        valid_from: bid?.validFrom ? parseInt(bid?.validFrom.toString().split('.')[0]) : null,
+        valid_until: bid?.validUntil ? parseInt(bid?.validUntil.toString().split('.')[0]) : null,
         quantity_filled: bid?.quantityFilled,
         quantity_remaining: bid?.quantityRemaining,
         criteria_kind: bid?.criteria?.kind,
@@ -276,7 +338,7 @@ class _InsertionService {
         source_id: bid?.source?.id,
         fee_bps: bid?.feeBps,
         fee_breakdown: JSON.stringify(bid.feeBreakdown),
-        expiration: bid?.expiration,
+        expiration: bid?.expiration ? parseInt(bid?.expiration.toString().split('.')[0]) : null,
         is_reservoir: bid?.isReservoir,
         is_dynamic: bid?.isDynamic,
         updated_at: bid?.updatedAt,

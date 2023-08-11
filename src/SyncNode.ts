@@ -243,8 +243,8 @@ export default new SyncNode({
     sources: process.env.SOURCES ? process.env.SOURCES.split(',') : [],
     toSync: {
       transfers: process.env.SYNC_TRANSFERS === '1',
-      bids: process.env.SYNC_BIDS === '1',
-      asks: process.env.SYNC_ASKS === '1',
+      bids: process.env.SYNC_BIDS === '1' || process.env.SYNC_ACTIVE_BIDS === '1',
+      asks: process.env.SYNC_ASKS === '1' || process.env.SYNC_ACTIVE_ASKS === '1',
       sales: process.env.SYNC_SALES === '1',
     },
     mode: process.env.MODE as Mode,
