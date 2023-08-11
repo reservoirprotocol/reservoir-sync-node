@@ -155,7 +155,9 @@ class _InsertionService {
       this.insertionTally[type] = 0;
     }
 
-    this.insertionTally[type] += data.length;
+    if (process.env[`SYNC_${type.toUpperCase()}`] !== '1') {
+      this.insertionTally[type] += data.length;
+    }
 
     for await (const record of data) {
       const formatted = this._format(type, record);
