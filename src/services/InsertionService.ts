@@ -109,9 +109,9 @@ class _InsertionService {
    */
   public async upsert(type: DataTypes, data: DataSets): Promise<void> {
 
-    // If not enabled return
-    if (process.env[`SYNC_${type.toUpperCase()}`] !== '1') {
-      return;
+    // Run active upsert
+    if (['bids', 'asks'].includes(type)) {
+      await this.upsertActive(type, data);
     }
 
     data = this._filter(type, data);
@@ -121,6 +121,11 @@ class _InsertionService {
     }
 
     this.insertionTally[type] += data.length;
+    
+    // If not enabled return
+    if (process.env[`SYNC_${type.toUpperCase()}`] !== '1') {
+      return;
+    }
 
     for await (const record of data) {
       const formatted = this._format(type, record);
@@ -151,11 +156,11 @@ class _InsertionService {
 
     data = this._filter(type, data);
 
-    if (!this.insertionTally[type]) {
-      this.insertionTally[type] = 0;
-    }
+    // if (!this.insertionTally[type]) {
+    //   this.insertionTally[type] = 0;
+    // }
 
-    this.insertionTally[type] += data.length;
+    // this.insertionTally[type] += data.length;
 
     for await (const record of data) {
       const formatted = this._format(type, record);
