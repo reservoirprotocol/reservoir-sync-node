@@ -113,7 +113,7 @@ class _InsertionService {
     this.upsertActive(type, data);
 
     // If not enabled return
-    if (process.env[`${type.toUpperCase()}_SYNC`] !== '1') {
+    if (process.env[`SYNC_${type.toUpperCase()}`] !== '1') {
       return;
     }
 
