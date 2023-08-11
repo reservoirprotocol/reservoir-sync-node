@@ -171,9 +171,11 @@ class _WebSocketService {
   ): void {
     if (event?.includes('ask')) {
       InsertionService.upsert('asks', [data as AsksSchema]);
+      InsertionService.upsertActive('asks', [data as AsksSchema]);
     }
     if (event?.includes('bid')) {
       InsertionService.upsert('bids', [data as BidsSchema]);
+      InsertionService.upsertActive('bids', [data as AsksSchema]);
     }
     if (event?.includes('sale')) {
       InsertionService.upsert('sales', [data as SalesSchema]);

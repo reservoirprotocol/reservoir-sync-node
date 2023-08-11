@@ -109,9 +109,6 @@ class _InsertionService {
    */
   public async upsert(type: DataTypes, data: DataSets): Promise<void> {
 
-    // Call active upsert
-    this.upsertActive(type, data);
-
     // If not enabled return
     if (process.env[`SYNC_${type.toUpperCase()}`] !== '1') {
       return;
@@ -146,11 +143,6 @@ class _InsertionService {
    * @returns {Promise<void>}
    */
   public async upsertActive(type: DataTypes, data: DataSets): Promise<void> {
-
-    // Only these two types support active status
-    if (!['asks', 'bids'].includes(type)) {
-      return;
-    }
 
     // If not enabled return
     if (process.env[`SYNC_ACTIVE_${type.toUpperCase()}`] !== '1') {
