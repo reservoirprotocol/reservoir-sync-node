@@ -8,6 +8,7 @@ const prisma = new PrismaClient();
   try {
     // Create sales
     await prisma.$executeRaw`
+-- CreateTable
 CREATE TABLE "sales" (
     "id" BYTEA NOT NULL,
     "sale_id" BYTEA,
@@ -21,34 +22,33 @@ CREATE TABLE "sales" (
     "to" BYTEA,
     "amount" TEXT,
     "fill_source" TEXT,
-    "block" INTEGER,
+    "block" TEXT,
     "tx_hash" BYTEA,
-    "log_index" INTEGER,
-    "batch_index" INTEGER,
-    "timestamp" INTEGER,
+    "log_index" TEXT,
+    "batch_index" TEXT,
+    "timestamp" TEXT,
     "wash_trading_score" DOUBLE PRECISION,
     "updated_at" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
     "created_at" TIMESTAMP(3),
     "price_currency_contract" BYTEA,
     "price_currency_name" TEXT,
     "price_currency_symbol" TEXT,
-    "price_currency_decimals" INTEGER,
+    "price_currency_decimals" TEXT,
     "price_amount_raw" TEXT,
-    "price_amount_decimal" DECIMAL,
-    "price_amount_usd" DECIMAL,
-    "price_amount_native" DECIMAL,
+    "price_amount_decimal" TEXT,
+    "price_amount_usd" TEXT,
+    "price_amount_native" TEXT,
 
     CONSTRAINT "sales_pkey" PRIMARY KEY ("id")
 );
+
     `;
 
     // Create asks
     await prisma.$executeRaw`
     -- CreateTable
-CREATE TABLE "asks" (
+    CREATE TABLE "asks" (
     "id" BYTEA NOT NULL,
-    "order_type" TEXT,
-    "order_id" BYTEA,
     "kind" TEXT,
     "side" TEXT,
     "status" TEXT,
@@ -60,19 +60,19 @@ CREATE TABLE "asks" (
     "price_currency_contract" BYTEA,
     "price_currency_name" TEXT,
     "price_currency_symbol" TEXT,
-    "price_currency_decimals" INTEGER,
+    "price_currency_decimals" TEXT,
     "price_amount_raw" TEXT,
-    "price_amount_decimal" DECIMAL,
-    "price_amount_usd" DECIMAL,
-    "price_amount_native" DECIMAL,
+    "price_amount_decimal" TEXT,
+    "price_amount_usd" TEXT,
+    "price_amount_native" TEXT,
     "price_net_amount_raw" TEXT,
-    "price_net_amount_decimal" DECIMAL,
-    "price_net_amount_usd" DECIMAL,
-    "price_net_amount_native" DECIMAL,
-    "valid_from" BIGINT,
-    "valid_until" BIGINT,
-    "quantity_filled" BIGINT,
-    "quantity_remaining" BIGINT,
+    "price_net_amount_decimal" TEXT,
+    "price_net_amount_usd" TEXT,
+    "price_net_amount_native" TEXT,
+    "valid_from" TEXT,
+    "valid_until" TEXT,
+    "quantity_filled" TEXT,
+    "quantity_remaining" TEXT,
     "criteria_kind" TEXT,
     "criteria_data_token_token_id" TEXT,
     "source_id" TEXT,
@@ -80,9 +80,9 @@ CREATE TABLE "asks" (
     "source_name" TEXT,
     "source_icon" TEXT,
     "source_url" TEXT,
-    "fee_bps" BIGINT,
+    "fee_bps" TEXT,
     "fee_breakdown" JSONB,
-    "expiration" BIGINT,
+    "expiration" TEXT,
     "is_reservoir" BOOLEAN,
     "is_dynamic" BOOLEAN,
     "created_at" TIMESTAMP,
@@ -90,6 +90,7 @@ CREATE TABLE "asks" (
 
     CONSTRAINT "asks_pkey" PRIMARY KEY ("id")
 );
+
     `;
 
     // Create asks_active
@@ -144,11 +145,9 @@ CREATE TABLE "asks_active" (
 
     // Create bids
     await prisma.$executeRaw`
-    -- CreateTable
+-- CreateTable
 CREATE TABLE "bids" (
     "id" BYTEA NOT NULL,
-    "order_type" TEXT,
-    "order_id" BYTEA,
     "kind" TEXT,
     "side" TEXT,
     "status" TEXT,
@@ -160,19 +159,19 @@ CREATE TABLE "bids" (
     "price_currency_contract" BYTEA,
     "price_currency_name" TEXT,
     "price_currency_symbol" TEXT,
-    "price_currency_decimals" INTEGER,
+    "price_currency_decimals" TEXT,
     "price_amount_raw" TEXT,
-    "price_amount_decimal" DECIMAL,
-    "price_amount_usd" DECIMAL,
-    "price_amount_native" DECIMAL,
+    "price_amount_decimal" TEXT,
+    "price_amount_usd" TEXT,
+    "price_amount_native" TEXT,
     "price_net_amount_raw" TEXT,
-    "price_net_amount_decimal" DECIMAL,
-    "price_net_amount_usd" DECIMAL,
-    "price_net_amount_native" DECIMAL,
-    "valid_from" BIGINT,
-    "valid_until" BIGINT,
-    "quantity_filled" BIGINT,
-    "quantity_remaining" BIGINT,
+    "price_net_amount_decimal" TEXT,
+    "price_net_amount_usd" TEXT,
+    "price_net_amount_native" TEXT,
+    "valid_from" TEXT,
+    "valid_until" TEXT,
+    "quantity_filled" TEXT,
+    "quantity_remaining" TEXT,
     "criteria_kind" TEXT,
     "criteria_data_token_token_id" TEXT,
     "source_id" TEXT,
@@ -180,9 +179,9 @@ CREATE TABLE "bids" (
     "source_name" TEXT,
     "source_icon" TEXT,
     "source_url" TEXT,
-    "fee_bps" BIGINT,
+    "fee_bps" TEXT,
     "fee_breakdown" JSONB,
-    "expiration" BIGINT,
+    "expiration" TEXT,
     "is_reservoir" BOOLEAN,
     "is_dynamic" BOOLEAN,
     "created_at" TIMESTAMP,
@@ -244,21 +243,25 @@ CREATE TABLE "bids_active" (
 
     // Create transfers
     await prisma.$executeRaw`
-     "id" BYTEA NOT NULL,
+-- CreateTable
+CREATE TABLE "transfers" (
+    "id" BYTEA NOT NULL,
     "token_contract" BYTEA,
     "token_id" TEXT,
     "from" BYTEA,
     "to" BYTEA,
     "amount" TEXT,
-    "block" INTEGER,
+    "block" TEXT,
     "tx_hash" BYTEA,
-    "log_index" INTEGER,
-    "batch_index" INTEGER,
-    "timestamp" INTEGER,
+    "log_index" TEXT,
+    "batch_index" TEXT,
+    "timestamp" TEXT,
     "created_at" TIMESTAMP,
     "updated_at" TIMESTAMP,
 
     CONSTRAINT "transfers_pkey" PRIMARY KEY ("id")
+);
+
     `;
   } catch (error) {
     console.log(error);
