@@ -20,22 +20,22 @@ model asks {
   price_currency_contract Bytes?  @db.ByteA
   price_currency_name     String? @db.Text
   price_currency_symbol   String? @db.Text
-  price_currency_decimals Int?    @db.Integer
+  price_currency_decimals String? @db.Text
 
   price_amount_raw     String?  @db.Text
-  price_amount_decimal Decimal? @db.Decimal
-  price_amount_usd     Decimal? @db.Decimal
-  price_amount_native  Decimal? @db.Decimal
+  price_amount_decimal String? @db.Text
+  price_amount_usd     String? @db.Text
+  price_amount_native  String? @db.Text
 
   price_net_amount_raw     String?  @db.Text
-  price_net_amount_decimal Decimal? @db.Decimal
-  price_net_amount_usd     Decimal? @db.Decimal
-  price_net_amount_native  Decimal? @db.Decimal
+  price_net_amount_decimal String? @db.Text
+  price_net_amount_usd     String? @db.Text
+  price_net_amount_native  String? @db.Text
 
-  valid_from         BigInt? @db.BigInt
-  valid_until        BigInt? @db.BigInt
-  quantity_filled    BigInt? @db.BigInt
-  quantity_remaining BigInt? @db.BigInt
+  valid_from         String? @db.Text
+  valid_until        String? @db.Text
+  quantity_filled    String? @db.Text
+  quantity_remaining String? @db.Text
 
   criteria_kind                String? @db.Text
   criteria_data_token_token_id String? @db.Text
@@ -45,9 +45,9 @@ model asks {
   source_name   String?   @db.Text
   source_icon   String?   @db.Text
   source_url    String?   @db.Text
-  fee_bps       BigInt?   @db.BigInt
+  fee_bps       String? @db.Text
   fee_breakdown Json?     @db.JsonB
-  expiration    BigInt?   @db.BigInt
+  expiration    String? @db.Text
   is_reservoir  Boolean?  @db.Boolean
   is_dynamic    Boolean?  @db.Boolean
   created_at    DateTime? @db.Timestamp
@@ -67,11 +67,11 @@ model sales {
   to                 Bytes?    @db.ByteA
   amount             String?   @db.Text
   fill_source        String?   @db.Text
-  block              Int?      @db.Integer
+  block              String?      @db.Text
   tx_hash            Bytes?    @db.ByteA
-  log_index          Int?      @db.Integer
-  batch_index        Int?      @db.Integer
-  timestamp          Int?      @db.Integer
+  log_index          String?      @db.Text
+  batch_index        String?      @db.Text
+  timestamp          String?      @db.Text
   wash_trading_score Float?
   updated_at         DateTime? @default(now())
   created_at         DateTime?
@@ -79,12 +79,12 @@ model sales {
   price_currency_contract Bytes?  @db.ByteA
   price_currency_name     String? @db.Text
   price_currency_symbol   String? @db.Text
-  price_currency_decimals Int?    @db.Integer
+  price_currency_decimals String? @db.Text
 
   price_amount_raw     String?  @db.Text
-  price_amount_decimal Decimal? @db.Decimal
-  price_amount_usd     Decimal? @db.Decimal
-  price_amount_native  Decimal? @db.Decimal
+  price_amount_decimal String? @db.Text
+  price_amount_usd     String? @db.Text
+  price_amount_native  String? @db.Text
 }
 
 model bids {
@@ -100,22 +100,22 @@ model bids {
   price_currency_contract Bytes?  @db.ByteA
   price_currency_name     String? @db.Text
   price_currency_symbol   String? @db.Text
-  price_currency_decimals Int?    @db.Integer
+  price_currency_decimals String? @db.Text
 
   price_amount_raw     String?  @db.Text
-  price_amount_decimal Decimal? @db.Decimal
-  price_amount_usd     Decimal? @db.Decimal
-  price_amount_native  Decimal? @db.Decimal
+  price_amount_decimal String? @db.Text
+  price_amount_usd     String? @db.Text
+  price_amount_native  String? @db.Text
 
   price_net_amount_raw     String?  @db.Text
-  price_net_amount_decimal Decimal? @db.Decimal
-  price_net_amount_usd     Decimal? @db.Decimal
-  price_net_amount_native  Decimal? @db.Decimal
+  price_net_amount_decimal String? @db.Text
+  price_net_amount_usd     String? @db.Text
+  price_net_amount_native  String? @db.Text
 
-  valid_from         BigInt? @db.BigInt
-  valid_until        BigInt? @db.BigInt
-  quantity_filled    BigInt? @db.BigInt
-  quantity_remaining BigInt? @db.BigInt
+  valid_from         String? @db.Text
+  valid_until        String? @db.Text
+  quantity_filled    String? @db.Text
+  quantity_remaining String? @db.Text
 
   criteria_kind                String? @db.Text
   criteria_data_token_token_id String? @db.Text
@@ -125,9 +125,9 @@ model bids {
   source_name   String?   @db.Text
   source_icon   String?   @db.Text
   source_url    String?   @db.Text
-  fee_bps       BigInt?   @db.BigInt
+  fee_bps       String? @db.Text
   fee_breakdown Json?     @db.JsonB
-  expiration    BigInt?   @db.BigInt
+  expiration    String? @db.Text
   is_reservoir  Boolean?  @db.Boolean
   is_dynamic    Boolean?  @db.Boolean
   created_at    DateTime? @db.Timestamp
@@ -141,11 +141,11 @@ model transfers {
   from           Bytes?  @db.ByteA
   to             Bytes?  @db.ByteA
   amount         String? @db.Text
-  block          Int?    @db.Integer
+  block          String? @db.Text
   tx_hash        Bytes?  @db.ByteA
-  log_index      Int?    @db.Integer
-  batch_index    Int?    @db.Integer
-  timestamp      Int?    @db.Integer
+  log_index      String? @db.Text
+  batch_index    String? @db.Text
+  timestamp      String? @db.Text
 
   created_at DateTime? @db.Timestamp
   updated_at DateTime? @db.Timestamp
