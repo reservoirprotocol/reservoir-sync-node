@@ -181,8 +181,7 @@ class _InsertionService {
       }
       else {
         return await caller.delete({
-          where: { id: formatted.id },
-          update: formatted,
+          where: { id: formatted.id }
         });
       }
 
