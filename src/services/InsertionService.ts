@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { Prisma, PrismaClient } from '@prisma/client';
-import SyncNode from '../SyncNode';
+import { Prisma, PrismaClient } from "@prisma/client";
+import SyncNode from "../SyncNode";
 import {
   AsksSchema,
   BidsSchema,
@@ -8,9 +8,9 @@ import {
   DataTypes,
   SalesSchema,
   TransfersSchema,
-} from '../types';
-import { addressToBuffer, toBuffer } from '../utils';
-import { LoggerService } from './LoggerService';
+} from "../types";
+import { addressToBuffer, toBuffer, toString } from "../utils";
+import { LoggerService } from "./LoggerService";
 
 interface DataSchemas {
   sales: SalesSchema;
@@ -71,22 +71,22 @@ class _InsertionService {
 
       switch (promise.code) {
         // Timeout
-        case 'P1008':
+        case "P1008":
           break;
         // Invalid data format
-        case 'P2000':
+        case "P2000":
           break;
         // Unique constraint failed
-        case 'P2002':
+        case "P2002":
           break;
         // Invalid data
-        case 'P2005':
+        case "P2005":
           break;
         // Invalid data
-        case 'P2006':
+        case "P2006":
           break;
         // Integer Overflow
-        case 'P2020':
+        case "P2020":
           break;
         default:
           break;
@@ -138,28 +138,28 @@ class _InsertionService {
    */
   private _filter(type: DataTypes, data: DataSets): DataSets {
     const contracts = SyncNode.getContracts();
-    const sources = SyncNode.getConfigProperty('syncer')['sources'];
+    const sources = SyncNode.getConfigProperty("syncer")["sources"];
 
     if (contracts.length === 0 && sources.length === 0) return data;
 
     switch (type) {
-      case 'transfers':
+      case "transfers":
         return (data as TransfersSchema[]).filter((set) =>
           contracts.includes(set.token?.contract)
         );
-      case 'asks':
+      case "asks":
         return (data as AsksSchema[]).filter(
           (set) =>
             (contracts.length === 0 || contracts.includes(set.contract)) &&
             (sources.length === 0 || sources.includes(set.source.domain))
         );
-      case 'bids':
+      case "bids":
         return (data as BidsSchema[]).filter(
           (set) =>
             (contracts.length === 0 || contracts.includes(set.contract)) &&
             (sources.length === 0 || sources.includes(set.source.domain))
         );
-      case 'sales':
+      case "sales":
         return (data as SalesSchema[]).filter(
           (set) =>
             (contracts.length === 0 ||
@@ -184,12 +184,12 @@ class _InsertionService {
     type: T,
     data: DataSchemas[T]
   ): DataReturns[T] {
-    if (type === 'asks') {
+    if (type === "asks") {
       const ask = data as AsksSchema;
       return {
         id: Buffer.from(
           `${ask?.id}-${ask?.contract}-${ask?.maker}-${ask?.tokenSetId}-${ask?.createdAt}`,
-          'utf16le'
+          "utf16le"
         ),
         kind: ask?.kind,
         side: ask?.side,
@@ -206,28 +206,28 @@ class _InsertionService {
         ),
         price_currency_name: ask?.price?.currency?.name,
         price_currency_symbol: ask?.price?.currency?.symbol,
-        price_currency_decimals: ask?.price?.currency?.decimals,
+        price_currency_decimals: toString(ask?.price?.currency?.decimals),
         price_amount_raw: ask?.price?.amount?.raw,
-        price_amount_decimal: ask?.price?.amount?.decimal,
-        price_amount_native: ask?.price?.amount?.native,
-        price_amount_usd: ask?.price?.amount?.usd,
-        price_net_amount_decimal: ask?.price?.netAmount?.decimal,
-        price_net_amount_native: ask?.price?.netAmount?.native,
+        price_amount_decimal: toString(ask?.price?.amount?.decimal),
+        price_amount_native: toString(ask?.price?.amount?.native),
+        price_amount_usd: toString(ask?.price?.amount?.usd),
+        price_net_amount_decimal: toString(ask?.price?.netAmount?.decimal),
+        price_net_amount_native: toString(ask?.price?.netAmount?.native),
         price_net_amount_raw: ask?.price?.netAmount?.raw,
-        price_net_amount_usd: ask?.price?.netAmount?.usd,
-        valid_from: ask?.validFrom,
-        valid_until: ask?.validUntil,
-        quantity_filled: ask?.quantityFilled,
-        quantity_remaining: ask?.quantityRemaining,
+        price_net_amount_usd: toString(ask?.price?.netAmount?.usd),
+        valid_from: toString(ask?.validFrom),
+        valid_until: toString(ask?.validUntil),
+        quantity_filled: toString(ask?.quantityFilled),
+        quantity_remaining: toString(ask?.quantityRemaining),
         criteria_kind: ask?.criteria?.kind,
         criteria_data_token_token_id: ask?.criteria?.data?.token?.tokenId,
         source_domain: ask?.source?.domain,
         source_icon: ask?.source?.icon,
         source_url: ask?.source?.url,
         source_id: ask?.source?.id,
-        fee_bps: ask?.feeBps,
+        fee_bps: toString(ask?.feeBps),
         fee_breakdown: JSON.stringify(ask.feeBreakdown),
-        expiration: ask?.expiration,
+        expiration: toString(ask?.expiration),
         is_reservoir: ask?.isReservoir,
         is_dynamic: ask?.isDynamic,
         updated_at: ask?.updatedAt,
@@ -235,12 +235,12 @@ class _InsertionService {
       };
     }
 
-    if (type === 'bids') {
+    if (type === "bids") {
       const bid = data as BidsSchema;
       return {
         id: Buffer.from(
           `${bid?.id}-${bid?.contract}-${bid?.maker}-${bid?.tokenSetId}-${bid?.createdAt}`,
-          'utf16le'
+          "utf16le"
         ),
         kind: bid?.kind,
         side: bid?.side,
@@ -255,28 +255,28 @@ class _InsertionService {
         ),
         price_currency_name: bid?.price?.currency?.name,
         price_currency_symbol: bid?.price?.currency?.symbol,
-        price_currency_decimals: bid?.price?.currency?.decimals,
+        price_currency_decimals: toString(bid?.price?.currency?.decimals),
         price_amount_raw: bid?.price?.amount?.raw,
-        price_amount_decimal: bid?.price?.amount?.decimal,
-        price_amount_native: bid?.price?.amount?.native,
-        price_amount_usd: bid?.price?.amount?.usd,
-        price_net_amount_decimal: bid?.price?.netAmount?.decimal,
-        price_net_amount_native: bid?.price?.netAmount?.native,
+        price_amount_decimal: toString(bid?.price?.amount?.decimal),
+        price_amount_native: toString(bid?.price?.amount?.native),
+        price_amount_usd: toString(bid?.price?.amount?.usd),
+        price_net_amount_decimal: toString(bid?.price?.netAmount?.decimal),
+        price_net_amount_native: toString(bid?.price?.netAmount?.native),
         price_net_amount_raw: bid?.price?.netAmount?.raw,
-        price_net_amount_usd: bid?.price?.netAmount?.usd,
-        valid_from: bid?.validFrom,
-        valid_until: bid?.validUntil,
-        quantity_filled: bid?.quantityFilled,
-        quantity_remaining: bid?.quantityRemaining,
+        price_net_amount_usd: toString(bid?.price?.netAmount?.usd),
+        valid_from: toString(bid?.validFrom),
+        valid_until: toString(bid?.validUntil),
+        quantity_filled: toString(bid?.quantityFilled),
+        quantity_remaining: toString(bid?.quantityRemaining),
         criteria_kind: bid?.criteria?.kind,
         criteria_data_token_token_id: bid?.criteria?.data?.token?.tokenId,
         source_domain: bid?.source?.domain,
         source_icon: bid?.source?.icon,
         source_url: bid?.source?.url,
         source_id: bid?.source?.id,
-        fee_bps: bid?.feeBps,
+        fee_bps: toString(bid?.feeBps),
         fee_breakdown: JSON.stringify(bid.feeBreakdown),
-        expiration: bid?.expiration,
+        expiration: toString(bid?.expiration),
         is_reservoir: bid?.isReservoir,
         is_dynamic: bid?.isDynamic,
         updated_at: bid?.updatedAt,
@@ -284,7 +284,7 @@ class _InsertionService {
       };
     }
 
-    if (type === 'sales') {
+    if (type === "sales") {
       const sale = data as SalesSchema;
       return {
         id: Buffer.from(`${sale.txHash}-${sale.logIndex}-${sale.batchIndex}`),
@@ -299,11 +299,11 @@ class _InsertionService {
         from: addressToBuffer(sale.from),
         to: addressToBuffer(sale.to),
         fill_source: sale.fillSource,
-        block: sale.block,
+        block: toString(sale.block),
         tx_hash: addressToBuffer(sale.txHash),
-        log_index: sale.logIndex,
-        batch_index: sale.batchIndex,
-        timestamp: sale.timestamp,
+        log_index: toString(sale.logIndex),
+        batch_index: toString(sale.batchIndex),
+        timestamp: toString(sale.timestamp),
         wash_trading_score: sale.washTradingScore,
         created_at: sale.createdAt,
         price_currency_contract: addressToBuffer(
@@ -312,31 +312,31 @@ class _InsertionService {
         updated_at: sale.updatedAt,
         price_currency_name: sale.price?.currency?.name,
         price_currency_symbol: sale.price?.currency?.symbol,
-        price_currency_decimals: sale.price?.currency?.decimals,
+        price_currency_decimals: toString(sale.price?.currency?.decimals),
         price_amount_raw: sale.price?.amount?.raw,
-        price_amount_decimal: sale.price?.amount?.decimal,
-        price_amount_usd: sale.price?.amount?.usd,
-        price_amount_native: sale.price?.amount?.native,
+        price_amount_decimal: toString(sale.price?.amount?.decimal),
+        price_amount_usd: toString(sale.price?.amount?.usd),
+        price_amount_native: toString(sale.price?.amount?.native),
       };
     }
 
-    if (type === 'transfers') {
+    if (type === "transfers") {
       const transfer = data as TransfersSchema;
       return {
         id: Buffer.from(
           `${transfer.txHash}-${transfer.logIndex}-${transfer.batchIndex}`,
-          'utf16le'
+          "utf16le"
         ),
         token_contract: addressToBuffer(transfer?.token?.contract),
         token_id: transfer?.token?.tokenId,
         from: addressToBuffer(transfer?.from),
         to: addressToBuffer(transfer?.to),
         amount: transfer.amount,
-        block: transfer.block,
+        block: toString(transfer.block),
         tx_hash: addressToBuffer(transfer?.txHash),
-        log_index: transfer.logIndex,
-        batch_index: transfer.batchIndex,
-        timestamp: transfer.timestamp,
+        log_index: toString(transfer.logIndex),
+        batch_index: toString(transfer.batchIndex),
+        timestamp: toString(transfer.timestamp),
         updated_at: transfer.updatedAt,
       };
     }

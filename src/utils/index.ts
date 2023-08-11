@@ -1,17 +1,17 @@
-import { AxiosResponse } from 'axios';
-import { isAddress } from 'web3-validator';
+import { AxiosResponse } from "axios";
+import { isAddress } from "web3-validator";
 import {
   addMilliseconds,
   differenceInMilliseconds,
   format,
   parseISO,
-} from 'date-fns';
-import { utcToZonedTime } from 'date-fns-tz';
-import fs from 'fs';
-import path from 'path';
-import { LoggerService } from '../services';
+} from "date-fns";
+import { utcToZonedTime } from "date-fns-tz";
+import fs from "fs";
+import path from "path";
+import { LoggerService } from "../services";
 
-import { ControllerEvent, ErrorType, Schemas, SuccessType } from '../types';
+import { ControllerEvent, ErrorType, Schemas, SuccessType } from "../types";
 /**
  * # isTodayUTC
  * @param dateString - Date string
@@ -20,8 +20,8 @@ import { ControllerEvent, ErrorType, Schemas, SuccessType } from '../types';
 export const isTodayUTC = (dateString: string) => {
   if (!dateString) return false;
   return (
-    format(utcToZonedTime(new Date(dateString), 'Etc/UTC'), 'yyyy-MM-dd') ===
-    format(utcToZonedTime(new Date(), 'Etc/UTC'), 'yyyy-MM-dd')
+    format(utcToZonedTime(new Date(dateString), "Etc/UTC"), "yyyy-MM-dd") ===
+    format(utcToZonedTime(new Date(), "Etc/UTC"), "yyyy-MM-dd")
   );
 };
 /**
@@ -37,7 +37,7 @@ export const isSuccessResponse = (
 };
 
 export const isQueueEvent = (e: ControllerEvent): e is ControllerEvent => {
-  return e.type === 'queue';
+  return e.type === "queue";
 };
 
 /**
@@ -53,10 +53,10 @@ export const isErrorResponse = (
 };
 
 export function parseTimestamp(date: string): number {
-  const datePieces = date.split('T');
-  const [year, month, day] = datePieces[0].split('-').map(Number);
+  const datePieces = date.split("T");
+  const [year, month, day] = datePieces[0].split("-").map(Number);
 
-  const timePieces = datePieces[1].substring(0, 8).split(':').map(Number);
+  const timePieces = datePieces[1].substring(0, 8).split(":").map(Number);
   const [hour, minute, second] = timePieces;
 
   const startDate = new Date(year, month - 1, day, hour, minute, second);
@@ -110,9 +110,14 @@ export const delay = async (ms: number): Promise<void> =>
  * @param hexValue - Hex value to slice
  * @returns Formatted buffer of a Hex
  */
-export const toBuffer = (hexValue: string = '') => {
+export const toBuffer = (hexValue: string = "") => {
   if (!hexValue) return null;
-  return Buffer.from(hexValue || ' ', 'hex');
+  return Buffer.from(hexValue || " ", "hex");
+};
+
+export const toString = (value: number = 0): string | null => {
+  if (!value) return null;
+  return value.toString();
 };
 
 /**
@@ -120,31 +125,31 @@ export const toBuffer = (hexValue: string = '') => {
  * @param hexValue - Hex value to slice
  * @returns Formatted buffer of a Hex
  */
-export const addressToBuffer = (hexValue: string = '') => {
+export const addressToBuffer = (hexValue: string = "") => {
   if (!hexValue) return null;
-  return Buffer.from((hexValue || ' ').slice(2), 'hex');
+  return Buffer.from((hexValue || " ").slice(2), "hex");
 };
 
 export const UrlBase = {
-  mainnet: 'https://api.reservoir.tools',
-  goerli: 'https://api-goerli.reservoir.tools',
-  polygon: 'https://api-polygon.reservoir.tools',
-  arbitrum: 'https://api-arbitrum.reservoir.tools',
-  optimism: 'https://api-optimism.reservoir.tools',
+  mainnet: "https://api.reservoir.tools",
+  goerli: "https://api-goerli.reservoir.tools",
+  polygon: "https://api-polygon.reservoir.tools",
+  arbitrum: "https://api-arbitrum.reservoir.tools",
+  optimism: "https://api-optimism.reservoir.tools",
 } as const;
 
 export const UrlPaths = {
-  sales: '/sales/v4',
-  asks: '/orders/asks/v4',
-  bids: '/orders/bids/v5',
-  transfers: '/transfers/bulk/v2',
+  sales: "/sales/v4",
+  asks: "/orders/asks/v4",
+  bids: "/orders/bids/v5",
+  transfers: "/transfers/bulk/v2",
 } as const;
 
 export const RecordRoots = {
-  asks: 'orders',
-  sales: 'sales',
-  bids: 'orders',
-  transfers: 'transfers',
+  asks: "orders",
+  sales: "sales",
+  bids: "orders",
+  transfers: "transfers",
 } as const;
 
 export const WorkerCounts = {
@@ -156,9 +161,9 @@ export const WorkerCounts = {
 export const readContracts = (): string[] => {
   try {
     const contracts: string[] = [];
-    fs.readFileSync(path.join(__dirname, '../contracts.txt'), 'utf-8')
+    fs.readFileSync(path.join(__dirname, "../contracts.txt"), "utf-8")
       .trim()
-      .split('\n')
+      .split("\n")
       .filter((contract) => isAddress(contract))
       .map((contract) => contracts.push(contract));
 
