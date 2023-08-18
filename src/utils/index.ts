@@ -139,9 +139,9 @@ export const UrlBase = {
 } as const;
 
 export const UrlPaths = {
-  sales: "/sales/v4",
-  asks: "/orders/asks/v4",
-  bids: "/orders/bids/v5",
+  sales: "/sales/v6",
+  asks: "/orders/asks/v5",
+  bids: "/orders/bids/v6",
   transfers: "/transfers/bulk/v2",
 } as const;
 

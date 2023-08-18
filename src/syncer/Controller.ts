@@ -307,11 +307,13 @@ export class Controller {
     params: Record<string | number, unknown>,
     isBackfill = true
   ): string {
-    const queries: string[] = ["limit=1000", "includeCriteriaMetadata=true"];
+    const queries: string[] = [
+      "limit=1000",
+      "includeCriteriaMetadata=true",
+      "sortBy=updatedAt",
+    ];
 
     const root = RecordRoots[this._config.dataset];
-
-    queries.push(root === "sales" ? "orderBy=updated_at" : "sortBy=updatedAt");
 
     isBackfill && queries.push(`status=active`);
 
