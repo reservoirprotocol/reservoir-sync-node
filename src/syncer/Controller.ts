@@ -341,7 +341,7 @@ export class Controller {
         validateStatus: () => true,
         headers: {
           "X-API-KEY": this._config.apiKey,
-          "X-SYNC-NODE": `${SYNC_NODE_VERSION?.toString()}`,
+          "x-syncnode-version": `${SYNC_NODE_VERSION?.toString()}`,
           "Content-Type": "application/json",
         },
       });
