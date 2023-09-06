@@ -114,20 +114,19 @@ class _InsertionService {
       this.insertionTally[type] = 0;
     }
 
-    this.insertionTally[type] += data.length;
-
-    for await (const record of data) {
-      const formatted = this._format(type, record);
-      // @ts-ignore Prisma doesn't support model reference by variable name.
-      // See https://github.com/prisma/prisma/discussions/16058#discussioncomment-5493
-      return await this._prisma[type].upsert({
-        where: { id: formatted.id },
-        create: formatted,
-        update: formatted,
-      });
-    }
-
-    return;
+    await this._prisma.$transaction(
+      data.map((record) => {
+        const formatted = this._format(type, record);
+        // @ts-ignore Prisma doesn't support model reference by variable name.
+        // See https://github.com/prisma/prisma/discussions/16058#discussioncomment-5493
+        return this._prisma[type].upsert({
+          where: { id: formatted.id },
+          create: formatted,
+          update: formatted,
+        });
+      })
+    ),
+      (this.insertionTally[type] += data.length);
   }
   /**
    * Filters the input data based on the available contracts.
