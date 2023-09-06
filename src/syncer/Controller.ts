@@ -335,9 +335,6 @@ export class Controller {
   public async request(
     parameters: string
   ): Promise<AxiosResponse<SuccessType | ErrorType>> {
-    /**
-     * Promise blocking until the setTimeout
-     */
     if (this._backoff) {
       await new Promise((resolve) => {
         const interval: NodeJS.Timer = setInterval(() => {
