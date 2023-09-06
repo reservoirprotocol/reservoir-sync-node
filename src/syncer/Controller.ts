@@ -360,10 +360,21 @@ export class Controller {
       });
       if (req.status === 429) {
         this._backoff = true;
-        const timeout: NodeJS.Timer = setTimeout(() => {
-          this._backoff = false;
-          clearTimeout(timeout);
-        }, new Date(req.headers["x-ratelimit-reset"]).getTime() - Date.now());
+        console.log(
+          `Waiting for ${
+            new Date(req.headers["x-ratelimit-reset"]).getTime() - Date.now()
+          }`
+        );
+        const rateLimitReset = req.headers?.["x-ratelimit-reset"];
+        const timeout: NodeJS.Timer = setTimeout(
+          () => {
+            this._backoff = false;
+            clearTimeout(timeout);
+          },
+          rateLimitReset
+            ? new Date(rateLimitReset).getTime() - Date.now()
+            : 10000
+        );
       }
       return {
         ...req,
