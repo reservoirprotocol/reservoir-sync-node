@@ -21,6 +21,8 @@ import {
 } from "../utils";
 import { Worker } from "./Worker";
 
+const SYNC_NODE_VERSION = process.env.npm_package_version;
+
 export class Controller {
   /**
    * Workers used to process & grain blocks.
@@ -339,7 +341,7 @@ export class Controller {
         validateStatus: () => true,
         headers: {
           "X-API-KEY": this._config.apiKey,
-          "X-SYNC-NODE": "V2",
+          "x-syncnode-version": `${SYNC_NODE_VERSION?.toString()}`,
           "Content-Type": "application/json",
         },
       });
