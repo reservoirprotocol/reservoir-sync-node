@@ -360,8 +360,9 @@ export class Controller {
       });
       if (req.status === 429) {
         this._backoff = true;
-        setTimeout(() => {
+        const timeout: NodeJS.Timer = setTimeout(() => {
           this._backoff = false;
+          clearTimeout(timeout);
         }, new Date(req.headers["x-ratelimit-reset"]).getTime() - Date.now());
       }
       return {
