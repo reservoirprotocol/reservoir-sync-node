@@ -12,6 +12,280 @@ import {
 import { addressToBuffer, toBuffer, toString } from "../utils";
 import { LoggerService } from "./LoggerService";
 
+interface PreparedStatement {
+  query: string;
+  values: unknown[];
+}
+
+const generateOrderSQl = (
+  records: AsksSchema[] | BidsSchema[],
+  type: "bids" | "asks"
+): PreparedStatement => {
+  const columns: string[] = [
+    "id",
+    "kind",
+    "side",
+    "status",
+    "token_set_id",
+    "token_set_schema_hash",
+    "contract",
+    "maker",
+    "taker",
+    "price_currency_contract",
+    "price_currency_name",
+    "price_currency_symbol",
+    "price_currency_decimals",
+    "price_amount_raw",
+    "price_amount_decimal",
+    "price_amount_usd",
+    "price_amount_native",
+    "price_net_amount_raw",
+    "price_net_amount_decimal",
+    "price_net_amount_usd",
+    "price_net_amount_native",
+    "valid_from",
+    "valid_until",
+    "quantity_filled",
+    "quantity_remaining",
+    "criteria_kind",
+    "criteria_data_token_token_id",
+    "source_id",
+    "source_domain",
+    "source_name",
+    "source_icon",
+    "source_url",
+    "fee_bps",
+    "fee_breakdown",
+    "expiration",
+    "is_reservoir",
+    "is_dynamic",
+    "created_at",
+    "updated_at",
+  ];
+
+  const byteaColumns = [
+    "id",
+    "token_set_schema_hash",
+    "contract",
+    "maker",
+    "taker",
+    "price_currency_contract",
+  ];
+
+  const jsonbColumns = ["fee_breakdown"];
+
+  const timestampColumns = ["created_at", "updated_at"];
+
+  const tempValues: string[] = [];
+  const values: unknown[] = [];
+
+  records.forEach((record, index) => {
+    const recordPlaceholders = columns
+      .map((col, colIndex) => {
+        const placeholder = `$${index * columns.length + colIndex + 1}`;
+
+        if (byteaColumns.includes(col)) {
+          return `decode(${placeholder}, 'hex')`;
+        } else if (jsonbColumns.includes(col)) {
+          return `${placeholder}::jsonb`;
+        } else if (timestampColumns.includes(col)) {
+          return `${placeholder}::timestamp`;
+        } else {
+          return placeholder;
+        }
+      })
+      .join(", ");
+    tempValues.push(`(${recordPlaceholders})`);
+
+    values.push(
+      ...columns.map((col) => {
+        // @ts-ignore
+        const val = record[col];
+        if (Buffer.isBuffer(val)) {
+          return val.toString("hex");
+        } else if (jsonbColumns.includes(col) && typeof val === "object") {
+          return JSON.stringify(val);
+        }
+        return val;
+      })
+    );
+  });
+
+  const updateCols = columns
+    .filter((col) => col !== "id")
+    .map((col) => `"${col}" = EXCLUDED."${col}"`)
+    .join(", ");
+
+  const query = `
+  INSERT INTO ${type} (${columns.map((col) => `"${col}"`).join(", ")})
+  VALUES ${tempValues.join(", ")}
+  ON CONFLICT (id) 
+  DO UPDATE SET ${updateCols}
+`;
+
+  return { query, values };
+};
+
+const generateTransfersSQL = (
+  records: TransfersSchema[]
+): PreparedStatement => {
+  const columns: string[] = [
+    "id",
+    "token_contract",
+    "token_id",
+    "from",
+    "to",
+    "amount",
+    "block",
+    "tx_hash",
+    "log_index",
+    "batch_index",
+    "timestamp",
+    "created_at",
+    "updated_at",
+  ];
+
+  const byteaColumns = ["id", "token_contract", "from", "to", "tx_hash"];
+
+  const timestampColumns = ["created_at", "updated_at"];
+
+  const tempValues: string[] = [];
+  const values: unknown[] = [];
+
+  records.forEach((record, index) => {
+    const recordPlaceholders = columns
+      .map((col, colIndex) => {
+        const placeholder = `$${index * columns.length + colIndex + 1}`;
+
+        if (byteaColumns.includes(col)) {
+          return `decode(${placeholder}, 'hex')`;
+        } else if (timestampColumns.includes(col)) {
+          return `${placeholder}::timestamp`;
+        } else {
+          return placeholder;
+        }
+      })
+      .join(", ");
+    tempValues.push(`(${recordPlaceholders})`);
+
+    values.push(
+      ...columns.map((col) => {
+        // @ts-ignore
+        const val = record[col];
+        if (Buffer.isBuffer(val)) {
+          return val.toString("hex");
+        }
+        return val;
+      })
+    );
+  });
+
+  const updateCols = columns
+    .filter((col) => col !== "id")
+    .map((col) => `"${col}" = EXCLUDED."${col}"`)
+    .join(", ");
+
+  const query = `
+  INSERT INTO transfers (${columns.map((col) => `"${col}"`).join(", ")})
+  VALUES ${tempValues.join(", ")}
+  ON CONFLICT (id) 
+  DO UPDATE SET ${updateCols}
+`;
+
+  return { query, values };
+};
+
+const generateSalesSQl = (records: SalesSchema[]): PreparedStatement => {
+  const columns: string[] = [
+    "id",
+    "sale_id",
+    "token_id",
+    "contract_id",
+    "order_id",
+    "order_source",
+    "order_side",
+    "order_kind",
+    "from",
+    "to",
+    "amount",
+    "fill_source",
+    "block",
+    "tx_hash",
+    "log_index",
+    "batch_index",
+    "timestamp",
+    "wash_trading_score",
+    "updated_at",
+    "created_at",
+    "price_currency_contract",
+    "price_currency_name",
+    "price_currency_symbol",
+    "price_currency_decimals",
+    "price_amount_raw",
+    "price_amount_decimal",
+    "price_amount_usd",
+    "price_amount_native",
+  ];
+
+  const byteaColumns = [
+    "id",
+    "sale_id",
+    "contract_id",
+    "order_id",
+    "from",
+    "to",
+    "tx_hash",
+    "price_currency_contract",
+  ];
+
+  const timestampColumns = ["created_at", "updated_at"];
+
+  const tempValues: string[] = [];
+  const values: unknown[] = [];
+
+  records.forEach((record, index) => {
+    const recordPlaceholders = columns
+      .map((col, colIndex) => {
+        const placeholder = `$${index * columns.length + colIndex + 1}`;
+
+        if (byteaColumns.includes(col)) {
+          return `decode(${placeholder}, 'hex')`;
+        } else if (timestampColumns.includes(col)) {
+          return `${placeholder}::timestamp`;
+        } else {
+          return placeholder;
+        }
+      })
+      .join(", ");
+    tempValues.push(`(${recordPlaceholders})`);
+
+    values.push(
+      ...columns.map((col) => {
+        // @ts-ignore
+        const val = record[col];
+        if (Buffer.isBuffer(val)) {
+          return val.toString("hex");
+        }
+        return val;
+      })
+    );
+  });
+
+  const updateCols = columns
+    .filter((col) => col !== "id")
+    .map((col) => `"${col}" = EXCLUDED."${col}"`)
+    .join(", ");
+
+  const query = `
+  INSERT INTO sales (${columns.map((col) => `"${col}"`).join(", ")})
+  VALUES ${tempValues.join(", ")}
+  ON CONFLICT (id) 
+  DO UPDATE SET ${updateCols}
+`;
+
+  return { query, values };
+};
+
 interface DataSchemas {
   sales: SalesSchema;
   asks: AsksSchema;
@@ -116,17 +390,37 @@ class _InsertionService {
 
     this.insertionTally[type] += data.length;
 
-    for await (const record of data) {
-      const formatted = this._format(type, record);
-      // @ts-ignore Prisma doesn't support model reference by variable name.
-      // See https://github.com/prisma/prisma/discussions/16058#discussioncomment-5493
-      await this._prisma[type].upsert({
-        where: { id: formatted.id },
-        create: formatted,
-        update: formatted,
-      });
+    const CHUNK_SIZE = 100;
+    for (let i = 0; i < data.length; i += CHUNK_SIZE) {
+      const chunk = data.slice(i, i + CHUNK_SIZE);
+      const formattedChunk = chunk.map((d) => this._format(type, d));
+      if (type === "asks" || type === "bids") {
+        try {
+          const { query, values } = generateOrderSQl(formattedChunk as any, type);
+          const result = await this._prisma.$executeRawUnsafe(query, ...values);
+        } catch (e: unknown) {
+          console.log(e);
+        }
+      }
+      if (type === "sales") {
+        try {
+          const { query, values } = generateSalesSQl(formattedChunk as any);
+          const result = await this._prisma.$executeRawUnsafe(query, ...values);
+        } catch (e: unknown) {
+          console.log(e);
+        }
+      }
+      if (type === "transfers") {
+        try {
+          const { query, values } = generateTransfersSQL(formattedChunk as any);
+          const result = await this._prisma.$executeRawUnsafe(query, ...values);
+        } catch (e: unknown) {
+          console.log(e);
+        }
+      }
     }
   }
+
   /**
    * Filters the input data based on the available contracts.
    * @param {DataTypes} type - The type of the data ('asks', 'bids', 'sales').
