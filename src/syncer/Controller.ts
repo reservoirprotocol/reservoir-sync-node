@@ -366,15 +366,10 @@ export class Controller {
           }`
         );
         const rateLimitReset = req.headers?.["x-ratelimit-reset"];
-        const timeout: NodeJS.Timer = setTimeout(
-          () => {
-            this._backoff = false;
-            clearTimeout(timeout);
-          },
-          rateLimitReset
-            ? new Date(rateLimitReset).getTime() - Date.now()
-            : 10000
-        );
+        const timeout: NodeJS.Timer = setTimeout(() => {
+          this._backoff = false;
+          clearTimeout(timeout);
+        }, 60000);
       }
       return {
         ...req,
