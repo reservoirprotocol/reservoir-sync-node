@@ -133,6 +133,7 @@ export const addressToBuffer = (hexValue: string = "") => {
 export const UrlBase = {
   mainnet: "https://api.reservoir.tools",
   goerli: "https://api-goerli.reservoir.tools",
+  sepolia: "https://api-sepolia.reservoir.tools",
   polygon: "https://api-polygon.reservoir.tools",
   arbitrum: "https://api-arbitrum.reservoir.tools",
   optimism: "https://api-optimism.reservoir.tools",

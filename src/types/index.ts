@@ -2,22 +2,22 @@
  * TYPES & ENUMS
  */
 
-import { HttpStatusCode } from 'axios';
-import { Application } from 'express';
+import { HttpStatusCode } from "axios";
+import { Application } from "express";
 
 export enum URLs {
-  'goerli' = 'wss://ws.dev.reservoir.tools',
-  'mainnet' = 'wss://ws.reservoir.tools',
-  'polygon' = 'wss://ws-polygon.reservoir.tools',
-  'arbitrum' = 'wss://ws-arbitrum.reservoir.tools',
-  'optimism' = 'wss://ws-optimism.reservoir.tools',
+  "goerli" = "wss://ws.dev.reservoir.tools",
+  "mainnet" = "wss://ws.reservoir.tools",
+  "polygon" = "wss://ws-polygon.reservoir.tools",
+  "arbitrum" = "wss://ws-arbitrum.reservoir.tools",
+  "optimism" = "wss://ws-optimism.reservoir.tools",
 }
 
 export type KnownPropertiesType = {
   continuation: string;
   records: Schemas;
 } & {
-  [key in 'sales' | 'orders' | 'transfers']: Schemas;
+  [key in "sales" | "orders" | "transfers"]: Schemas;
 };
 
 export type GenericResponse = KnownPropertiesType;
@@ -40,11 +40,11 @@ export type ErrorResponse<T = ErrorType | null> = {
   status: HttpStatusCode | null;
 };
 
-export type WorkerType = 'backfiller' | 'upkeeper';
+export type WorkerType = "backfiller" | "upkeeper";
 
 export type ApiResponse<T = SuccessType> = SuccessResponse<T> | ErrorResponse;
 
-export type DataTypes = 'sales' | 'asks' | 'bids' | 'transfers';
+export type DataTypes = "sales" | "asks" | "bids" | "transfers";
 
 export type DataSets =
   | AsksSchema[]
@@ -52,23 +52,29 @@ export type DataSets =
   | BidsSchema[]
   | TransfersSchema[];
 
-export type Chains = 'mainnet' | 'goerli' | 'polygon' | 'arbitrum' | 'optimism';
+export type Chains =
+  | "mainnet"
+  | "goerli"
+  | "polygon"
+  | "arbitrum"
+  | "optimism"
+  | "sepolia";
 
-export type MessageType = 'connection';
+export type MessageType = "connection";
 
 export type MessageEvent =
-  | 'subscribe'
-  | 'ask.created'
-  | 'ask.updated'
-  | 'sale.created'
-  | 'sale.updated'
-  | 'bid.created'
-  | 'bid.updated'
-  | 'transfer.created'
-  | 'transfer.updated';
+  | "subscribe"
+  | "ask.created"
+  | "ask.updated"
+  | "sale.created"
+  | "sale.updated"
+  | "bid.created"
+  | "bid.updated"
+  | "transfer.created"
+  | "transfer.updated";
 
-export type Mode = 'slow' | 'normal' | 'fast';
-export type ControllerType = 'upkeep' | 'backfill';
+export type Mode = "slow" | "normal" | "fast";
+export type ControllerType = "upkeep" | "backfill";
 /**
  * INTERFACES
  */
@@ -89,7 +95,7 @@ export interface Mapping {
   table: string;
 }
 export interface WorkerEvent {
-  type: 'worker.release' | 'worker.split' | 'block.status' | 'worker.idle';
+  type: "worker.release" | "worker.split" | "block.status" | "worker.idle";
   block: Block;
 }
 
@@ -104,7 +110,7 @@ export interface ControllerConfig {
 }
 
 export interface QueueEvent {
-  type: 'new.block';
+  type: "new.block";
   block: Block;
 }
 
