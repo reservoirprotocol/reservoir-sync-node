@@ -126,7 +126,7 @@ export class Worker extends EventEmitter {
 
         const records = [
           ...ascRes.data[RecordRoots[this._datatype]],
-          ...descRes.data[RecordRoots[this._datatype]],
+          ...descRes.data[RecordRoots[this._datatype]].reverse(),
         ] as Schemas;
 
         await this._insert(records);
@@ -252,7 +252,7 @@ export class Worker extends EventEmitter {
       const isHighDensity = isHighDensityBlock(
         [
           ...ascRes.data[RecordRoots[this._datatype]],
-          ...descRes.data[RecordRoots[this._datatype]],
+          ...descRes.data[RecordRoots[this._datatype]].reverse(),
         ] as Schemas,
         300000
       );

@@ -9,7 +9,7 @@ import {
   SalesSchema,
   TransfersSchema,
 } from "../types";
-import { addressToBuffer, toBuffer, toString } from "../utils";
+import { addressToBuffer, splitArray, toBuffer, toString } from "../utils";
 import { LoggerService } from "./LoggerService";
 
 interface PreparedStatement {
@@ -390,37 +390,35 @@ class _InsertionService {
 
     this.insertionTally[type] += data.length;
 
-    const CHUNK_SIZE = 100;
-    for (let i = 0; i < data.length; i += CHUNK_SIZE) {
-      const chunk = data.slice(i, i + CHUNK_SIZE);
-      const formattedChunk = chunk.map((d) => this._format(type, d));
-      if (type === "asks" || type === "bids") {
-        try {
-          const { query, values } = generateOrderSQl(formattedChunk as any, type);
-          const result = await this._prisma.$executeRawUnsafe(query, ...values);
-        } catch (e: unknown) {
-          console.log(e);
-        }
-      }
-      if (type === "sales") {
-        try {
-          const { query, values } = generateSalesSQl(formattedChunk as any);
-          const result = await this._prisma.$executeRawUnsafe(query, ...values);
-        } catch (e: unknown) {
-          console.log(e);
-        }
-      }
-      if (type === "transfers") {
-        try {
-          const { query, values } = generateTransfersSQL(formattedChunk as any);
-          const result = await this._prisma.$executeRawUnsafe(query, ...values);
-        } catch (e: unknown) {
-          console.log(e);
-        }
+    const chunks = splitArray(
+      data.map((set) => this._format(type, set)),
+      10
+    ).filter((chunk) => chunk.length > 0);
+
+    for await (const chunk of chunks) {
+      try {
+        const { values, query } = this._generateSql(type, chunk as any);
+        await this._prisma.$executeRawUnsafe(query, ...values);
+      } catch (e: unknown) {
+        LoggerService.error(e);
       }
     }
   }
-
+  private _generateSql(
+    type: DataTypes,
+    data: DataSchemas[]
+  ): PreparedStatement {
+    if (type === "asks" || type === "bids") {
+      return generateOrderSQl(data as any, type);
+    }
+    if (type === "sales") {
+      return generateSalesSQl(data as any);
+    }
+    if (type === "transfers") {
+      return generateTransfersSQL(data as any);
+    }
+    throw new Error(`Unkown type: ${type}`);
+  }
   /**
    * Filters the input data based on the available contracts.
    * @param {DataTypes} type - The type of the data ('asks', 'bids', 'sales').

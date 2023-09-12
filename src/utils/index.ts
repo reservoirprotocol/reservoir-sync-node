@@ -93,8 +93,7 @@ export function getMiddleDate(date1: string, date2: string): string {
  */
 export function isHighDensityBlock(data: Schemas, threshold: number) {
   const dateOne = new Date(data[0].updatedAt).getTime();
-  const dateTwo = new Date(data[0].updatedAt).getTime();
-
+  const dateTwo = new Date(data[data.length - 1].updatedAt).getTime();
   return Math.abs(dateOne - dateTwo) > threshold;
 }
 
