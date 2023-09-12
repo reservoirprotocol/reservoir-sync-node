@@ -21,7 +21,14 @@ import {
 } from "../utils";
 import { Worker } from "./Worker";
 
+const SYNC_NODE_VERSION = process.env.npm_package_version;
+
 export class Controller {
+  /**
+   * Flag that blocks requests from proceeding
+   */
+  private _backoff: Boolean = false;
+
   /**
    * Workers used to process & grain blocks.
    * @private
@@ -313,8 +320,6 @@ export class Controller {
       "sortBy=updatedAt",
     ];
 
-    const root = RecordRoots[this._config.dataset];
-
     isBackfill && queries.push(`status=active`);
 
     Object.keys(params).map((key) => queries.push(`${key}=${params[key]}`));
@@ -330,6 +335,16 @@ export class Controller {
   public async request(
     parameters: string
   ): Promise<AxiosResponse<SuccessType | ErrorType>> {
+    if (this._backoff) {
+      await new Promise((resolve) => {
+        const interval: NodeJS.Timer = setInterval(() => {
+          if (!this._backoff) {
+            resolve(clearInterval(interval));
+          }
+        }, 1000);
+      });
+    }
+
     try {
       const req = await axios<SuccessType | ErrorType>({
         ...this._config,
@@ -339,10 +354,17 @@ export class Controller {
         validateStatus: () => true,
         headers: {
           "X-API-KEY": this._config.apiKey,
-          "X-SYNC-NODE": "V2",
+          "x-syncnode-version": `${SYNC_NODE_VERSION?.toString()}`,
           "Content-Type": "application/json",
         },
       });
+      if (req.status === 429) {
+        this._backoff = true;
+        const timeout: NodeJS.Timer = setTimeout(() => {
+          this._backoff = false;
+          clearTimeout(timeout);
+        }, 60000);
+      }
       return {
         ...req,
         data: req.data,
