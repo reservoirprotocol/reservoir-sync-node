@@ -13,7 +13,6 @@ tsconfig.tsbuildinfo
 # Misc
 yarn-error.log
 postgres/
-contracts.txt
 
 # IDE
 *.iml
