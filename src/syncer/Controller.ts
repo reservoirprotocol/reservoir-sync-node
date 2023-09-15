@@ -320,7 +320,9 @@ export class Controller {
       "sortBy=updatedAt",
     ];
 
-    isBackfill && queries.push(`status=active`);
+    if (this._config.dataset === "asks" || this._config.dataset === "bids") {
+      isBackfill && queries.push(`status=active`);
+    }
 
     Object.keys(params).map((key) => queries.push(`${key}=${params[key]}`));
 
