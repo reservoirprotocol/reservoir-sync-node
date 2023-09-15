@@ -173,6 +173,7 @@ export class Worker extends EventEmitter {
     while (true) {
       const res = await this._request(
         this._normalize({
+          ...(contract && { contract: contract }),
           ...(this.continuation && { continuation: this.continuation }),
           sortDirection: "asc",
           startTimestamp: parseTimestamp(startDate),
