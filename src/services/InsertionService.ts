@@ -21,6 +21,15 @@ const generateOrderSQl = (
   records: AsksSchema[] | BidsSchema[],
   type: "bids" | "asks"
 ): PreparedStatement => {
+  const uniqueRecords: AsksSchema[] | BidsSchema[] = [];
+  const seenIds = new Set();
+
+  records.forEach((record) => {
+    if (!seenIds.has(record.id)) {
+      seenIds.add(record.id);
+      uniqueRecords.push(record);
+    }
+  });
   const columns: string[] = [
     "id",
     "kind",
@@ -79,7 +88,7 @@ const generateOrderSQl = (
   const tempValues: string[] = [];
   const values: unknown[] = [];
 
-  records.forEach((record, index) => {
+  uniqueRecords.forEach((record, index) => {
     const recordPlaceholders = columns
       .map((col, colIndex) => {
         const placeholder = `$${index * columns.length + colIndex + 1}`;
@@ -129,6 +138,15 @@ const generateOrderSQl = (
 const generateTransfersSQL = (
   records: TransfersSchema[]
 ): PreparedStatement => {
+  const uniqueRecords: TransfersSchema[] = [];
+  const seenIds = new Set();
+
+  records.forEach((record) => {
+    if (!seenIds.has(record.id)) {
+      seenIds.add(record.id);
+      uniqueRecords.push(record);
+    }
+  });
   const columns: string[] = [
     "id",
     "token_contract",
@@ -152,7 +170,7 @@ const generateTransfersSQL = (
   const tempValues: string[] = [];
   const values: unknown[] = [];
 
-  records.forEach((record, index) => {
+  uniqueRecords.forEach((record, index) => {
     const recordPlaceholders = columns
       .map((col, colIndex) => {
         const placeholder = `$${index * columns.length + colIndex + 1}`;
@@ -196,6 +214,16 @@ const generateTransfersSQL = (
 };
 
 const generateSalesSQl = (records: SalesSchema[]): PreparedStatement => {
+  const uniqueRecords: SalesSchema[] = [];
+  const seenIds = new Set();
+
+  records.forEach((record) => {
+    if (!seenIds.has(record.id)) {
+      seenIds.add(record.id);
+      uniqueRecords.push(record);
+    }
+  });
+
   const columns: string[] = [
     "id",
     "sale_id",
@@ -243,7 +271,7 @@ const generateSalesSQl = (records: SalesSchema[]): PreparedStatement => {
   const tempValues: string[] = [];
   const values: unknown[] = [];
 
-  records.forEach((record, index) => {
+  uniqueRecords.forEach((record, index) => {
     const recordPlaceholders = columns
       .map((col, colIndex) => {
         const placeholder = `$${index * columns.length + colIndex + 1}`;
