@@ -6,8 +6,8 @@ import { HttpStatusCode } from "axios";
 import { Application } from "express";
 
 export enum URLs {
-  "goerli" = "wss://ws.dev.reservoir.tools",
   "mainnet" = "wss://ws.reservoir.tools",
+  "goerli" = "wss://ws-goerli.reservoir.tools",
   "polygon" = "wss://ws-polygon.reservoir.tools",
   "arbitrum" = "wss://ws-arbitrum.reservoir.tools",
   "sepolia" = "wss://ws-sepolia.reservoir.tools",
