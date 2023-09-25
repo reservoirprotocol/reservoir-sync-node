@@ -7,7 +7,6 @@ import { Application } from "express";
 
 export enum URLs {
   "mainnet" = "wss://ws.reservoir.tools",
-  "goerli" = "wss://ws-goerli.reservoir.tools",
   "polygon" = "wss://ws-polygon.reservoir.tools",
   "arbitrum" = "wss://ws-arbitrum.reservoir.tools",
   "sepolia" = "wss://ws-sepolia.reservoir.tools",
@@ -55,7 +54,6 @@ export type DataSets =
 
 export type Chains =
   | "mainnet"
-  | "goerli"
   | "polygon"
   | "arbitrum"
   | "optimism"
