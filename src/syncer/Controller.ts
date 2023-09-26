@@ -13,6 +13,7 @@ import { InsertionService, LoggerService, QueueService } from "../services";
 import {
   delay,
   isSuccessResponse,
+  parseTimestamp,
   RecordRoots,
   splitArray,
   UrlBase,
@@ -365,6 +366,30 @@ export class Controller {
           clearTimeout(timeout);
         }, 60000);
       }
+
+      // Logging
+      try {
+        if (isSuccessResponse(req)) {
+          if (req.data.continuation) {
+            const root = RecordRoots[this._config.dataset];
+            const decodedContinuation = Buffer.from(
+              req.data.continuation,
+              "base64"
+            ).toString("utf-8");
+
+            const decodedTimestamp = decodedContinuation.split(".")[0];
+            const recordTimestamp = parseTimestamp(
+              req.data[root].reverse()[0].updatedAt
+            ).toString();
+
+            if (decodedTimestamp !== recordTimestamp) {
+              LoggerService.error(`FATAL ERROR INVALID TIMESTAMP/CONTINUATION`);
+              console.log(recordTimestamp, recordTimestamp);
+            }
+          }
+        }
+      } catch (e: unknown) {}
+
       return {
         ...req,
         data: req.data,
