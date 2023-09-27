@@ -386,7 +386,7 @@ export class Controller {
 
             if (decodedTimestamp !== recordTimestamp) {
               LoggerService.error(`FATAL ERROR INVALID TIMESTAMP/CONTINUATION`);
-              console.log(recordTimestamp, recordTimestamp);
+              console.log(recordTimestamp, decodedTimestamp);
             }
           }
         }
