@@ -37,6 +37,26 @@ class _Queue {
   });
 
   /**
+   * Local queue
+   * @type {Object}
+   * @private
+   */
+  private _queue: Record<`${DataTypes}-queue-priority:${1 | 2 | 3}`, Block[]> =
+    {
+      "sales-queue-priority:1": [],
+      "sales-queue-priority:2": [],
+      "sales-queue-priority:3": [],
+      "asks-queue-priority:1": [],
+      "asks-queue-priority:2": [],
+      "asks-queue-priority:3": [],
+      "bids-queue-priority:1": [],
+      "bids-queue-priority:2": [],
+      "bids-queue-priority:3": [],
+      "transfers-queue-priority:1": [],
+      "transfers-queue-priority:2": [],
+      "transfers-queue-priority:3": [],
+    };
+  /**
    * _Queue class constructor
    * Initializes a new redis client and sets up an error listener.
    * @constructor
@@ -74,8 +94,12 @@ class _Queue {
    */
   public async getQueueLength(
     datatype: DataTypes,
-    priority: 1 | 2 | 3
+    priority: 1 | 2 | 3,
+    type: "redis" | "local" = "local"
   ): Promise<number> {
+    if (type === "local")
+      return this._queue[`${datatype}-queue-priority:${priority}`].length;
+
     try {
       return await this._client.lLen(`${datatype}-queue-priority:${priority}`);
     } catch (e: unknown) {
@@ -133,6 +157,8 @@ class _Queue {
    * @returns {Promise<void>} - A promise that resolves when the block is inserted.
    */
   public async insertBlock(block: Block, datatype: DataTypes): Promise<void> {
+    this._queue[`${datatype}-queue-priority:${block.priority}`].push(block);
+
     try {
       const { priority } = block;
       const queueName = `${datatype}-queue-priority:${priority}`;
@@ -149,6 +175,13 @@ class _Queue {
    * @returns {Promise<Block | null>} - A promise that resolves to the retrieved block, or null.
    */
   public async getBlock(datatype: DataTypes): Promise<Block | null> {
+    for (const priority of [1, 2, 3]) {
+      const queue =
+        this._queue[`${datatype}-queue-priority:${priority as 1 | 2 | 3}`];
+      const block = queue.shift();
+
+      return block ? block : null;
+    }
     try {
       for (const priority of [1, 2, 3]) {
         const queueName = `${datatype}-queue-priority:${priority}`;
@@ -157,7 +190,26 @@ class _Queue {
       }
       return null;
     } catch (e: unknown) {
+      LoggerService.error(e);
       return await this.getBlock(datatype);
+    }
+  }
+
+  /**
+   * Retrieves a block from the queue.
+   * @param {DataTypes} datatype - The datatype of the block to be retrieved.
+   * @returns {Promise<Block | null>} - A promise that resolves to the retrieved block, or null.
+   */
+  public async getRedisBlock(datatype: DataTypes): Promise<Block | null> {
+    try {
+      for (const priority of [1, 2, 3]) {
+        const queueName = `${datatype}-queue-priority:${priority}`;
+        const block = await this._client.rPop(queueName);
+        if (block) return JSON.parse(block) as Block;
+      }
+      return null;
+    } catch (e: unknown) {
+      return await this.getRedisBlock(datatype);
     }
   }
 
