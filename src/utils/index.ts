@@ -190,3 +190,5 @@ export const splitArray = <T>(arr: T[], parts: number): T[][] => {
 
   return out;
 };
+
+export const END_OF_TIME = 253402300799;

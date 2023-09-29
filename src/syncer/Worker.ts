@@ -9,6 +9,7 @@ import {
   isSuccessResponse,
   parseTimestamp,
   RecordRoots,
+  END_OF_TIME,
 } from "../utils";
 import { Controller } from "./Controller";
 
@@ -79,6 +80,8 @@ export class Worker extends EventEmitter {
     grain: boolean = true
   ): Promise<void> {
     this.busy = true;
+    this.data.continuation = "";
+    this.continuation = "";
     this.data.block = { startDate, endDate, id, priority, contract };
 
     if (grain) {
@@ -204,12 +207,8 @@ export class Worker extends EventEmitter {
   }
 
   public async upkeep(): Promise<void> {
-    let startDate = new Date(
-      (+new Date().getTime() - +new Date().getTimezoneOffset() * 60 * 1000) /
-        1000
-    ).toISOString();
+    let startDate = new Date().toISOString();
 
-    // eslint-disable-next-line no-constant-condition
     while (true) {
       await delay(60000);
 
@@ -219,7 +218,7 @@ export class Worker extends EventEmitter {
             ...(this.continuation && { continuation: this.continuation }),
             sortDirection: "asc",
             startTimestamp: parseTimestamp(startDate),
-            endTimestamp: 253402300799,
+            endTimestamp: END_OF_TIME,
           },
           false
         )
@@ -241,7 +240,7 @@ export class Worker extends EventEmitter {
             ...(this.continuation && { continuation: this.continuation }),
             sortDirection: "desc",
             startTimestamp: parseTimestamp(startDate),
-            endTimestamp: 253402300799,
+            endTimestamp: END_OF_TIME,
           },
           false
         )
@@ -270,7 +269,7 @@ export class Worker extends EventEmitter {
           records[0].updatedAt === startDate ||
           records[0].updatedAt === endDate
         )
-          return;
+          continue;
 
         this._split({
           priority: 1,
@@ -279,9 +278,11 @@ export class Worker extends EventEmitter {
           id: v4(),
           contract: "",
         });
+
         startDate = records[records.length - 1].updatedAt;
       }
     }
+    
   }
   /**
    * Emit a split event for a block.
