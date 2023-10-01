@@ -1,7 +1,7 @@
 import EventEmitter from "events";
 import { v4 } from "uuid";
 import { LoggerService as Logger } from "../services";
-import { Block, DataTypes, Schemas, WorkerEvent } from "../types";
+import { Block, DataTypes, ErrorType, Schemas, WorkerEvent } from "../types";
 import {
   delay,
   getMiddleDate,
@@ -73,6 +73,13 @@ export class Worker extends EventEmitter {
     this._config = controller.getConfigProperty.bind(controller);
 
     this._datatype = this._config("dataset");
+  }
+
+  private _handleStatus(status: number, message: string): string {
+    if (status === 400) {
+      if (message.includes("out of range")) return "reprocess";
+    }
+    return "continue";
   }
 
   public async process(
@@ -185,7 +192,14 @@ export class Worker extends EventEmitter {
 
       if (!isSuccessResponse(res)) {
         await delay(5000);
-        continue;
+        const { message, status } = res.data as ErrorType;
+        const action = this._handleStatus(status, message);
+        if (action === "reprocess") {
+          return this.process(
+            { startDate, id, endDate, contract, priority },
+            false
+          );
+        } else continue;
       }
 
       const records = res.data[RecordRoots[this._datatype]];
@@ -282,7 +296,6 @@ export class Worker extends EventEmitter {
         startDate = records[records.length - 1].updatedAt;
       }
     }
-    
   }
   /**
    * Emit a split event for a block.
