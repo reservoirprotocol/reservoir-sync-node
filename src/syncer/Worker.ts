@@ -1,7 +1,7 @@
 import EventEmitter from "events";
 import { v4 } from "uuid";
 import { LoggerService as Logger } from "../services";
-import { Block, DataTypes, Schemas, WorkerEvent } from "../types";
+import { Block, DataTypes, ErrorType, Schemas, WorkerEvent } from "../types";
 import {
   delay,
   getMiddleDate,
@@ -9,6 +9,7 @@ import {
   isSuccessResponse,
   parseTimestamp,
   RecordRoots,
+  END_OF_TIME,
 } from "../utils";
 import { Controller } from "./Controller";
 
@@ -74,11 +75,20 @@ export class Worker extends EventEmitter {
     this._datatype = this._config("dataset");
   }
 
+  private _handleStatus(status: number, message: string): string {
+    if (status === 400) {
+      if (message.includes("out of range")) return "reprocess";
+    }
+    return "continue";
+  }
+
   public async process(
     { startDate, id, endDate, contract, priority }: Block,
     grain: boolean = true
   ): Promise<void> {
     this.busy = true;
+    this.data.continuation = "";
+    this.continuation = "";
     this.data.block = { startDate, endDate, id, priority, contract };
 
     if (grain) {
@@ -182,7 +192,14 @@ export class Worker extends EventEmitter {
 
       if (!isSuccessResponse(res)) {
         await delay(5000);
-        continue;
+        const { message, status } = res.data as ErrorType;
+        const action = this._handleStatus(status, message);
+        if (action === "reprocess") {
+          return this.process(
+            { startDate, id, endDate, contract, priority },
+            false
+          );
+        } else continue;
       }
 
       const records = res.data[RecordRoots[this._datatype]];
@@ -204,12 +221,8 @@ export class Worker extends EventEmitter {
   }
 
   public async upkeep(): Promise<void> {
-    let startDate = new Date(
-      (+new Date().getTime() - +new Date().getTimezoneOffset() * 60 * 1000) /
-        1000
-    ).toISOString();
+    let startDate = new Date().toISOString();
 
-    // eslint-disable-next-line no-constant-condition
     while (true) {
       await delay(60000);
 
@@ -219,7 +232,7 @@ export class Worker extends EventEmitter {
             ...(this.continuation && { continuation: this.continuation }),
             sortDirection: "asc",
             startTimestamp: parseTimestamp(startDate),
-            endTimestamp: 253402300799,
+            endTimestamp: END_OF_TIME,
           },
           false
         )
@@ -241,7 +254,7 @@ export class Worker extends EventEmitter {
             ...(this.continuation && { continuation: this.continuation }),
             sortDirection: "desc",
             startTimestamp: parseTimestamp(startDate),
-            endTimestamp: 253402300799,
+            endTimestamp: END_OF_TIME,
           },
           false
         )
@@ -270,7 +283,7 @@ export class Worker extends EventEmitter {
           records[0].updatedAt === startDate ||
           records[0].updatedAt === endDate
         )
-          return;
+          continue;
 
         this._split({
           priority: 1,
@@ -279,6 +292,7 @@ export class Worker extends EventEmitter {
           id: v4(),
           contract: "",
         });
+
         startDate = records[records.length - 1].updatedAt;
       }
     }
