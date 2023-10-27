@@ -1,7 +1,7 @@
 import { createClient, RedisClientType } from "redis";
+import { Worker } from "../syncer/Worker";
 import { Backup, Block, DataTypes, QueueServiceConfig } from "../types";
 import { LoggerService } from "./LoggerService";
-import { Worker } from "../syncer/Worker";
 
 /**
  * Queue class for managing a Redis-based queue.
@@ -90,11 +90,28 @@ class _Queue {
    */
   public async clearBackup(): Promise<void> {
     LoggerService.info(`Clearing Backup`);
+    const keys: string[] = ["transfers", "asks", "bids", "sales"];
+
     try {
-      this._client.flushAll();
+      await Promise.allSettled(
+        keys.map(async (key) => {
+          this._client.del(`${key}-queue-priority-1`);
+          this._client.del(`${key}-queue-priority-2`);
+          this._client.del(`${key}-queue-priority-3`);
+        })
+      );
     } catch (e: unknown) {
+      LoggerService.error(`Error deleting queues`);
       LoggerService.error(e);
-      return await this.clearBackup();
+      process.exit(0);
+    }
+
+    try {
+      this._client.del("backups");
+    } catch (e: unknown) {
+      LoggerService.error(`Error deleting backups`);
+      LoggerService.error(e);
+      process.exit(0);
     }
   }
 
