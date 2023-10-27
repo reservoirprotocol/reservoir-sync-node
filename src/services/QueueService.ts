@@ -1,6 +1,6 @@
 import { createClient, RedisClientType } from "redis";
 import { Backup, Block, DataTypes, QueueServiceConfig } from "../types";
-import { LoggerService } from "./LoggerService";
+import { LoggerService as loggerService } from "./LoggerService";
 import { Worker } from "../syncer/Worker";
 
 /**
@@ -42,7 +42,7 @@ class _Queue {
    * @constructor
    */
   constructor() {
-    this._client.on("error", (err) => LoggerService.error(err));
+    this._client.on("error", (err) => loggerService.error(err));
   }
 
   /**
@@ -79,7 +79,7 @@ class _Queue {
     try {
       return await this._client.lLen(`${datatype}-queue-priority:${priority}`);
     } catch (e: unknown) {
-      LoggerService.error(e);
+      loggerService.error(e);
       return 0;
     }
   }
@@ -89,12 +89,29 @@ class _Queue {
    * @returns {Promise<void>} - A promise that resolves when the backups are cleared.
    */
   public async clearBackup(): Promise<void> {
-    LoggerService.info(`Clearing Backup`);
+    loggerService.info(`Clearing Backup`);
+    const keys: string[] = ["queue", "transfers", "asks", "bids", "backups"];
+
     try {
-      this._client.flushAll();
+      await Promise.allSettled(
+        keys.map(async (key) => {
+          this._client.del(`${key}-queue-priority-1`);
+          this._client.del(`${key}-queue-priority-2`);
+          this._client.del(`${key}-queue-priority-3`);
+        })
+      );
     } catch (e: unknown) {
-      LoggerService.error(e);
-      return await this.clearBackup();
+      loggerService.error(`Error deleting queues`);
+      loggerService.error(e);
+      process.exit(0);
+    }
+
+    try {
+      this._client.del("backups");
+    } catch (e: unknown) {
+      loggerService.error(`Error deleting backups`);
+      loggerService.error(e);
+      process.exit(0);
     }
   }
 
@@ -114,14 +131,14 @@ class _Queue {
    */
   public async loadBackup(): Promise<void> {
     try {
-      LoggerService.info(`Loading Backup`);
+      loggerService.info(`Loading Backup`);
       this._backups = Object.fromEntries(
         Object.entries(await this._client.hGetAll("backups")).map(
           ([key, value]) => [key, JSON.parse(value) as Backup]
         )
       );
     } catch (e: unknown) {
-      LoggerService.error(e);
+      loggerService.error(e);
       return;
     }
   }
@@ -138,8 +155,8 @@ class _Queue {
       const queueName = `${datatype}-queue-priority:${priority}`;
       await this._client.lPush(queueName, JSON.stringify(block));
     } catch (e: unknown) {
-      LoggerService.error(e);
-      return await this.insertBlock(block, datatype);
+      loggerService.error(e);
+      return this.insertBlock(block, datatype);
     }
   }
 
@@ -157,7 +174,7 @@ class _Queue {
       }
       return null;
     } catch (e: unknown) {
-      return await this.getBlock(datatype);
+      return this.getBlock(datatype);
     }
   }
 
@@ -175,7 +192,37 @@ class _Queue {
    */
   public async launch(): Promise<void> {
     await this._client.connect();
-    LoggerService.info(`Queue Service Launched`);
+    loggerService.info(`Queue Service Launched`);
+  }
+
+  /**
+   * Writes and stores contracts in redis
+   *
+   * @param contracts - Contracts to write
+   * @returns {Promise<void>} - A promise that resolves when the contracts have been written.
+   */
+  public async updateContracts(contracts: string[]): Promise<void> {
+    try {
+      this._client.sAdd("contracts", contracts);
+    } catch (e: unknown) {
+      loggerService.error(e);
+      return this.updateContracts(contracts);
+    }
+  }
+
+  /**
+   * Returns the contracts that are stored in redis
+   *
+   * @returns {Promise<void>} - A promise that resolves with an array of contracts
+   */
+  public async getContracts(): Promise<string[]> {
+    try {
+      const contracts: string[] = await this._client.sMembers("contracts");
+      return contracts;
+    } catch (e: unknown) {
+      loggerService.error(e);
+      return [];
+    }
   }
 }
 
