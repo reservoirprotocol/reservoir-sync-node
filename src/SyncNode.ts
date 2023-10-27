@@ -84,9 +84,14 @@ class SyncNode {
     await this._insertionService.launch();
     await this._webSocketService.launch();
 
-    this._config.backup.useBackup
-      ? await this._queueService.loadBackup()
-      : await this._queueService.clearBackup();
+    if (this._config.backup.useBackup) {
+      await this._queueService.loadBackup();
+    } else {
+      await this._queueService.clearBackup();
+    }
+
+
+    // Store 
 
     LoggerService.info(`Launched All Services`);
 
