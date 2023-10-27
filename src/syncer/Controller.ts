@@ -9,16 +9,19 @@ import {
   WorkerEvent,
 } from "types";
 import { v4 } from "uuid";
-import { InsertionService, LoggerService, QueueService } from "../services";
 import {
-  delay,
-  isSuccessResponse,
-  parseTimestamp,
+  InsertionService,
+  QueueService,
+  LoggerService as logger,
+} from "../services";
+import {
   RecordRoots,
-  splitArray,
   UrlBase,
   UrlPaths,
   WorkerCounts,
+  delay,
+  isSuccessResponse,
+  splitArray,
 } from "../utils";
 import { Worker } from "./Worker";
 
@@ -82,7 +85,7 @@ export class Controller {
     if (!block) return;
     await this._queue.insertBlock(block, this._config.dataset);
 
-    LoggerService.info(
+    logger.info(
       `Added contract ${contract} to ${this._config.dataset} controller`
     );
   }
@@ -124,7 +127,7 @@ export class Controller {
     this._queue.backup(this._config.dataset, this._workers);
   }
   private async _launchBackup(_backup: Backup): Promise<void> {
-    LoggerService.info(`Launching from backup`);
+    logger.info(`Launching from backup`);
     const backup = _backup;
     await this._queue.clearBackup();
     for (let i = 0; i < backup.workers.length; i++) {
@@ -137,7 +140,7 @@ export class Controller {
           },
           continuation ? false : true
         );
-        LoggerService.info(`Launched block: ${block.id}`);
+        logger.info(`Launched block: ${block.id}`);
         await delay(30000);
       }
     }
@@ -155,9 +158,7 @@ export class Controller {
         })
       );
       i += promises.length;
-      LoggerService.info(
-        `${i}/${this._config.contracts.length} Blocks created`
-      );
+      logger.info(`${i}/${this._config.contracts.length} Blocks created`);
       blocks.push(...(promises.filter((block) => block !== null) as Block[]));
     }
 
@@ -250,7 +251,7 @@ export class Controller {
     ]);
 
     if (!isSuccessResponse(reqs[0]) || !isSuccessResponse(reqs[1])) {
-      LoggerService.warn(
+      logger.warn(
         `Intiailizing blocks failed: ${reqs.map(
           (r, i) => `${r.status}:${i} ${contract ?? contract}`
         )}`
@@ -261,9 +262,7 @@ export class Controller {
     const root = RecordRoots[this._config.dataset];
 
     if (reqs[1].data[root].length === 0 || reqs[0].data[root].length === 0) {
-      LoggerService.warn(
-        `Unable to create block for: ${contract}. No records found.`
-      );
+      logger.warn(`Unable to create block for: ${contract}. No records found.`);
       return null;
     }
 
@@ -289,7 +288,7 @@ export class Controller {
     worker.continuation = "";
     worker.data.block = null;
     worker.data.continuation = null;
-    
+
     const block = await this._queue.getBlock(this._config.dataset);
 
     if (!block) {

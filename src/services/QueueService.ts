@@ -201,12 +201,15 @@ class _Queue {
    * @param contracts - Contracts to write
    * @returns {Promise<void>} - A promise that resolves when the contracts have been written.
    */
-  public async updateContracts(contracts: string[]): Promise<void> {
+  public async updateContracts(
+    contracts: string[],
+    type: DataTypes
+  ): Promise<void> {
     try {
-      this._client.sAdd("contracts", contracts);
+      this._client.sAdd(`${type}:contracts`, contracts);
     } catch (e: unknown) {
       loggerService.error(e);
-      return this.updateContracts(contracts);
+      return this.updateContracts(contracts, type);
     }
   }
 
@@ -215,9 +218,11 @@ class _Queue {
    *
    * @returns {Promise<void>} - A promise that resolves with an array of contracts
    */
-  public async getContracts(): Promise<string[]> {
+  public async getContracts(type: DataTypes): Promise<string[]> {
     try {
-      const contracts: string[] = await this._client.sMembers("contracts");
+      const contracts: string[] = await this._client.sMembers(
+        `${type}:contracts`
+      );
       return contracts;
     } catch (e: unknown) {
       loggerService.error(e);
