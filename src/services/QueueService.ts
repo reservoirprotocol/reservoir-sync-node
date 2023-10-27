@@ -90,7 +90,7 @@ class _Queue {
    */
   public async clearBackup(): Promise<void> {
     loggerService.info(`Clearing Backup`);
-    const keys: string[] = ["queue", "transfers", "asks", "bids", "backups"];
+    const keys: string[] = ["transfers", "asks", "bids", "sales"];
 
     try {
       await Promise.allSettled(
