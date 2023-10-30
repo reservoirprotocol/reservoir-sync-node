@@ -105,9 +105,17 @@ class _Queue {
     type: DataTypes
   ): Promise<void> {
     try {
-      this._client.sAdd(`${type}:contracts`, contracts);
-      this.contracts[type] = [...contracts, ...this.contracts[type]];
-      await this.loadContracts();
+      const currentContracts = await this.getContracts(type);
+
+      const filteredContracts = [
+        ...new Set(currentContracts.concat(contracts)),
+      ];
+
+      this._client.sAdd(`${type}:contracts`, filteredContracts);
+
+      this.contracts[type] = [
+        ...new Set(filteredContracts.concat(this.contracts[type])),
+      ];
     } catch (e: unknown) {
       LoggerService.error(e);
       return this.addContracts(contracts, type);

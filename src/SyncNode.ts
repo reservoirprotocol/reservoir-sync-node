@@ -1,19 +1,19 @@
-import { ChildProcess, spawn } from 'child_process';
-import { readContracts } from './utils';
+import { ChildProcess, spawn } from "child_process";
+import { readContracts } from "./utils";
 import {
   InsertionService,
   LoggerService,
   QueueService,
   WebSocketService,
-} from './services';
-import { Controller } from './syncer/Controller';
+} from "./services";
+import { Controller } from "./syncer/Controller";
 import {
   Chains,
   DataTypes,
   Mode,
   ProcessCommand,
   SyncNodeConfig,
-} from './types';
+} from "./types";
 
 class SyncNode {
   /**
@@ -58,15 +58,8 @@ class SyncNode {
    */
   private readonly _controllers: Map<DataTypes, Controller> = new Map();
 
-  /**
-   * Array of contracts
-   * @private
-   */
-  private _contracts: Record<DataTypes, string[]>;
-
   constructor(config: SyncNodeConfig) {
     this._config = config;
-    this._contracts = config.syncer.contracts;
     this._loggerService.construct(config.logger);
     this._queueService.construct(config.backup);
     this._webSocketService.construct(config.syncer);
@@ -90,6 +83,13 @@ class SyncNode {
       LoggerService.info(`Cleared Backup`);
     }
 
+    Object.keys(this._config.syncer.contracts).map(async (key) => {
+      await this._queueService.addContracts(
+        this._config.syncer.contracts[key as DataTypes],
+        key as DataTypes
+      );
+    });
+
     await this._queueService.loadContracts();
 
     LoggerService.info(`Launched All Services`);
@@ -106,15 +106,15 @@ class SyncNode {
   }
 
   private _launchServerProcess(): void {
-    this._serverProcess = spawn('node', ['dist/server/index.js'], {
+    this._serverProcess = spawn("node", ["dist/server/index.js"], {
       shell: true,
-      stdio: ['inherit', 'inherit', 'inherit', 'ipc'],
+      stdio: ["inherit", "inherit", "inherit", "ipc"],
     });
-    this._serverProcess.on('message', (message: ProcessCommand) => {
+    this._serverProcess.on("message", (message: ProcessCommand) => {
       LoggerService.info(`Server Message: ${message}`);
       if (message.command) {
         switch (message.command) {
-          case 'contract_add': {
+          case "contract_add": {
             if (message.dataType && message.contract) {
               const controller = this.getController(message.dataType);
               if (controller) {
@@ -133,7 +133,7 @@ class SyncNode {
     setInterval(() => {
       Object.keys(this._insertionService.insertionTally).forEach((type) => {
         this._serverProcess?.send?.({
-          command: 'record_insertions',
+          command: "record_insertions",
           dataType: type,
           recordCount: this._insertionService.insertionTally[type],
         });
@@ -162,11 +162,11 @@ class SyncNode {
 
     if (syncer.toSync.transfers) {
       this._controllers.set(
-        'transfers',
+        "transfers",
         new Controller({
           apiKey: this._config.syncer.apiKey,
-          dataset: 'transfers',
-          type: 'backfill',
+          dataset: "transfers",
+          type: "backfill",
           chain: this._config.syncer.chain,
           delay: 0,
           mode: this._config.syncer.mode,
@@ -176,11 +176,11 @@ class SyncNode {
 
     if (syncer.toSync.sales) {
       this._controllers.set(
-        'sales',
+        "sales",
         new Controller({
           apiKey: this._config.syncer.apiKey,
-          dataset: 'sales',
-          type: 'backfill',
+          dataset: "sales",
+          type: "backfill",
           chain: this._config.syncer.chain,
           delay: 0,
           mode: this._config.syncer.mode,
@@ -190,11 +190,11 @@ class SyncNode {
 
     if (syncer.toSync.asks) {
       this._controllers.set(
-        'asks',
+        "asks",
         new Controller({
           apiKey: this._config.syncer.apiKey,
-          dataset: 'asks',
-          type: 'backfill',
+          dataset: "asks",
+          type: "backfill",
           chain: this._config.syncer.chain,
           delay: 0,
           mode: this._config.syncer.mode,
@@ -204,11 +204,11 @@ class SyncNode {
 
     if (syncer.toSync.bids) {
       this._controllers.set(
-        'bids',
+        "bids",
         new Controller({
           apiKey: this._config.syncer.apiKey,
-          dataset: 'bids',
-          type: 'backfill',
+          dataset: "bids",
+          type: "backfill",
           chain: this._config.syncer.chain,
           delay: 0,
           mode: this._config.syncer.mode,
@@ -223,22 +223,22 @@ export default new SyncNode({
     chain: process.env.CHAIN as Chains,
     apiKey: process.env.API_KEY as string,
     contracts: readContracts(),
-    sources: process.env.SOURCES ? process.env.SOURCES.split(',') : [],
+    sources: process.env.SOURCES ? process.env.SOURCES.split(",") : [],
     toSync: {
-      transfers: process.env.SYNC_TRANSFERS === '1',
-      bids: process.env.SYNC_BIDS === '1',
-      asks: process.env.SYNC_ASKS === '1',
-      sales: process.env.SYNC_SALES === '1',
+      transfers: process.env.SYNC_TRANSFERS === "1",
+      bids: process.env.SYNC_BIDS === "1",
+      asks: process.env.SYNC_ASKS === "1",
+      sales: process.env.SYNC_SALES === "1",
     },
     mode: process.env.MODE as Mode,
   },
   backup: {
-    useBackup: process.env.USE_BACKUP === '1',
+    useBackup: process.env.USE_BACKUP === "1",
   },
   logger: {
     datadog: {
-      apiKey: process.env.DATADOG_API_KEY || '',
-      appName: process.env.DATADOG_APP_NAME || '',
+      apiKey: process.env.DATADOG_API_KEY || "",
+      appName: process.env.DATADOG_APP_NAME || "",
     },
   },
 });
