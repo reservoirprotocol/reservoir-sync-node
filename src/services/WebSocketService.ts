@@ -1,4 +1,4 @@
-import WebSocket from "ws";
+import WebSocket from 'ws';
 import {
   AsksSchema,
   BidsSchema,
@@ -9,9 +9,9 @@ import {
   WebSocketError,
   WebSocketMessage,
   WebSocketServiceConfig,
-} from "../types";
-import { InsertionService } from "./InsertionService";
-import { LoggerService } from "./LoggerService";
+} from '../types';
+import { InsertionService } from './InsertionService';
+import { LoggerService } from './LoggerService';
 
 /**
  * Class _WebSocketService provides an interface for working with WebSocket connections.
@@ -30,7 +30,7 @@ class _WebSocketService {
    * @private
    * @type {URLs}
    */
-  private _url: URLs = URLs["mainnet"];
+  private _url: URLs = URLs['mainnet'];
 
   /**
    * Current connection status
@@ -45,7 +45,7 @@ class _WebSocketService {
    * @type {WebSocketServiceConfig}
    */
   private _config: WebSocketServiceConfig = {
-    apiKey: "",
+    apiKey: '',
     chain: null,
     toSync: {
       transfers: false,
@@ -80,9 +80,9 @@ class _WebSocketService {
           )
         : null;
 
-    this._ws?.on("close", this._onClose.bind(this));
-    this._ws?.on("error", this._onError.bind(this));
-    this._ws?.on("message", this._onMessage.bind(this));
+    this._ws?.on('close', this._onClose.bind(this));
+    this._ws?.on('error', this._onError.bind(this));
+    this._ws?.on('message', this._onMessage.bind(this));
   }
 
   /**
@@ -111,23 +111,23 @@ class _WebSocketService {
    */
   private _onConnect(): void {
     if (this._config.toSync.asks) {
-      this._subscribe("ask.created");
-      this._subscribe("ask.updated");
+      this._subscribe('ask.created');
+      this._subscribe('ask.updated');
     }
 
     if (this._config.toSync.bids) {
-      this._subscribe("bid.created");
-      this._subscribe("bid.updated");
+      this._subscribe('bid.created');
+      this._subscribe('bid.updated');
     }
 
     if (this._config.toSync.bids) {
-      this._subscribe("sale.created");
-      this._subscribe("sale.updated");
+      this._subscribe('sale.created');
+      this._subscribe('sale.updated');
     }
 
     if (this._config.toSync.transfers) {
-      this._subscribe("transfer.created");
-      this._subscribe("transfer.updated");
+      this._subscribe('transfer.created');
+      this._subscribe('transfer.updated');
     }
   }
 
@@ -140,12 +140,12 @@ class _WebSocketService {
   private _onMessage(message: Buffer): void {
     try {
       const { type, status, data, event }: WebSocketMessage = JSON.parse(
-        message.toString("utf-8")
+        message.toString('utf-8')
       );
 
-      if (event === "subscribe") return;
+      if (event === 'subscribe') return;
 
-      if (type === "connection" && status === "ready") {
+      if (type === 'connection' && status === 'ready') {
         this._isConnected = true;
         this._onConnect();
         return;
@@ -168,17 +168,17 @@ class _WebSocketService {
     event: string,
     data: AsksSchema | BidsSchema | SalesSchema
   ): void {
-    if (event?.includes("ask")) {
-      InsertionService.upsert("asks", [data as AsksSchema]);
+    if (event?.includes('ask')) {
+      InsertionService.upsert('asks', [data as AsksSchema]);
     }
-    if (event?.includes("bid")) {
-      InsertionService.upsert("bids", [data as BidsSchema]);
+    if (event?.includes('bid')) {
+      InsertionService.upsert('bids', [data as BidsSchema]);
     }
-    if (event?.includes("sale")) {
-      InsertionService.upsert("sales", [data as SalesSchema]);
+    if (event?.includes('sale')) {
+      InsertionService.upsert('sales', [data as SalesSchema]);
     }
-    if (event?.includes("transfer")) {
-      InsertionService.upsert("transfers", [data as TransfersSchema]);
+    if (event?.includes('transfer')) {
+      InsertionService.upsert('transfers', [data as TransfersSchema]);
     }
   }
 
@@ -220,7 +220,7 @@ class _WebSocketService {
   private _subscribe(event: MessageEvent): void {
     this._ws?.send(
       JSON.stringify({
-        type: "subscribe",
+        type: 'subscribe',
         event,
       })
     );
