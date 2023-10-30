@@ -1,6 +1,7 @@
 -- CreateTable
 CREATE TABLE "asks" (
     "id" BYTEA NOT NULL,
+    "chain_id": TEXT,
     "kind" TEXT,
     "side" TEXT,
     "status" TEXT,
@@ -39,13 +40,13 @@ CREATE TABLE "asks" (
     "is_dynamic" BOOLEAN,
     "created_at" TIMESTAMP,
     "updated_at" TIMESTAMP,
-
     CONSTRAINT "asks_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "sales" (
     "id" BYTEA NOT NULL,
+    "chain_id": TEXT,
     "sale_id" BYTEA,
     "token_id" TEXT,
     "contract_id" BYTEA,
@@ -73,13 +74,13 @@ CREATE TABLE "sales" (
     "price_amount_decimal" TEXT,
     "price_amount_usd" TEXT,
     "price_amount_native" TEXT,
-
     CONSTRAINT "sales_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "bids" (
     "id" BYTEA NOT NULL,
+    "chain_id": TEXT,
     "kind" TEXT,
     "side" TEXT,
     "status" TEXT,
@@ -118,13 +119,13 @@ CREATE TABLE "bids" (
     "is_dynamic" BOOLEAN,
     "created_at" TIMESTAMP,
     "updated_at" TIMESTAMP,
-
     CONSTRAINT "bids_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "transfers" (
     "id" BYTEA NOT NULL,
+    "chain_id": TEXT,
     "token_contract" BYTEA,
     "token_id" TEXT,
     "from" BYTEA,
@@ -137,6 +138,5 @@ CREATE TABLE "transfers" (
     "timestamp" TEXT,
     "created_at" TIMESTAMP,
     "updated_at" TIMESTAMP,
-
     CONSTRAINT "transfers_pkey" PRIMARY KEY ("id")
 );

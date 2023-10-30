@@ -9,6 +9,7 @@ generator client {
 
 model asks {
   id                      Bytes   @id @db.ByteA
+  chain_id                 String? @db.Text
   kind                    String? @db.Text
   side                    String? @db.Text
   status                  String? @db.Text
@@ -22,12 +23,12 @@ model asks {
   price_currency_symbol   String? @db.Text
   price_currency_decimals String? @db.Text
 
-  price_amount_raw     String?  @db.Text
+  price_amount_raw     String? @db.Text
   price_amount_decimal String? @db.Text
   price_amount_usd     String? @db.Text
   price_amount_native  String? @db.Text
 
-  price_net_amount_raw     String?  @db.Text
+  price_net_amount_raw     String? @db.Text
   price_net_amount_decimal String? @db.Text
   price_net_amount_usd     String? @db.Text
   price_net_amount_native  String? @db.Text
@@ -45,9 +46,9 @@ model asks {
   source_name   String?   @db.Text
   source_icon   String?   @db.Text
   source_url    String?   @db.Text
-  fee_bps       String? @db.Text
+  fee_bps       String?   @db.Text
   fee_breakdown Json?     @db.JsonB
-  expiration    String? @db.Text
+  expiration    String?   @db.Text
   is_reservoir  Boolean?  @db.Boolean
   is_dynamic    Boolean?  @db.Boolean
   created_at    DateTime? @db.Timestamp
@@ -56,6 +57,7 @@ model asks {
 
 model sales {
   id                 Bytes     @id @db.ByteA
+  chain_id            String?   @db.Text
   sale_id            Bytes?    @db.ByteA
   token_id           String?   @db.Text
   contract_id        Bytes?    @db.ByteA
@@ -67,11 +69,11 @@ model sales {
   to                 Bytes?    @db.ByteA
   amount             String?   @db.Text
   fill_source        String?   @db.Text
-  block              String?      @db.Text
+  block              String?   @db.Text
   tx_hash            Bytes?    @db.ByteA
-  log_index          String?      @db.Text
-  batch_index        String?      @db.Text
-  timestamp          String?      @db.Text
+  log_index          String?   @db.Text
+  batch_index        String?   @db.Text
+  timestamp          String?   @db.Text
   wash_trading_score Float?
   updated_at         DateTime? @default(now())
   created_at         DateTime?
@@ -81,7 +83,7 @@ model sales {
   price_currency_symbol   String? @db.Text
   price_currency_decimals String? @db.Text
 
-  price_amount_raw     String?  @db.Text
+  price_amount_raw     String? @db.Text
   price_amount_decimal String? @db.Text
   price_amount_usd     String? @db.Text
   price_amount_native  String? @db.Text
@@ -89,6 +91,7 @@ model sales {
 
 model bids {
   id                      Bytes   @id @db.ByteA
+  chain_id                 String? @db.Text
   kind                    String? @db.Text
   side                    String? @db.Text
   status                  String? @db.Text
@@ -102,12 +105,12 @@ model bids {
   price_currency_symbol   String? @db.Text
   price_currency_decimals String? @db.Text
 
-  price_amount_raw     String?  @db.Text
+  price_amount_raw     String? @db.Text
   price_amount_decimal String? @db.Text
   price_amount_usd     String? @db.Text
   price_amount_native  String? @db.Text
 
-  price_net_amount_raw     String?  @db.Text
+  price_net_amount_raw     String? @db.Text
   price_net_amount_decimal String? @db.Text
   price_net_amount_usd     String? @db.Text
   price_net_amount_native  String? @db.Text
@@ -125,9 +128,9 @@ model bids {
   source_name   String?   @db.Text
   source_icon   String?   @db.Text
   source_url    String?   @db.Text
-  fee_bps       String? @db.Text
+  fee_bps       String?   @db.Text
   fee_breakdown Json?     @db.JsonB
-  expiration    String? @db.Text
+  expiration    String?   @db.Text
   is_reservoir  Boolean?  @db.Boolean
   is_dynamic    Boolean?  @db.Boolean
   created_at    DateTime? @db.Timestamp
@@ -136,7 +139,8 @@ model bids {
 
 model transfers {
   id             Bytes   @id @db.ByteA
-  token_contract Bytes?   @db.ByteA
+  chain_id        String? @db.Text
+  token_contract Bytes?  @db.ByteA
   token_id       String? @db.Text
   from           Bytes?  @db.ByteA
   to             Bytes?  @db.ByteA
