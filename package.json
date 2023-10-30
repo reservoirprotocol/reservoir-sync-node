@@ -17,7 +17,7 @@
     "purge:asks": "node ./scripts/database-flush-asks.js",
     "purge:sales": "node ./scripts/database-flush-sales.js",
     "purge:bids": "node ./scripts/database-flush-bids.js",
-    "purge:backup": "node ./scripts/backup-flush.js",
+    "purge:redis": "node ./scripts/redis-flush.js",
     "lint": "yarn run lint:fix && yarn run lint:format",
     "lint:fix": "eslint --fix . --ext .ts",
     "lint:format": "prettier --config .prettierrc 'src/**/*.ts' --write",
