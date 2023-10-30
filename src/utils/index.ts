@@ -177,16 +177,20 @@ export const readContracts = (): Record<DataTypes, string[]> => {
       .trim()
       .split("\n")
       .forEach((line) => {
-        const [key, contract] = line.split(":");
+        const [contract = "", key = ""] = line.split(":");
 
         if (!isAddress(contract)) return;
 
         if (!key) {
           Object.keys(hashMap).forEach((key) => {
-            hashMap[key as DataTypes].push(contract);
+            if (!hashMap[key as DataTypes].includes(contract)) {
+              hashMap[key as DataTypes].push(contract);
+            }
           });
         } else {
-          hashMap[key as DataTypes].push(contract);
+          if (!hashMap[key as DataTypes]) {
+            hashMap[key as DataTypes].push(contract);
+          }
         }
       });
 

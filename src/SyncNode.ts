@@ -70,6 +70,9 @@ class SyncNode {
    * @returns void
    */
   public async launch(): Promise<void> {
+    console.log(this._config.syncer);
+    return;
+
     this._launchServerProcess();
     await this._queueService.launch();
     await this._insertionService.launch();
