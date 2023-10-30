@@ -13,7 +13,6 @@ import { InsertionService, LoggerService, QueueService } from "../services";
 import {
   delay,
   isSuccessResponse,
-  parseTimestamp,
   RecordRoots,
   splitArray,
   UrlBase,
@@ -28,7 +27,7 @@ export class Controller {
   /**
    * Flag that blocks requests from proceeding
    */
-  private _backoff: Boolean = false;
+  private _backoff: boolean = false;
 
   /**
    * Workers used to process & grain blocks.
