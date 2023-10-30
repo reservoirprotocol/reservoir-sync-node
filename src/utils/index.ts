@@ -181,11 +181,13 @@ export const readContracts = (): Record<DataTypes, string[]> => {
 
         if (!isAddress(contract)) return;
 
-        if (!hashMap[key as DataTypes]) {
-          hashMap[key as DataTypes] = [];
+        if (!key) {
+          Object.keys(hashMap).forEach((key) => {
+            hashMap[key as DataTypes].push(contract);
+          });
+        } else {
+          hashMap[key as DataTypes].push(contract);
         }
-
-        hashMap[key as DataTypes].push(contract);
       });
 
     return hashMap;
