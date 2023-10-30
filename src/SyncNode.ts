@@ -187,7 +187,6 @@ class SyncNode {
       );
     }
 
-
     if (syncer.toSync.sales) {
       this._controllers.set(
         'sales',
