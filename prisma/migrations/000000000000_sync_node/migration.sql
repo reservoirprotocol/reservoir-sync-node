@@ -1,5 +1,5 @@
 -- CreateTable
-CREATE TABLE "asks" (
+CREATE TABLE IF NOT EXISTS "asks" (
     "id" BYTEA NOT NULL,
     "kind" TEXT,
     "side" TEXT,
@@ -44,7 +44,7 @@ CREATE TABLE "asks" (
 );
 
 -- CreateTable
-CREATE TABLE "sales" (
+CREATE TABLE IF NOT EXISTS "sales" (
     "id" BYTEA NOT NULL,
     "sale_id" BYTEA,
     "token_id" TEXT,
@@ -78,7 +78,7 @@ CREATE TABLE "sales" (
 );
 
 -- CreateTable
-CREATE TABLE "bids" (
+CREATE TABLE IF NOT EXISTS "bids" (
     "id" BYTEA NOT NULL,
     "kind" TEXT,
     "side" TEXT,
@@ -123,7 +123,7 @@ CREATE TABLE "bids" (
 );
 
 -- CreateTable
-CREATE TABLE "transfers" (
+CREATE TABLE IF NOT EXISTS "transfers" (
     "id" BYTEA NOT NULL,
     "token_contract" BYTEA,
     "token_id" TEXT,
