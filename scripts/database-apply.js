@@ -1,6 +1,6 @@
 /* eslint-disable */
 
-const { PrismaClient } = require("@prisma/client");
+const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
 
@@ -11,7 +11,6 @@ const prisma = new PrismaClient();
 -- CreateTable
 CREATE TABLE "sales" (
     "id" BYTEA NOT NULL,
-    "chain_id": TEXT,
     "sale_id" BYTEA,
     "token_id" TEXT,
     "contract_id" BYTEA,
@@ -50,7 +49,6 @@ CREATE TABLE "sales" (
     -- CreateTable
     CREATE TABLE "asks" (
     "id" BYTEA NOT NULL,
-    "chain_id": TEXT,
     "kind" TEXT,
     "side" TEXT,
     "status" TEXT,
@@ -100,7 +98,6 @@ CREATE TABLE "sales" (
 -- CreateTable
 CREATE TABLE "bids" (
     "id" BYTEA NOT NULL,
-    "chain_id": TEXT,
     "kind" TEXT,
     "side" TEXT,
     "status" TEXT,
@@ -149,7 +146,6 @@ CREATE TABLE "bids" (
 -- CreateTable
 CREATE TABLE "transfers" (
     "id" BYTEA NOT NULL,
-    "chain_id": TEXT,
     "token_contract" BYTEA,
     "token_id" TEXT,
     "from" BYTEA,

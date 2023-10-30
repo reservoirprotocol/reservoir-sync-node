@@ -11,7 +11,13 @@ import fs from "fs";
 import path from "path";
 import { LoggerService } from "../services";
 
-import { ControllerEvent, ErrorType, Schemas, SuccessType } from "../types";
+import {
+  Chains,
+  ControllerEvent,
+  ErrorType,
+  Schemas,
+  SuccessType,
+} from "../types";
 /**
  * # isTodayUTC
  * @param dateString - Date string
@@ -189,6 +195,21 @@ export const splitArray = <T>(arr: T[], parts: number): T[][] => {
   }
 
   return out;
+};
+
+const chains: Record<Chains, number> = {
+  arbitrum: 42161,
+  mainnet: 1,
+  goerli: 5,
+  polygon: 137,
+  optimism: 10,
+  sepolia: 11155111,
+};
+
+export const getChainId = (): string => {
+  const chainName = process.env.CHAIN as Chains;
+
+  return chains[chainName].toString();
 };
 
 export const END_OF_TIME = 253402300799;

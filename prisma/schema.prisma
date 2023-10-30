@@ -9,7 +9,7 @@ generator client {
 
 model asks {
   id                      Bytes   @id @db.ByteA
-  chain_id                 String? @db.Text
+  chain_id                String? @db.Text
   kind                    String? @db.Text
   side                    String? @db.Text
   status                  String? @db.Text
@@ -57,7 +57,7 @@ model asks {
 
 model sales {
   id                 Bytes     @id @db.ByteA
-  chain_id            String?   @db.Text
+  chain_id           String?   @db.Text
   sale_id            Bytes?    @db.ByteA
   token_id           String?   @db.Text
   contract_id        Bytes?    @db.ByteA
@@ -91,7 +91,7 @@ model sales {
 
 model bids {
   id                      Bytes   @id @db.ByteA
-  chain_id                 String? @db.Text
+  chain_id                String? @db.Text
   kind                    String? @db.Text
   side                    String? @db.Text
   status                  String? @db.Text
@@ -138,19 +138,18 @@ model bids {
 }
 
 model transfers {
-  id             Bytes   @id @db.ByteA
-  chain_id        String? @db.Text
-  token_contract Bytes?  @db.ByteA
-  token_id       String? @db.Text
-  from           Bytes?  @db.ByteA
-  to             Bytes?  @db.ByteA
-  amount         String? @db.Text
-  block          String? @db.Text
-  tx_hash        Bytes?  @db.ByteA
-  log_index      String? @db.Text
-  batch_index    String? @db.Text
-  timestamp      String? @db.Text
-
-  created_at DateTime? @db.Timestamp
-  updated_at DateTime? @db.Timestamp
+  id             Bytes     @id @db.ByteA
+  chain_id       String?   @db.Text
+  token_contract Bytes?    @db.ByteA
+  token_id       String?   @db.Text
+  from           Bytes?    @db.ByteA
+  to             Bytes?    @db.ByteA
+  amount         String?   @db.Text
+  block          String?   @db.Text
+  tx_hash        Bytes?    @db.ByteA
+  log_index      String?   @db.Text
+  batch_index    String?   @db.Text
+  timestamp      String?   @db.Text
+  created_at     DateTime? @db.Timestamp
+  updated_at     DateTime? @db.Timestamp
 }

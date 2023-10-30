@@ -9,7 +9,7 @@ import {
   SalesSchema,
   TransfersSchema,
 } from "../types";
-import { addressToBuffer, toBuffer, toString } from "../utils";
+import { addressToBuffer, toBuffer, toString, getChainId } from "../utils";
 import { LoggerService } from "./LoggerService";
 
 interface DataSchemas {
@@ -120,7 +120,7 @@ class _InsertionService {
       const formatted = this._format(type, record);
       // @ts-ignore Prisma doesn't support model reference by variable name.
       // See https://github.com/prisma/prisma/discussions/16058#discussioncomment-5493
-     await this._prisma[type].upsert({
+      await this._prisma[type].upsert({
         where: { id: formatted.id },
         create: formatted,
         update: formatted,
@@ -182,6 +182,8 @@ class _InsertionService {
     type: T,
     data: DataSchemas[T]
   ): DataReturns[T] {
+    const chain = getChainId();
+
     if (type === "asks") {
       const ask = data as AsksSchema;
       return {
@@ -189,6 +191,7 @@ class _InsertionService {
           `${ask?.id}-${ask?.contract}-${ask?.maker}-${ask?.tokenSetId}-${ask?.createdAt}`,
           "utf16le"
         ),
+        chain_id: chain,
         kind: ask?.kind,
         side: ask?.side,
         status: ask?.status,
@@ -240,6 +243,7 @@ class _InsertionService {
           `${bid?.id}-${bid?.contract}-${bid?.maker}-${bid?.tokenSetId}-${bid?.createdAt}`,
           "utf16le"
         ),
+        chain_id: chain,
         kind: bid?.kind,
         side: bid?.side,
         status: bid?.status,
@@ -286,6 +290,7 @@ class _InsertionService {
       const sale = data as SalesSchema;
       return {
         id: Buffer.from(`${sale.txHash}-${sale.logIndex}-${sale.batchIndex}`),
+        chain_id: chain,
         sale_id: toBuffer(sale?.saleId),
         token_id: sale.token?.tokenId,
         contract_id: addressToBuffer(sale?.token?.contract),
@@ -325,6 +330,7 @@ class _InsertionService {
           `${transfer.txHash}-${transfer.logIndex}-${transfer.batchIndex}`,
           "utf16le"
         ),
+        chain_id: chain,
         token_contract: addressToBuffer(transfer?.token?.contract),
         token_id: transfer?.token?.tokenId,
         from: addressToBuffer(transfer?.from),

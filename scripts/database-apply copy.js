@@ -1,5 +1,55 @@
+/* eslint-disable */
+
+const { PrismaClient } = require("@prisma/client");
+
+const prisma = new PrismaClient();
+
+(async () => {
+  try {
+    await prisma.$executeRawUnsafe`DROP TABLE _prisma_migrations`;
+
+    // Create sales
+    await prisma.$executeRawUnsafe`
 -- CreateTable
-CREATE TABLE "asks" (
+CREATE TABLE IF NOT EXISTS  "sales" (
+    "id" BYTEA NOT NULL,
+    "sale_id" BYTEA,
+    "token_id" TEXT,
+    "contract_id" BYTEA,
+    "order_id" BYTEA,
+    "order_source" TEXT,
+    "order_side" TEXT,
+    "order_kind" TEXT,
+    "from" BYTEA,
+    "to" BYTEA,
+    "amount" TEXT,
+    "fill_source" TEXT,
+    "block" TEXT,
+    "tx_hash" BYTEA,
+    "log_index" TEXT,
+    "batch_index" TEXT,
+    "timestamp" TEXT,
+    "wash_trading_score" DOUBLE PRECISION,
+    "updated_at" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
+    "created_at" TIMESTAMP(3),
+    "price_currency_contract" BYTEA,
+    "price_currency_name" TEXT,
+    "price_currency_symbol" TEXT,
+    "price_currency_decimals" TEXT,
+    "price_amount_raw" TEXT,
+    "price_amount_decimal" TEXT,
+    "price_amount_usd" TEXT,
+    "price_amount_native" TEXT,
+
+    CONSTRAINT "sales_pkey" PRIMARY KEY ("id")
+);
+
+    `;
+
+    // Create asks
+    await prisma.$executeRawUnsafe`
+    -- CreateTable
+    CREATE TABLE IF NOT EXISTS "asks" (
     "id" BYTEA NOT NULL,
     "kind" TEXT,
     "side" TEXT,
@@ -43,42 +93,12 @@ CREATE TABLE "asks" (
     CONSTRAINT "asks_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "sales" (
-    "id" BYTEA NOT NULL,
-    "sale_id" BYTEA,
-    "token_id" TEXT,
-    "contract_id" BYTEA,
-    "order_id" BYTEA,
-    "order_source" TEXT,
-    "order_side" TEXT,
-    "order_kind" TEXT,
-    "from" BYTEA,
-    "to" BYTEA,
-    "amount" TEXT,
-    "fill_source" TEXT,
-    "block" TEXT,
-    "tx_hash" BYTEA,
-    "log_index" TEXT,
-    "batch_index" TEXT,
-    "timestamp" TEXT,
-    "wash_trading_score" DOUBLE PRECISION,
-    "updated_at" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
-    "created_at" TIMESTAMP(3),
-    "price_currency_contract" BYTEA,
-    "price_currency_name" TEXT,
-    "price_currency_symbol" TEXT,
-    "price_currency_decimals" TEXT,
-    "price_amount_raw" TEXT,
-    "price_amount_decimal" TEXT,
-    "price_amount_usd" TEXT,
-    "price_amount_native" TEXT,
+    `;
 
-    CONSTRAINT "sales_pkey" PRIMARY KEY ("id")
-);
-
+    // Create bids
+    await prisma.$executeRawUnsafe`
 -- CreateTable
-CREATE TABLE "bids" (
+CREATE TABLE IF NOT EXISTS "bids" (
     "id" BYTEA NOT NULL,
     "kind" TEXT,
     "side" TEXT,
@@ -121,9 +141,12 @@ CREATE TABLE "bids" (
 
     CONSTRAINT "bids_pkey" PRIMARY KEY ("id")
 );
+    `;
 
+    // Create transfers
+    await prisma.$executeRawUnsafe`
 -- CreateTable
-CREATE TABLE "transfers" (
+CREATE TABLE IF NOT EXISTS "transfers" (
     "id" BYTEA NOT NULL,
     "token_contract" BYTEA,
     "token_id" TEXT,
@@ -140,3 +163,11 @@ CREATE TABLE "transfers" (
 
     CONSTRAINT "transfers_pkey" PRIMARY KEY ("id")
 );
+
+    `;
+  } catch (error) {
+    console.log(error);
+  } finally {
+    await prisma.$disconnect();
+  }
+})();
