@@ -1,5 +1,4 @@
 import { AxiosResponse } from "axios";
-import { isAddress } from "web3-validator";
 import {
   addMilliseconds,
   differenceInMilliseconds,
@@ -9,9 +8,16 @@ import {
 import { utcToZonedTime } from "date-fns-tz";
 import fs from "fs";
 import path from "path";
+import { isAddress } from "web3-validator";
 import { LoggerService } from "../services";
 
-import { ControllerEvent, ErrorType, Schemas, SuccessType } from "../types";
+import {
+  ControllerEvent,
+  DataTypes,
+  ErrorType,
+  Schemas,
+  SuccessType,
+} from "../types";
 /**
  * # isTodayUTC
  * @param dateString - Date string
@@ -159,19 +165,33 @@ export const WorkerCounts = {
   slow: 10,
 } as const;
 
-export const readContracts = (): string[] => {
+export const readContracts = (): Record<DataTypes, string[]> => {
+  const hashMap: Record<DataTypes, string[]> = {
+    sales: [],
+    asks: [],
+    bids: [],
+    transfers: [],
+  };
   try {
-    const contracts: string[] = [];
     fs.readFileSync(path.join(__dirname, "../contracts.txt"), "utf-8")
       .trim()
       .split("\n")
-      .filter((contract) => isAddress(contract))
-      .map((contract) => contracts.push(contract));
+      .forEach((line) => {
+        const [key, contract] = line.split(":");
 
-    return contracts;
+        if (!isAddress(contract)) return;
+
+        if (!hashMap[key as DataTypes]) {
+          hashMap[key as DataTypes] = [];
+        }
+
+        hashMap[key as DataTypes].push(contract);
+      });
+
+    return hashMap;
   } catch (e: unknown) {
     LoggerService.error(e);
-    return [];
+    return hashMap;
   }
 };
 

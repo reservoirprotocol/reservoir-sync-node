@@ -28,6 +28,16 @@ class _Queue {
   } | null = null;
 
   /**
+   * Contract filters for each dataset
+   */
+  public contracts: Record<DataTypes, string[]> = {
+    sales: [],
+    asks: [],
+    bids: [],
+    transfers: [],
+  };
+
+  /**
    * Redis client instance
    * @type {RedisClientType}
    * @private
@@ -85,6 +95,43 @@ class _Queue {
   }
 
   /**
+   * Writes and stores contracts in redis
+   *
+   * @param contracts - Contracts to write
+   * @returns {Promise<void>} - A promise that resolves when the contracts have been written.
+   */
+  public async addContracts(
+    contracts: string[],
+    type: DataTypes
+  ): Promise<void> {
+    try {
+      this._client.sAdd(`${type}:contracts`, contracts);
+      this.contracts[type] = [...contracts, ...this.contracts[type]];
+      await this.loadContracts();
+    } catch (e: unknown) {
+      LoggerService.error(e);
+      return this.addContracts(contracts, type);
+    }
+  }
+
+  /**
+   * Returns the contracts that are stored in redis
+   *
+   * @returns {Promise<void>} - A promise that resolves with an array of contracts
+   */
+  public async getContracts(type: DataTypes): Promise<string[]> {
+    try {
+      const contracts: string[] = await this._client.sMembers(
+        `${type}:contracts`
+      );
+      return contracts;
+    } catch (e: unknown) {
+      LoggerService.error(e);
+      return [];
+    }
+  }
+
+  /**
    * Clears all backups.
    * @returns {Promise<void>} - A promise that resolves when the backups are cleared.
    */
@@ -113,6 +160,23 @@ class _Queue {
       LoggerService.error(e);
       process.exit(0);
     }
+  }
+
+  /**
+   * Loads the contracts for every dataset
+   *
+   * @returns {Promise<void>} - A promise that resolves when the contracts are loaded
+   */
+  public async loadContracts(): Promise<void> {
+    for await (const key of [
+      "sales",
+      "asks",
+      "bids",
+      "transfers",
+    ] as DataTypes[]) {
+      this.contracts[key] = await this.getContracts(key);
+    }
+    LoggerService.info(`Loaded Contracts`);
   }
 
   /**

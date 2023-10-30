@@ -106,7 +106,6 @@ export interface ControllerConfig {
   dataset: DataTypes;
   chain: Chains;
   delay: number;
-  contracts: string[];
   mode: Mode;
 }
 
@@ -160,7 +159,6 @@ export interface WebSocketError {
 }
 
 export interface WebSocketServiceConfig {
-  contracts: string[];
   apiKey: string;
   chain: Chains | null;
   toSync: {
@@ -203,7 +201,7 @@ export interface SyncNodeConfig {
   syncer: {
     apiKey: string;
     chain: Chains;
-    contracts: string[];
+    contracts: Record<DataTypes, string[]>;
     sources: string[];
     toSync: Record<DataTypes, boolean>;
     mode: Mode;
