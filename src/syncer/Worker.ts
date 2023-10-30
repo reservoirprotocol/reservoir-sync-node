@@ -223,6 +223,7 @@ export class Worker extends EventEmitter {
   public async upkeep(): Promise<void> {
     let startDate = new Date().toISOString();
 
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       await delay(60000);
 
