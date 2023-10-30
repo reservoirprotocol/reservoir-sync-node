@@ -9,7 +9,7 @@
     "database:introspect": "yarn database:apply && yarn database:resolve",
     "database:apply": "node ./scripts/database-apply.js",
     "move": "node ./scripts/contracts-copy.js",
-    "database:resolve": "prisma migrate resolve --applied sync_node",
+    "database:resolve": "prisma migrate resolve --applied 20231030183224_sync_node",
     "database:prepare": "yarn database:deploy && yarn database:generate",
     "database:generate": "npx prisma generate",
     "database:deploy": "npx prisma migrate deploy",

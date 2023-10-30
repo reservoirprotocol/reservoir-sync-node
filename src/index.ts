@@ -1,6 +1,6 @@
 import "dotenv/config";
 import SyncNode from "./SyncNode";
-import { LoggerService } from "services";
+import { LoggerService } from "./services";
 
 SyncNode.launch();
 

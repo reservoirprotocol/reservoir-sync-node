@@ -138,18 +138,19 @@ model bids {
 }
 
 model transfers {
-  id             Bytes     @id @db.ByteA
-  chain_id       String?   @db.Text
-  token_contract Bytes?    @db.ByteA
-  token_id       String?   @db.Text
-  from           Bytes?    @db.ByteA
-  to             Bytes?    @db.ByteA
-  amount         String?   @db.Text
-  block          String?   @db.Text
-  tx_hash        Bytes?    @db.ByteA
-  log_index      String?   @db.Text
-  batch_index    String?   @db.Text
-  timestamp      String?   @db.Text
-  created_at     DateTime? @db.Timestamp
-  updated_at     DateTime? @db.Timestamp
+  id             Bytes   @id @db.ByteA
+  chain_id       String? @db.Text
+  token_contract Bytes?  @db.ByteA
+  token_id       String? @db.Text
+  from           Bytes?  @db.ByteA
+  to             Bytes?  @db.ByteA
+  amount         String? @db.Text
+  block          String? @db.Text
+  tx_hash        Bytes?  @db.ByteA
+  log_index      String? @db.Text
+  batch_index    String? @db.Text
+  timestamp      String? @db.Text
+
+  created_at DateTime? @db.Timestamp
+  updated_at DateTime? @db.Timestamp
 }
