@@ -76,14 +76,18 @@ export class Controller {
    * @param contract - Contract to add
    * @returns void
    */
-  public async addContract(contract: string): Promise<void> {
+  public async addContract(contract: string, backfill: boolean): Promise<void> {
+    // This just adds it in to be filtered
     await QueueService.addContracts([contract], this._config.dataset);
-    const block = await this._getInitialBlock(contract);
-    if (block) {
-      await this._queue.insertBlock(block, this._config.dataset);
-      LoggerService.info(
-        `Added contract ${contract} to ${this._config.dataset} controller`
-      );
+
+    if (backfill) {
+      const block = await this._getInitialBlock(contract);
+      if (block) {
+        await this._queue.insertBlock(block, this._config.dataset);
+        LoggerService.info(
+          `Controller Backfilling ${this._config.dataset}:${contract}`
+        );
+      }
     }
   }
 

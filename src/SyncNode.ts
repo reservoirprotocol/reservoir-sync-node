@@ -119,10 +119,10 @@ class SyncNode {
       if (message.command) {
         switch (message.command) {
           case "contract_add": {
-            if (message.dataType && message.contract) {
+            if (message.dataType && message.contract && message.backfill) {
               const controller = this.getController(message.dataType);
               if (controller) {
-                controller.addContract(message.contract);
+                controller.addContract(message.contract, message.backfill);
               } else {
                 LoggerService.error(
                   `Unable to add contract, ${message.dataType} controller missing`

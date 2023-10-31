@@ -429,6 +429,7 @@ export interface InsertionDataPoint {
 export interface ProcessCommand {
   command: string;
   contract?: string;
+  backfill?: boolean;
   dataType?: DataTypes;
   recordCount?: number;
 }

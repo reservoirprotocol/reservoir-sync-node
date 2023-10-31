@@ -2,13 +2,13 @@ import express, {
   type Application,
   type Request,
   type Response,
-} from 'express';
-import { DataTypes } from '../../../types';
-import { Server } from '../../Server';
+} from "express";
+import { DataTypes } from "../../../types";
+import { Server } from "../../Server";
 
 const handler: Application = express();
 
-handler.get('/queue', async (req: Request, res: Response): Promise<unknown> => {
+handler.get("/queue", async (req: Request, res: Response): Promise<unknown> => {
   const type = req.query?.type as DataTypes;
 
   const responses = await Promise.allSettled([
@@ -20,14 +20,14 @@ handler.get('/queue', async (req: Request, res: Response): Promise<unknown> => {
 
   return res.status(200).json({
     data: {
-      blocks: responses[0].status === 'fulfilled' ? responses[0].value : [],
-      backups: responses[1].status === 'fulfilled' ? responses[1].value : {},
+      blocks: responses[0].status === "fulfilled" ? responses[0].value : [],
+      backups: responses[1].status === "fulfilled" ? responses[1].value : {},
     },
   });
 });
 
 handler.get(
-  '/insertions',
+  "/insertions",
   async (req: Request, res: Response): Promise<unknown> => {
     return res.status(200).json({
       data: Server.getInsertions(),
@@ -36,10 +36,11 @@ handler.get(
 );
 
 handler.post(
-  '/create',
+  "/create",
   async (req: Request, res: Response): Promise<unknown> => {
     const type = req.query?.type as DataTypes;
     const contract = req?.query.contract as string;
+    const backfill = req?.query.backfill as string;
 
     if (!contract || !type) {
       return res.status(400).json({
@@ -52,8 +53,9 @@ handler.post(
     }
 
     process?.send?.({
-      command: 'contract_add',
+      command: "contract_add",
       dataType: type,
+      backfill: backfill == "true",
       contract,
     });
 
