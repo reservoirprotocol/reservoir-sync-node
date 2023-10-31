@@ -107,15 +107,21 @@ class _Queue {
     try {
       const currentContracts = await this.getContracts(type);
 
-      const filteredContracts = [
-        ...new Set(currentContracts.concat(contracts)),
-      ];
+      const existingContractsSet = new Set(currentContracts);
 
-      await this._client.sAdd(`${type}:contracts`, filteredContracts);
+      const filteredContracts = contracts.filter(
+        (contract) => !existingContractsSet.has(contract)
+      );
 
-      this.contracts[type] = [
-        ...new Set(filteredContracts.concat(this.contracts[type])),
-      ];
+      const combinedContracts = currentContracts.concat(filteredContracts);
+
+      this._client.sAdd(`${type}:contracts`, combinedContracts);
+
+      const contractsTypeSet = new Set(this.contracts[type]);
+      const updatedContractsType = this.contracts[type].concat(
+        filteredContracts.filter((contract) => !contractsTypeSet.has(contract))
+      );
+      this.contracts[type] = updatedContractsType;
     } catch (e: unknown) {
       LoggerService.error(e);
       return this.addContracts(contracts, type);
