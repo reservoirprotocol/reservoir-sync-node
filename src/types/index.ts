@@ -9,6 +9,7 @@ export enum URLs {
   "mainnet" = "wss://ws.reservoir.tools",
   "goerli" = "wss://ws-goerli.reservoir.tools",
   "polygon" = "wss://ws-polygon.reservoir.tools",
+  "mumbai" = "wss://ws-mumbai.reservoir.tools",
   "arbitrum" = "wss://ws-arbitrum.reservoir.tools",
   "sepolia" = "wss://ws-sepolia.reservoir.tools",
   "optimism" = "wss://ws-optimism.reservoir.tools",
@@ -58,6 +59,7 @@ export type Chains =
   | "goerli"
   | "polygon"
   | "arbitrum"
+  | "mumbai"
   | "optimism"
   | "sepolia";
 
