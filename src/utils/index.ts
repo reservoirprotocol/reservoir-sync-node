@@ -141,6 +141,7 @@ export const UrlBase = {
   goerli: "https://api-goerli.reservoir.tools",
   sepolia: "https://api-sepolia.reservoir.tools",
   polygon: "https://api-polygon.reservoir.tools",
+  mumbai: "https://api-mumbai.reservoir.tools",
   arbitrum: "https://api-arbitrum.reservoir.tools",
   optimism: "https://api-optimism.reservoir.tools",
 } as const;
@@ -202,6 +203,7 @@ const chains: Record<Chains, number> = {
   mainnet: 1,
   goerli: 5,
   polygon: 137,
+  mumbai: 80001,
   optimism: 10,
   sepolia: 11155111,
 };
