@@ -12,6 +12,7 @@ import { isAddress } from "web3-validator";
 import { LoggerService } from "../services";
 
 import {
+  Chains,
   ControllerEvent,
   DataTypes,
   ErrorType,
@@ -141,6 +142,7 @@ export const UrlBase = {
   goerli: "https://api-goerli.reservoir.tools",
   sepolia: "https://api-sepolia.reservoir.tools",
   polygon: "https://api-polygon.reservoir.tools",
+  mumbai: "https://api-mumbai.reservoir.tools",
   arbitrum: "https://api-arbitrum.reservoir.tools",
   optimism: "https://api-optimism.reservoir.tools",
 } as const;
@@ -215,6 +217,22 @@ export const splitArray = <T>(arr: T[], parts: number): T[][] => {
   }
 
   return out;
+};
+
+const chains: Record<Chains, number> = {
+  arbitrum: 42161,
+  mainnet: 1,
+  goerli: 5,
+  polygon: 137,
+  mumbai: 80001,
+  optimism: 10,
+  sepolia: 11155111,
+};
+
+export const getChainId = (): string => {
+  const chainName = process.env.CHAIN as Chains;
+
+  return chains[chainName].toString();
 };
 
 export const END_OF_TIME = 253402300799;
