@@ -111,7 +111,7 @@ class _Queue {
         ...new Set(currentContracts.concat(contracts)),
       ];
 
-      this._client.sAdd(`${type}:contracts`, filteredContracts);
+      await this._client.sAdd(`${type}:contracts`, filteredContracts);
 
       this.contracts[type] = [
         ...new Set(filteredContracts.concat(this.contracts[type])),
