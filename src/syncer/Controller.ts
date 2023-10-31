@@ -148,7 +148,9 @@ export class Controller {
     const contracts = QueueService.contracts[this._config.dataset];
 
     const blocks: Block[] = [];
-    const chunks: string[][] = splitArray(contracts, 4);
+    const chunks: string[][] = splitArray(contracts, 4).filter(
+      (arr) => arr.length > 0
+    );
 
     let i: number = 0;
     for await (const chunk of chunks) {

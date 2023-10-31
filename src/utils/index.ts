@@ -150,7 +150,6 @@ export const readContracts = (): Record<DataTypes, string[]> => {
       .split("\n")
       .forEach((line) => {
         const [contract = "", key = ""] = line.split(":");
-
         if (!isAddress(contract)) return;
 
         if (!key) {
@@ -160,9 +159,7 @@ export const readContracts = (): Record<DataTypes, string[]> => {
             }
           });
         } else {
-          if (!hashMap[key as DataTypes]) {
-            hashMap[key as DataTypes].push(contract);
-          }
+          hashMap[key as DataTypes].push(contract);
         }
       });
 

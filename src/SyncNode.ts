@@ -70,13 +70,9 @@ class SyncNode {
    * @returns void
    */
   public async launch(): Promise<void> {
-    console.log(this._config.syncer);
-    return;
-
     this._launchServerProcess();
+
     await this._queueService.launch();
-    await this._insertionService.launch();
-    await this._webSocketService.launch();
 
     if (this._config.backup.useBackup) {
       await this._queueService.loadBackup();
@@ -87,15 +83,20 @@ class SyncNode {
     }
 
     Object.keys(this._config.syncer.contracts).map(async (key) => {
-      await this._queueService.addContracts(
-        this._config.syncer.contracts[key as DataTypes],
-        key as DataTypes
-      );
+      const contracts = this._config.syncer.contracts[key as DataTypes];
+      if (contracts.length) {
+        await this._queueService.addContracts(
+          this._config.syncer.contracts[key as DataTypes],
+          key as DataTypes
+        );
+      }
     });
 
-    await this._queueService.loadContracts();
-
+    await this._insertionService.launch();
+    await this._webSocketService.launch();
     LoggerService.info(`Launched All Services`);
+
+    await this._queueService.loadContracts();
 
     this._createControllers();
   }
