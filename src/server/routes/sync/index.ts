@@ -42,11 +42,11 @@ handler.post(
     const contract = req?.query.contract as string;
     const backfill = req?.query.backfill as string;
 
-    if (!contract || !type) {
+    if (!contract || !type || backfill == null || backfill == undefined) {
       return res.status(400).json({
         error: {
           status: 400,
-          message: `Invalid parameters: ${type}:${contract}`,
+          message: `Invalid parameters: ${type}:${contract}:${backfill}`,
         },
         data: null,
       });

@@ -115,11 +115,16 @@ class SyncNode {
       stdio: ["inherit", "inherit", "inherit", "ipc"],
     });
     this._serverProcess.on("message", (message: ProcessCommand) => {
-      LoggerService.info(`Server Message: ${message}`);
+      LoggerService.info(`Server Message: ${JSON.stringify(message)}`);
       if (message.command) {
         switch (message.command) {
           case "contract_add": {
-            if (message.dataType && message.contract && message.backfill) {
+            if (
+              message.dataType &&
+              message.contract &&
+              message.backfill !== null &&
+              message.backfill !== undefined
+            ) {
               const controller = this.getController(message.dataType);
               if (controller) {
                 controller.addContract(message.contract, message.backfill);

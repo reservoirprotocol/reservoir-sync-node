@@ -77,7 +77,6 @@ export class Controller {
    * @returns void
    */
   public async addContract(contract: string, backfill: boolean): Promise<void> {
-    // This just adds it in to be filtered
     await QueueService.addContracts([contract], this._config.dataset);
 
     if (backfill) {
@@ -88,6 +87,10 @@ export class Controller {
           `Controller Backfilling ${this._config.dataset}:${contract}`
         );
       }
+    } else {
+      LoggerService.info(
+        `Controller added ${this._config.dataset}:${contract}`
+      );
     }
   }
 

@@ -13,6 +13,8 @@ const CONNECTION_URL = process.env.REDIS_URL;
     await client.connect();
 
     await client.flushDb();
+
+    await client.quit();
   } catch (error) {
     console.log(error);
   }
