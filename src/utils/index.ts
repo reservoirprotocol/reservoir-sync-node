@@ -137,36 +137,6 @@ export const addressToBuffer = (hexValue: string = "") => {
   return Buffer.from((hexValue || " ").slice(2), "hex");
 };
 
-export const UrlBase = {
-  mainnet: "https://api.reservoir.tools",
-  goerli: "https://api-goerli.reservoir.tools",
-  sepolia: "https://api-sepolia.reservoir.tools",
-  polygon: "https://api-polygon.reservoir.tools",
-  mumbai: "https://api-mumbai.reservoir.tools",
-  arbitrum: "https://api-arbitrum.reservoir.tools",
-  optimism: "https://api-optimism.reservoir.tools",
-} as const;
-
-export const UrlPaths = {
-  sales: "/sales/v6",
-  asks: "/orders/asks/v5",
-  bids: "/orders/bids/v6",
-  transfers: "/transfers/bulk/v2",
-} as const;
-
-export const RecordRoots = {
-  asks: "orders",
-  sales: "sales",
-  bids: "orders",
-  transfers: "transfers",
-} as const;
-
-export const WorkerCounts = {
-  fast: 20,
-  normal: 15,
-  slow: 10,
-} as const;
-
 export const readContracts = (): Record<DataTypes, string[]> => {
   const hashMap: Record<DataTypes, string[]> = {
     sales: [],
@@ -236,3 +206,33 @@ export const getChainId = (): string => {
 };
 
 export const END_OF_TIME = 253402300799;
+
+export const UrlBase = {
+  mainnet: "https://api.reservoir.tools",
+  goerli: "https://api-goerli.reservoir.tools",
+  sepolia: "https://api-sepolia.reservoir.tools",
+  polygon: "https://api-polygon.reservoir.tools",
+  mumbai: "https://api-mumbai.reservoir.tools",
+  arbitrum: "https://api-arbitrum.reservoir.tools",
+  optimism: "https://api-optimism.reservoir.tools",
+} as const;
+
+export const UrlPaths = {
+  sales: "/sales/v6",
+  asks: "/orders/asks/v5",
+  bids: "/orders/bids/v6",
+  transfers: "/transfers/bulk/v2",
+} as const;
+
+export const RecordRoots = {
+  asks: "orders",
+  sales: "sales",
+  bids: "orders",
+  transfers: "transfers",
+} as const;
+
+export const WorkerCounts = {
+  fast: 20,
+  normal: 15,
+  slow: 10,
+} as const;
