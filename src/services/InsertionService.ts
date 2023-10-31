@@ -200,6 +200,7 @@ class _InsertionService {
           ? addressToBuffer(ask.tokenSetSchemaHash)
           : null,
         contract: addressToBuffer(ask?.contract),
+        collection_id: ask.criteria.data.collection.id,
         maker: addressToBuffer(ask?.maker),
         taker: addressToBuffer(ask?.taker),
         price_currency_contract: addressToBuffer(
@@ -250,6 +251,7 @@ class _InsertionService {
         token_set_id: bid?.tokenSetId,
         token_set_schema_hash: addressToBuffer(bid?.tokenSetSchemaHash),
         contract: addressToBuffer(bid?.contract),
+        collection_id: bid.criteria.data.collection.id,
         maker: addressToBuffer(bid?.maker),
         taker: addressToBuffer(bid?.taker),
         price_currency_contract: addressToBuffer(
@@ -294,6 +296,7 @@ class _InsertionService {
         sale_id: toBuffer(sale?.saleId),
         token_id: sale.token?.tokenId,
         contract_id: addressToBuffer(sale?.token?.contract),
+        collection_id: sale.token.collection.id,
         order_id: addressToBuffer(sale.orderId),
         order_source: sale.orderSource,
         order_side: sale.orderSide,
