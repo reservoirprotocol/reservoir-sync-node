@@ -45,7 +45,6 @@ class _WebSocketService {
    * @type {WebSocketServiceConfig}
    */
   private _config: WebSocketServiceConfig = {
-    contracts: [],
     apiKey: '',
     chain: null,
     toSync: {

@@ -76,14 +76,22 @@ export class Controller {
    * @param contract - Contract to add
    * @returns void
    */
-  public async addContract(contract: string): Promise<void> {
-    const block = await this._getInitialBlock(contract);
-    if (!block) return;
-    await this._queue.insertBlock(block, this._config.dataset);
+  public async addContract(contract: string, backfill: boolean): Promise<void> {
+    await QueueService.addContracts([contract], this._config.dataset);
 
-    LoggerService.info(
-      `Added contract ${contract} to ${this._config.dataset} controller`
-    );
+    if (backfill) {
+      const block = await this._getInitialBlock(contract);
+      if (block) {
+        await this._queue.insertBlock(block, this._config.dataset);
+        LoggerService.info(
+          `Controller Backfilling ${this._config.dataset}:${contract}`
+        );
+      }
+    } else {
+      LoggerService.info(
+        `Controller added ${this._config.dataset}:${contract}`
+      );
+    }
   }
 
   /**
@@ -105,11 +113,12 @@ export class Controller {
     this._listen();
 
     const backup = this._queue.getBackup(this._config.dataset);
+    const contracts = QueueService.contracts[this._config.dataset];
 
     if (backup) {
       await this._launchBackup(backup);
     } else {
-      if (this._config.contracts.length > 0) {
+      if (contracts.length > 0) {
         this._handleContracts();
       } else {
         const worker = this._workers.find(({ busy }) => !busy) as Worker;
@@ -143,8 +152,12 @@ export class Controller {
   }
 
   private async _handleContracts(): Promise<void> {
+    const contracts = QueueService.contracts[this._config.dataset];
+
     const blocks: Block[] = [];
-    const chunks: string[][] = splitArray(this._config.contracts, 4);
+    const chunks: string[][] = splitArray(contracts, 4).filter(
+      (arr) => arr.length > 0
+    );
 
     let i: number = 0;
     for await (const chunk of chunks) {
@@ -154,9 +167,7 @@ export class Controller {
         })
       );
       i += promises.length;
-      LoggerService.info(
-        `${i}/${this._config.contracts.length} Blocks created`
-      );
+      LoggerService.info(`${i}/${contracts.length} Blocks created`);
       blocks.push(...(promises.filter((block) => block !== null) as Block[]));
     }
 
@@ -288,7 +299,7 @@ export class Controller {
     worker.continuation = "";
     worker.data.block = null;
     worker.data.continuation = null;
-    
+
     const block = await this._queue.getBlock(this._config.dataset);
 
     if (!block) {

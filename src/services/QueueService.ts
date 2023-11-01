@@ -1,7 +1,7 @@
 import { createClient, RedisClientType } from "redis";
+import { Worker } from "../syncer/Worker";
 import { Backup, Block, DataTypes, QueueServiceConfig } from "../types";
 import { LoggerService } from "./LoggerService";
-import { Worker } from "../syncer/Worker";
 
 /**
  * Queue class for managing a Redis-based queue.
@@ -26,6 +26,16 @@ class _Queue {
   private _backups: {
     [key: string]: Backup;
   } | null = null;
+
+  /**
+   * Contract filters for each dataset
+   */
+  public contracts: Record<DataTypes, string[]> = {
+    sales: [],
+    asks: [],
+    bids: [],
+    transfers: [],
+  };
 
   /**
    * Redis client instance
@@ -85,17 +95,93 @@ class _Queue {
   }
 
   /**
+   * Writes and stores contracts in redis
+   *
+   * @param contracts - Contracts to write
+   * @returns {Promise<void>} - A promise that resolves when the contracts have been written.
+   */
+  public async addContracts(
+    contracts: string[],
+    type: DataTypes
+  ): Promise<void> {
+    try {
+      const currentContracts = await this.getContracts(type);
+
+      const combinedContractsSet = new Set([...currentContracts, ...contracts]);
+      const combinedContracts = [...combinedContractsSet];
+
+      await this._client.sAdd(`${type}:contracts`, combinedContracts);
+
+      this.contracts[type] = combinedContracts;
+    } catch (e: unknown) {
+      LoggerService.error(e);
+      return this.addContracts(contracts, type);
+    }
+  }
+
+  /**
+   * Returns the contracts that are stored in redis
+   *
+   * @returns {Promise<void>} - A promise that resolves with an array of contracts
+   */
+  public async getContracts(type: DataTypes): Promise<string[]> {
+    try {
+      const contracts: string[] = await this._client.sMembers(
+        `${type}:contracts`
+      );
+      return contracts;
+    } catch (e: unknown) {
+      LoggerService.error(e);
+      return [];
+    }
+  }
+
+  /**
    * Clears all backups.
    * @returns {Promise<void>} - A promise that resolves when the backups are cleared.
    */
   public async clearBackup(): Promise<void> {
     LoggerService.info(`Clearing Backup`);
+    const keys: string[] = ["transfers", "asks", "bids", "sales"];
+
     try {
-      this._client.flushAll();
+      await Promise.allSettled(
+        keys.map(async (key) => {
+          this._client.del(`${key}-queue-priority-1`);
+          this._client.del(`${key}-queue-priority-2`);
+          this._client.del(`${key}-queue-priority-3`);
+        })
+      );
     } catch (e: unknown) {
+      LoggerService.error(`Error deleting queues`);
       LoggerService.error(e);
-      return await this.clearBackup();
+      process.exit(0);
     }
+
+    try {
+      this._client.del("backups");
+    } catch (e: unknown) {
+      LoggerService.error(`Error deleting backups`);
+      LoggerService.error(e);
+      process.exit(0);
+    }
+  }
+
+  /**
+   * Loads the contracts for every dataset
+   *
+   * @returns {Promise<void>} - A promise that resolves when the contracts are loaded
+   */
+  public async loadContracts(): Promise<void> {
+    for await (const key of [
+      "sales",
+      "asks",
+      "bids",
+      "transfers",
+    ] as DataTypes[]) {
+      this.contracts[key] = await this.getContracts(key);
+    }
+    LoggerService.info(`Loaded Contracts`);
   }
 
   /**
