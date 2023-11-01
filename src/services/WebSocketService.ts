@@ -120,7 +120,7 @@ class _WebSocketService {
       this._subscribe('bid.updated');
     }
 
-    if (this._config.toSync.bids) {
+    if (this._config.toSync.sales) {
       this._subscribe('sale.created');
       this._subscribe('sale.updated');
     }
