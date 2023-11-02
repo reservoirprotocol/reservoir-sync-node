@@ -58,20 +58,11 @@ class SyncNode {
    */
   private readonly _controllers: Map<DataTypes, Controller> = new Map();
 
-  /**
-   * Array of contracts
-   * @private
-   */
-  private _contracts: string[];
-
   constructor(config: SyncNodeConfig) {
     this._config = config;
-    this._contracts = config.syncer.contracts;
     this._loggerService.construct(config.logger);
     this._queueService.construct(config.backup);
-    this._webSocketService.construct({
-      ...this._config.syncer,
-    });
+    this._webSocketService.construct(config.syncer);
   }
   /**
    * Launches the SyncNode
@@ -80,15 +71,32 @@ class SyncNode {
    */
   public async launch(): Promise<void> {
     this._launchServerProcess();
+
     await this._queueService.launch();
+
+    if (this._config.backup.useBackup) {
+      await this._queueService.loadBackup();
+      LoggerService.info(`Loaded Backup`);
+    } else {
+      await this._queueService.clearBackup();
+      LoggerService.info(`Cleared Backup`);
+    }
+
+    Object.keys(this._config.syncer.contracts).map(async (key) => {
+      const contracts = this._config.syncer.contracts[key as DataTypes];
+      if (contracts.length) {
+        await this._queueService.addContracts(
+          this._config.syncer.contracts[key as DataTypes],
+          key as DataTypes
+        );
+      }
+    });
+
     await this._insertionService.launch();
     await this._webSocketService.launch();
-
-    this._config.backup.useBackup
-      ? await this._queueService.loadBackup()
-      : await this._queueService.clearBackup();
-
     LoggerService.info(`Launched All Services`);
+
+    await this._queueService.loadContracts();
 
     this._createControllers();
   }
@@ -101,36 +109,25 @@ class SyncNode {
     return this._controllers.get(controller);
   }
 
-  /**
-   * Gets the contracts to filter by
-   * @returns contracts array
-   */
-  public getContracts(): string[] {
-    return this._contracts;
-  }
-  /**
-   * Inserts a contract into the contract array
-   * @returns void
-   */
-  public insertContract(contract: string): void {
-    this._contracts.push(contract);
-  }
-
   private _launchServerProcess(): void {
     this._serverProcess = spawn('node', ['dist/server/index.js'], {
       shell: true,
       stdio: ['inherit', 'inherit', 'inherit', 'ipc'],
     });
     this._serverProcess.on('message', (message: ProcessCommand) => {
-      LoggerService.info(`Server Message: ${message}`);
+      LoggerService.info(`Server Message: ${JSON.stringify(message)}`);
       if (message.command) {
         switch (message.command) {
           case 'contract_add': {
-            if (message.dataType && message.contract) {
+            if (
+              message.dataType &&
+              message.contract &&
+              message.backfill !== null &&
+              message.backfill !== undefined
+            ) {
               const controller = this.getController(message.dataType);
               if (controller) {
-                this.insertContract(message.contract);
-                controller?.addContract(message.contract);
+                controller.addContract(message.contract, message.backfill);
               } else {
                 LoggerService.error(
                   `Unable to add contract, ${message.dataType} controller missing`
@@ -176,7 +173,6 @@ class SyncNode {
       this._controllers.set(
         'transfers',
         new Controller({
-          contracts: this._contracts,
           apiKey: this._config.syncer.apiKey,
           dataset: 'transfers',
           type: 'backfill',
@@ -191,7 +187,6 @@ class SyncNode {
       this._controllers.set(
         'sales',
         new Controller({
-          contracts: this._contracts,
           apiKey: this._config.syncer.apiKey,
           dataset: 'sales',
           type: 'backfill',
@@ -206,7 +201,6 @@ class SyncNode {
       this._controllers.set(
         'asks',
         new Controller({
-          contracts: this._contracts,
           apiKey: this._config.syncer.apiKey,
           dataset: 'asks',
           type: 'backfill',
@@ -221,7 +215,6 @@ class SyncNode {
       this._controllers.set(
         'bids',
         new Controller({
-          contracts: this._contracts,
           apiKey: this._config.syncer.apiKey,
           dataset: 'bids',
           type: 'backfill',

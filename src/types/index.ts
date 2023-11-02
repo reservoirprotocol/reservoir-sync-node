@@ -9,6 +9,7 @@ export enum URLs {
   "mainnet" = "wss://ws.reservoir.tools",
   "goerli" = "wss://ws-goerli.reservoir.tools",
   "polygon" = "wss://ws-polygon.reservoir.tools",
+  "mumbai" = "wss://ws-mumbai.reservoir.tools",
   "arbitrum" = "wss://ws-arbitrum.reservoir.tools",
   "sepolia" = "wss://ws-sepolia.reservoir.tools",
   "optimism" = "wss://ws-optimism.reservoir.tools",
@@ -58,6 +59,7 @@ export type Chains =
   | "goerli"
   | "polygon"
   | "arbitrum"
+  | "mumbai"
   | "optimism"
   | "sepolia";
 
@@ -106,7 +108,6 @@ export interface ControllerConfig {
   dataset: DataTypes;
   chain: Chains;
   delay: number;
-  contracts: string[];
   mode: Mode;
 }
 
@@ -160,7 +161,6 @@ export interface WebSocketError {
 }
 
 export interface WebSocketServiceConfig {
-  contracts: string[];
   apiKey: string;
   chain: Chains | null;
   toSync: {
@@ -203,7 +203,7 @@ export interface SyncNodeConfig {
   syncer: {
     apiKey: string;
     chain: Chains;
-    contracts: string[];
+    contracts: Record<DataTypes, string[]>;
     sources: string[];
     toSync: Record<DataTypes, boolean>;
     mode: Mode;
@@ -429,6 +429,7 @@ export interface InsertionDataPoint {
 export interface ProcessCommand {
   command: string;
   contract?: string;
+  backfill?: boolean;
   dataType?: DataTypes;
   recordCount?: number;
 }

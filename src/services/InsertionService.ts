@@ -11,6 +11,7 @@ import {
 } from "../types";
 import { addressToBuffer, toBuffer, toString, getChainId } from "../utils";
 import { LoggerService } from "./LoggerService";
+import { QueueService } from "./QueueService";
 
 interface DataSchemas {
   sales: SalesSchema;
@@ -135,7 +136,7 @@ class _InsertionService {
    * @private
    */
   private _filter(type: DataTypes, data: DataSets): DataSets {
-    const contracts = SyncNode.getContracts();
+    const contracts = QueueService.contracts[type];
     const sources = SyncNode.getConfigProperty("syncer")["sources"];
 
     if (contracts.length === 0 && sources.length === 0) return data;

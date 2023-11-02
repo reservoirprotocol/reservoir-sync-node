@@ -1,5 +1,4 @@
 import { AxiosResponse } from "axios";
-import { isAddress } from "web3-validator";
 import {
   addMilliseconds,
   differenceInMilliseconds,
@@ -9,11 +8,13 @@ import {
 import { utcToZonedTime } from "date-fns-tz";
 import fs from "fs";
 import path from "path";
+import { isAddress } from "web3-validator";
 import { LoggerService } from "../services";
 
 import {
   Chains,
   ControllerEvent,
+  DataTypes,
   ErrorType,
   Schemas,
   SuccessType,
@@ -136,48 +137,36 @@ export const addressToBuffer = (hexValue: string = "") => {
   return Buffer.from((hexValue || " ").slice(2), "hex");
 };
 
-export const UrlBase = {
-  mainnet: "https://api.reservoir.tools",
-  goerli: "https://api-goerli.reservoir.tools",
-  sepolia: "https://api-sepolia.reservoir.tools",
-  polygon: "https://api-polygon.reservoir.tools",
-  arbitrum: "https://api-arbitrum.reservoir.tools",
-  optimism: "https://api-optimism.reservoir.tools",
-} as const;
-
-export const UrlPaths = {
-  sales: "/sales/v6",
-  asks: "/orders/asks/v5",
-  bids: "/orders/bids/v6",
-  transfers: "/transfers/bulk/v2",
-} as const;
-
-export const RecordRoots = {
-  asks: "orders",
-  sales: "sales",
-  bids: "orders",
-  transfers: "transfers",
-} as const;
-
-export const WorkerCounts = {
-  fast: 20,
-  normal: 15,
-  slow: 10,
-} as const;
-
-export const readContracts = (): string[] => {
+export const readContracts = (): Record<DataTypes, string[]> => {
+  const hashMap: Record<DataTypes, string[]> = {
+    sales: [],
+    asks: [],
+    bids: [],
+    transfers: [],
+  };
   try {
-    const contracts: string[] = [];
     fs.readFileSync(path.join(__dirname, "../contracts.txt"), "utf-8")
       .trim()
       .split("\n")
-      .filter((contract) => isAddress(contract))
-      .map((contract) => contracts.push(contract));
+      .forEach((line) => {
+        const [contract = "", key = ""] = line.split(":");
+        if (!isAddress(contract)) return;
 
-    return contracts;
+        if (!key) {
+          Object.keys(hashMap).forEach((key) => {
+            if (!hashMap[key as DataTypes].includes(contract)) {
+              hashMap[key as DataTypes].push(contract);
+            }
+          });
+        } else {
+          hashMap[key as DataTypes].push(contract);
+        }
+      });
+
+    return hashMap;
   } catch (e: unknown) {
     LoggerService.error(e);
-    return [];
+    return hashMap;
   }
 };
 
@@ -202,6 +191,7 @@ const chains: Record<Chains, number> = {
   mainnet: 1,
   goerli: 5,
   polygon: 137,
+  mumbai: 80001,
   optimism: 10,
   sepolia: 11155111,
 };
@@ -213,3 +203,33 @@ export const getChainId = (): string => {
 };
 
 export const END_OF_TIME = 253402300799;
+
+export const UrlBase = {
+  mainnet: "https://api.reservoir.tools",
+  goerli: "https://api-goerli.reservoir.tools",
+  sepolia: "https://api-sepolia.reservoir.tools",
+  polygon: "https://api-polygon.reservoir.tools",
+  mumbai: "https://api-mumbai.reservoir.tools",
+  arbitrum: "https://api-arbitrum.reservoir.tools",
+  optimism: "https://api-optimism.reservoir.tools",
+} as const;
+
+export const UrlPaths = {
+  sales: "/sales/v6",
+  asks: "/orders/asks/v5",
+  bids: "/orders/bids/v6",
+  transfers: "/transfers/bulk/v2",
+} as const;
+
+export const RecordRoots = {
+  asks: "orders",
+  sales: "sales",
+  bids: "orders",
+  transfers: "transfers",
+} as const;
+
+export const WorkerCounts = {
+  fast: 20,
+  normal: 15,
+  slow: 10,
+} as const;
