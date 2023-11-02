@@ -338,6 +338,10 @@ export class Controller {
       isBackfill && queries.push(`status=active`);
     }
 
+    if (this._config.dataset === "sales") {
+      queries.push(`includeTokenMetadata=true`)
+    }
+
     Object.keys(params).map((key) => queries.push(`${key}=${params[key]}`));
 
     return queries.join("&");
