@@ -66,17 +66,13 @@ export function parseTimestamp(date: string, isEndTime: boolean): number {
   const timePieces = datePieces[1].substring(0, 8).split(":").map(Number);
   const [hour, minute, second] = timePieces;
 
-  const startDate = new Date(
-    year,
-    month - 1,
-    day,
-    hour,
-    isEndTime ? minute + 1 : minute - 1,
-    second
-  );
+  const timeAdjustment = isEndTime ? 5000 : -5000;
+
+  const startDate = new Date(year, month - 1, day, hour, minute, second);
 
   const timezoneOffset = startDate.getTimezoneOffset() * 60 * 1000;
-  return (startDate.getTime() - timezoneOffset) / 1000;
+  
+  return (startDate.getTime() - timezoneOffset + timeAdjustment) / 1000;
 }
 
 /**
