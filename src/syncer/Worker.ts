@@ -95,8 +95,8 @@ export class Worker extends EventEmitter {
       const ascRes = await this._request(
         this._normalize({
           ...(contract && { contract: contract }),
-          startTimestamp: parseTimestamp(startDate),
-          endTimestamp: parseTimestamp(endDate),
+          startTimestamp: parseTimestamp(startDate, false),
+          endTimestamp: parseTimestamp(endDate, true),
           sortDirection: "asc",
         })
       );
@@ -123,8 +123,8 @@ export class Worker extends EventEmitter {
         const descRes = await this._request(
           this._normalize({
             ...(contract && { contract: contract }),
-            startTimestamp: parseTimestamp(startDate),
-            endTimestamp: parseTimestamp(endDate),
+            startTimestamp: parseTimestamp(startDate, false),
+            endTimestamp: parseTimestamp(endDate, true),
             sortDirection: "desc",
           })
         );
@@ -185,8 +185,8 @@ export class Worker extends EventEmitter {
         this._normalize({
           ...(this.continuation && { continuation: this.continuation }),
           sortDirection: "asc",
-          startTimestamp: parseTimestamp(startDate),
-          endTimestamp: parseTimestamp(endDate),
+          startTimestamp: parseTimestamp(startDate, false),
+          endTimestamp: parseTimestamp(endDate, true),
         })
       );
 
@@ -232,7 +232,7 @@ export class Worker extends EventEmitter {
           {
             ...(this.continuation && { continuation: this.continuation }),
             sortDirection: "asc",
-            startTimestamp: parseTimestamp(startDate),
+            startTimestamp: parseTimestamp(startDate, false),
             endTimestamp: END_OF_TIME,
           },
           false
@@ -254,7 +254,7 @@ export class Worker extends EventEmitter {
           {
             ...(this.continuation && { continuation: this.continuation }),
             sortDirection: "desc",
-            startTimestamp: parseTimestamp(startDate),
+            startTimestamp: parseTimestamp(startDate, false),
             endTimestamp: END_OF_TIME,
           },
           false

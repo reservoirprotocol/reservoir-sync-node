@@ -59,17 +59,20 @@ export const isErrorResponse = (
   return r.status !== 200;
 };
 
-export function parseTimestamp(date: string): number {
+export function parseTimestamp(date: string, isEndTime: boolean): number {
   const datePieces = date.split("T");
   const [year, month, day] = datePieces[0].split("-").map(Number);
 
   const timePieces = datePieces[1].substring(0, 8).split(":").map(Number);
   const [hour, minute, second] = timePieces;
 
+  const timeAdjustment = isEndTime ? 5000 : -5000;
+
   const startDate = new Date(year, month - 1, day, hour, minute, second);
 
   const timezoneOffset = startDate.getTimezoneOffset() * 60 * 1000;
-  return (startDate.getTime() - timezoneOffset) / 1000;
+  
+  return (startDate.getTime() - timezoneOffset + timeAdjustment) / 1000;
 }
 
 /**

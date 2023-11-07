@@ -1,6 +1,6 @@
 {
   "name": "reservoir-sync-node",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "scripts": {
     "start": " yarn database:prepare && yarn build && yarn build:viewer && yarn move && node dist/index.js",
     "build": "yarn run clean && tsc",
