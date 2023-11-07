@@ -134,8 +134,6 @@ export class Worker extends EventEmitter {
           continue;
         }
 
-        console.log(descRes.data.sales.length);
-
         const records = [
           ...ascRes.data[RecordRoots[this._datatype]],
           ...descRes.data[RecordRoots[this._datatype]],
