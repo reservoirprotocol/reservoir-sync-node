@@ -280,8 +280,8 @@ export class Controller {
     return {
       id: v4(),
       priority: 1,
-      startDate: reqs[1].data[root][reqs[1].data[root].length - 1].updatedAt,
-      endDate: reqs[0].data[root][reqs[0].data[root].length - 1].updatedAt,
+      startDate: reqs[0].data[root][reqs[0].data[root].length - 1].updatedAt,
+      endDate: reqs[1].data[root][reqs[1].data[root].length - 1].updatedAt,
       contract: contract || "",
     };
   }
@@ -339,7 +339,7 @@ export class Controller {
     }
 
     if (this._config.dataset === "sales") {
-      queries.push(`includeTokenMetadata=true`)
+      queries.push(`includeTokenMetadata=true`);
     }
 
     Object.keys(params).map((key) => queries.push(`${key}=${params[key]}`));
