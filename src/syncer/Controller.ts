@@ -334,6 +334,12 @@ export class Controller {
       "sortBy=updatedAt",
     ];
 
+    if (params?.contract) {
+      params[this._config.dataset == "sales" ? "contract" : "contracts"] =
+        params?.contract;
+      delete params?.contract;
+    }
+
     if (this._config.dataset === "asks" || this._config.dataset === "bids") {
       isBackfill && queries.push(`status=active`);
     }
