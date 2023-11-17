@@ -1,8 +1,9 @@
 import "dotenv/config";
-import { Server } from "./Server";
 import { stdin, stdout } from "node:process";
+import { Server } from "./Server";
 
 stdin.pipe(stdout);
+process.title = "SyncNode Server Process";
 
 const config = {
   port: Number(process.env.PORT) as number,
@@ -13,17 +14,15 @@ Server.construct(config);
 Server.launch();
 
 process.on("uncaughtException", (error: Error) => {
-  console.log(
-    `SyncNode Process Killed. Killing Monitor Service: ${process.pid}`
+  console.error(
+    `FATAL ERROR: ${error.message}. Terminating Server Process ${process.pid}`
   );
-  console.error(error);
   process.exit(0);
 });
 
 process.on("unhandledRejection", (error: Error) => {
-  console.log(
-    `SyncNode Process Killed. Killing Monitor Service: ${process.pid}`
+  console.error(
+    `FATAL ERROR: ${error.message}. Terminating Server Process ${process.pid}`
   );
-  console.error(error);
   process.exit(0);
 });
