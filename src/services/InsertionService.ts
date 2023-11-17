@@ -136,7 +136,7 @@ class _InsertionService {
    * @private
    */
   private _filter(type: DataTypes, data: DataSets): DataSets {
-    const contracts = QueueService.contracts[type];
+    const contracts = QueueService.contracts[type].map((c) => c.toLowerCase());
     const sources = SyncNode.getConfigProperty("syncer")["sources"];
 
     if (contracts.length === 0 && sources.length === 0) return data;
@@ -144,25 +144,29 @@ class _InsertionService {
     switch (type) {
       case "transfers":
         return (data as TransfersSchema[]).filter((set) =>
-          contracts.includes(set.token?.contract)
+          contracts.includes(set.token?.contract?.toLowerCase())
         );
       case "asks":
         return (data as AsksSchema[]).filter(
           (set) =>
-            (contracts.length === 0 || contracts.includes(set.contract)) &&
+            (contracts.length === 0 ||
+              contracts.includes(set.contract.toLowerCase())) &&
             (sources.length === 0 || sources.includes(set.source.domain))
         );
       case "bids":
-        return (data as BidsSchema[]).filter(
-          (set) =>
-            (contracts.length === 0 || contracts.includes(set.contract)) &&
-            (sources.length === 0 || sources.includes(set.source.domain))
-        );
+        return (data as BidsSchema[]).filter((set) => {
+          return (
+            (contracts.length === 0 ||
+              contracts.includes(set.contract.toLowerCase())) &&
+            (sources.length === 0 ||
+              sources.includes(set.source.domain.toLowerCase()))
+          );
+        });
       case "sales":
         return (data as SalesSchema[]).filter(
           (set) =>
             (contracts.length === 0 ||
-              contracts.includes(set.token.contract)) &&
+              contracts.includes(set.token.contract.toLowerCase())) &&
             (sources.length === 0 || sources.includes(set.orderSource))
         );
       default:
@@ -240,6 +244,7 @@ class _InsertionService {
 
     if (type === "bids") {
       const bid = data as BidsSchema;
+      console.log(bid.id);
       return {
         id: Buffer.from(
           `${bid?.id}-${bid?.contract}-${bid?.maker}-${bid?.tokenSetId}-${bid?.createdAt}`,
