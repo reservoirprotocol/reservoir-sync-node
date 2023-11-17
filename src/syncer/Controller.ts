@@ -335,7 +335,7 @@ export class Controller {
     ];
 
     if (params?.contract) {
-      params
+      params[
         this._config.dataset === "sales" || this._config.dataset === "transfers"
           ? "contract"
           : "contracts"
