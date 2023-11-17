@@ -244,7 +244,6 @@ class _InsertionService {
 
     if (type === "bids") {
       const bid = data as BidsSchema;
-      console.log(bid.id);
       return {
         id: Buffer.from(
           `${bid?.id}-${bid?.contract}-${bid?.maker}-${bid?.tokenSetId}-${bid?.createdAt}`,
