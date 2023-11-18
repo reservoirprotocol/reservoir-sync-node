@@ -137,37 +137,41 @@ class _InsertionService {
    */
   private _filter(type: DataTypes, data: DataSets): DataSets {
     const contracts = QueueService.contracts[type].map((c) => c.toLowerCase());
-    const sources = SyncNode.getConfigProperty("syncer")["sources"];
+    const sources = SyncNode.getConfigProperty("syncer")["sources"].map((s) =>
+      s.toLowerCase()
+    );
 
     if (contracts.length === 0 && sources.length === 0) return data;
 
     switch (type) {
       case "transfers":
         return (data as TransfersSchema[]).filter((set) =>
-          contracts.includes(set.token?.contract?.toLowerCase())
+          contracts.includes(set?.token?.contract?.toLowerCase())
         );
       case "asks":
-        return (data as AsksSchema[]).filter(
-          (set) =>
+        return (data as AsksSchema[]).filter((set) => {
+          return (
             (contracts.length === 0 ||
-              contracts.includes(set.contract.toLowerCase())) &&
-            (sources.length === 0 || sources.includes(set.source.domain))
-        );
+              contracts.includes(set?.contract?.toLowerCase())) &&
+            (sources.length === 0 ||
+              sources.includes(set?.source?.domain.toLowerCase()))
+          );
+        });
       case "bids":
         return (data as BidsSchema[]).filter((set) => {
           return (
             (contracts.length === 0 ||
-              contracts.includes(set.contract.toLowerCase())) &&
+              contracts.includes(set?.contract?.toLowerCase())) &&
             (sources.length === 0 ||
-              sources.includes(set.source.domain.toLowerCase()))
+              sources.includes(set?.source?.domain.toLowerCase()))
           );
         });
       case "sales":
         return (data as SalesSchema[]).filter(
           (set) =>
             (contracts.length === 0 ||
-              contracts.includes(set.token.contract.toLowerCase())) &&
-            (sources.length === 0 || sources.includes(set.orderSource))
+              contracts.includes(set?.token?.contract?.toLowerCase())) &&
+            (sources.length === 0 || sources.includes(set?.orderSource))
         );
       default:
         return data;
