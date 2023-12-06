@@ -335,12 +335,10 @@ export class Controller {
     ];
 
     if (params?.contract) {
-      params[
-        this._config.dataset === "sales" || this._config.dataset === "transfers"
-          ? "contract"
-          : "contracts"
-      ] = params?.contract;
-      delete params?.contract;
+      if (this._config.dataset == "bids" || this._config.dataset == "asks") {
+        params["contracts"] = params.contract;
+        delete params.contract;
+      }
     }
 
     if (this._config.dataset === "asks" || this._config.dataset === "bids") {
