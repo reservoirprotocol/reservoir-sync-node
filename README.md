@@ -3,6 +3,9 @@
     Reservoir Sync Node is a customizable lightweight indexer based on the Reservoir indexer. It's easy to set up, customizable, and fast. Sync sales and asks continuously into your infrastructure.
   </p>
 
+  <h1 align="center" style="font-weight:bold">The Sync Node is a reference product on how bulk syncing might work with the Reseroir APIs. As such, support is limited.</h1>
+
+
 ![SyncNode Logo Placeholder](https://dashboard.reservoir.tools/reservoir.svg)
 
 ### Installation
@@ -24,5 +27,3 @@ yarn start
 ### Configuration - ENV
 
 Learn more about configuration from our [docs](https://docs.reservoir.tools/reference/reservoir-sync-node).
-
-  <h3 style="font-weight:bold">The Sync Node is a reference product on how bulk syncing might work with the Reseroir APIs. As such, support is limited.</h3>
