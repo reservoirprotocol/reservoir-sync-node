@@ -277,6 +277,9 @@ export class Controller {
       return null;
     }
 
+    await InsertionService.upsert(this._config.dataset, reqs[1].data[root]);
+    await InsertionService.upsert(this._config.dataset, reqs[0].data[root]);
+
     return {
       id: v4(),
       priority: 1,
